@@ -1,0 +1,40 @@
+{
+  "name": "learning-lab",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "turbo test",
+    "dev": "turbo dev",
+    "dev:frontend": "turbo dev --filter=frontend",
+    "dev:backend": "turbo dev --filter=backend",
+    "build": "turbo build",
+    "build:frontend": "turbo build --filter=frontend",
+    "build:backend": "turbo build --filter=backend",
+    "build:types": "turbo build --filter=types",
+    "lint": "turbo lint",
+    "clean": "turbo clean && rimraf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md,json}\"",
+    "prepare": "is-ci || husky"
+  },
+  "private": true,
+  "packageManager": "npm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,md,json}": "prettier --write"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "eslint": "^9.35.0",
+    "eslint-plugin-import": "^2.32.0",
+    "is-ci": "^4.1.0",
+    "turbo": "^2.5.6"
+  }
+}

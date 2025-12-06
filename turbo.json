@@ -1,0 +1,12 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "tasks": {
+    "dev": { "cache": false, "persistent": true },
+    "build": {
+      "outputs": ["dist/**", "build/**", "tsconfig.tsbuildinfo", "tsconfig.build.tsbuildinfo"],
+      "dependsOn": ["^build"]
+    },
+    "lint": {},
+    "test": { "outputs": [".coverage/**"] }
+  }
+}
