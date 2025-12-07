@@ -11,10 +11,4 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
-
-  @Public()
-  @Get('api/quote')
-  getQuote(): Promise<{ content: string; author: string }> {
-    return this.appService.getQuote();
-  }
 }

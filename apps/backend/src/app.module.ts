@@ -5,29 +5,26 @@ import { AppService } from './app.service';
 import { CommonModule } from './common/common.module';
 import { HealthController } from './health.controller';
 import { PrismaModule } from './infra/prisma/prisma.module';
+import { FirebaseModule } from './infra/firebase/firebase.module';
 
-import { VocabModule } from './modules/vocab/vocab.module';
-import { DecksModule } from './modules/decks/decks.module';
-import { ReviewModule } from './modules/review/review.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { FirebaseAuthGuard } from './modules/auth/guards/firebase-auth.guard';
 
 @Module({
   imports: [
     CommonModule,
+    FirebaseModule,
     AuthModule,
-    VocabModule,
     PrismaModule,
-    DecksModule,
-    ReviewModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard,
+      useClass: FirebaseAuthGuard,
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
+

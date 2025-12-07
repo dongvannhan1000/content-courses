@@ -2,131 +2,223 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-// import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { FirebaseService } from '../../infra/firebase/firebase.service';
 import { RegisterDto } from './dto/register.dto';
-import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
-  private readonly saltRounds = 10;
+  private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService,
-    // private configService: ConfigService,
-  ) {}
+    private firebaseService: FirebaseService,
+  ) { }
 
+  /**
+   * Register a new user with Firebase Auth and sync to database
+   */
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
-    const { username, password, name } = registerDto;
+    const { email, password, name } = registerDto;
 
-    // Check if user already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: username },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('Username already exists');
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, this.saltRounds);
-
-    // Create user
-    await this.prisma.user.create({
-      data: {
-        email: username,
-        password: hashedPassword,
-        name,
-      },
-    });
-
-    return { message: 'User registered successfully' };
-  }
-
-  async validateUser(username: string, password: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: username },
-    });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return user;
-    }
-
-    return null;
-  }
-
-  async login(user: User) {
-    const payload = { sub: user.id, username: user.email, name: user.name };
-    const accessToken = await this.jwtService.signAsync(payload);
-
-    return {
-      access_token: accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    };
-  }
-
-  async requestPasswordReset(email: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      // Don't reveal if user exists for security
-      return { message: 'If the email exists, a reset link will be sent' };
-    }
-
-    // Generate reset token (valid for 1 hour)
-    const resetToken = await this.jwtService.signAsync(
-      { sub: user.id, email: user.email, type: 'password-reset' },
-      { expiresIn: '1h' },
-    );
-
-    // TODO: In production, send email with reset link
-    // For now, return the token (in production, this should be sent via email)
-    console.log(`Password reset token for ${email}: ${resetToken}`);
-
-    return { message: 'If the email exists, a reset link will be sent' };
-  }
-
-  async resetPassword(
-    token: string,
-    newPassword: string,
-  ): Promise<{ message: string }> {
     try {
-      // Verify token
-      const payload = await this.jwtService.verifyAsync(token);
-
-      if (payload.type !== 'password-reset') {
-        throw new UnauthorizedException('Invalid reset token');
-      }
-
-      // Hash new password
-      const hashedPassword = await bcrypt.hash(newPassword, this.saltRounds);
-
-      // Update user password
-      await this.prisma.user.update({
-        where: { id: payload.sub },
-        data: { password: hashedPassword },
+      // Check if user already exists in our database
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email },
       });
 
-      return { message: 'Password reset successfully' };
-    } catch (error) {
-      console.log(error);
-      throw new UnauthorizedException('Invalid or expired reset token');
+      if (existingUser) {
+        throw new ConflictException('Email already registered');
+      }
+
+      // Create user in Firebase Auth
+      const firebaseUser = await this.firebaseService.createUser({
+        email,
+        password,
+        displayName: name,
+      });
+
+      // Sync user to our database
+      await this.prisma.user.create({
+        data: {
+          firebaseUid: firebaseUser.uid,
+          email: firebaseUser.email!,
+          name: firebaseUser.displayName || name,
+          emailVerified: firebaseUser.emailVerified,
+          photoURL: firebaseUser.photoURL,
+        },
+      });
+
+      this.logger.log(`User registered successfully: ${email}`);
+      return { message: 'User registered successfully' };
+    } catch (error: any) {
+      this.logger.error('Registration failed', error);
+
+      // Handle Firebase-specific errors
+      if (error.code === 'auth/email-already-exists') {
+        throw new ConflictException('Email already registered in Firebase');
+      }
+      if (error.code === 'auth/invalid-email') {
+        throw new BadRequestException('Invalid email address');
+      }
+      if (error.code === 'auth/weak-password') {
+        throw new BadRequestException(
+          'Password is too weak. Please choose a stronger password',
+        );
+      }
+
+      // Re-throw NestJS exceptions
+      if (
+        error instanceof ConflictException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      throw new BadRequestException('Registration failed');
     }
   }
 
-  async getUserById(id: number): Promise<User | null> {
+  /**
+   * Login user by verifying Firebase ID token
+   */
+  async login(idToken: string) {
+    try {
+      // Verify the Firebase ID token
+      const decodedToken = await this.firebaseService.verifyIdToken(idToken);
+
+      // Get or create user in our database
+      let user = await this.prisma.user.findUnique({
+        where: { firebaseUid: decodedToken.uid },
+      });
+
+      // If user doesn't exist in our DB, sync from Firebase
+      if (!user) {
+        user = await this.syncFirebaseUser(decodedToken.uid);
+      }
+
+      this.logger.log(`User logged in: ${user.email}`);
+
+      return {
+        user: {
+          id: user.id,
+          firebaseUid: user.firebaseUid,
+          email: user.email,
+          name: user.name,
+          emailVerified: user.emailVerified,
+          photoURL: user.photoURL,
+        },
+      };
+    } catch (error: any) {
+      this.logger.error('Login failed', error);
+
+      if (error.code === 'auth/id-token-expired') {
+        throw new UnauthorizedException('Token expired, please login again');
+      }
+      if (error.code === 'auth/argument-error') {
+        throw new UnauthorizedException('Invalid token format');
+      }
+
+      throw new UnauthorizedException('Authentication failed');
+    }
+  }
+
+  /**
+   * Sync Firebase user to our database
+   */
+  async syncFirebaseUser(firebaseUid: string) {
+    try {
+      const firebaseUser = await this.firebaseService.getUserByUid(firebaseUid);
+
+      const user = await this.prisma.user.upsert({
+        where: { firebaseUid },
+        update: {
+          email: firebaseUser.email!,
+          name: firebaseUser.displayName,
+          emailVerified: firebaseUser.emailVerified,
+          photoURL: firebaseUser.photoURL,
+        },
+        create: {
+          firebaseUid: firebaseUser.uid,
+          email: firebaseUser.email!,
+          name: firebaseUser.displayName,
+          emailVerified: firebaseUser.emailVerified,
+          photoURL: firebaseUser.photoURL,
+        },
+      });
+
+      this.logger.log(`Synced Firebase user to database: ${user.email}`);
+      return user;
+    } catch (error) {
+      this.logger.error(`Failed to sync Firebase user: ${firebaseUid}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Request password reset (Firebase will send email)
+   */
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    try {
+      // Generate password reset link
+      const resetLink = await this.firebaseService.generatePasswordResetLink(
+        email,
+      );
+
+      // TODO: In production, send this link via your email service
+      // For now, just log it (Firebase can also send email directly if configured)
+      this.logger.log(`Password reset link for ${email}: ${resetLink}`);
+
+      return {
+        message: 'If the email exists, a password reset link has been sent',
+      };
+    } catch (error: any) {
+      // Don't reveal if user exists for security
+      this.logger.error(`Password reset failed for ${email}`, error);
+      return {
+        message: 'If the email exists, a password reset link has been sent',
+      };
+    }
+  }
+
+  /**
+   * Get user by Firebase UID
+   */
+  async getUserByFirebaseUid(firebaseUid: string) {
+    return this.prisma.user.findUnique({
+      where: { firebaseUid },
+      select: {
+        id: true,
+        firebaseUid: true,
+        email: true,
+        name: true,
+        emailVerified: true,
+        photoURL: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  /**
+   * Get user by database ID
+   */
+  async getUserById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
+      select: {
+        id: true,
+        firebaseUid: true,
+        email: true,
+        name: true,
+        emailVerified: true,
+        photoURL: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   }
 }

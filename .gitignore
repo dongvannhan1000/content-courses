@@ -10,3 +10,9 @@ apps/**/.env
 
 .agent
 .shared
+
+# IDE - IntelliJ / WebStorm
+.idea
+
+# IDE - VSCode
+.vscode

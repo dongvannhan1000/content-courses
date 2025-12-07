@@ -3,16 +3,9 @@ import { IsString } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
-    description: 'Username (email)',
-    example: 'user@example.com',
+    description: 'Firebase ID Token from client-side authentication',
+    example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjFkYzBmM...',
   })
   @IsString()
-  username!: string;
-
-  @ApiProperty({
-    description: 'Password',
-    example: 'SecurePass123!',
-  })
-  @IsString()
-  password!: string;
+  idToken!: string;
 }

@@ -7,142 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//
-// Enums
-//
-enum ReviewResult {
-  AGAIN
-  HARD
-  GOOD
-  EASY
-}
-
-//
-// Models
-//
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  firebaseUid   String   @unique @map("firebase_uid")
+  email         String   @unique
+  name          String?
+  password      String?  // Optional: kept for backward compatibility
+  emailVerified Boolean  @default(false) @map("email_verified")
+  photoURL      String?  @map("photo_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  // batches   CaptureBatch[]
-  vocabs    Vocab[]
-  reviews   VocabReview[]
-
-  @@map("user")
-}
-
-// model CaptureBatch {
-//   id        Int       @id @default(autoincrement())
-//   userId    Int
-//   startedAt DateTime  @default(now())
-//   endedAt   DateTime?
-//   tags      String[]
-
-//   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   items   Vocab[]
-
-//   @@index([userId, startedAt])
-//   @@map("capture_batch")
-// }
-
-model PublicDeck {
-  id          Int              @id @default(autoincrement())
-  slug        String           @unique
-  title       String
-  description String?
-  tags        String[]
-  // cefr        String?          // optional: A2/B1/B2/C1/C2
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-
-  items       PublicDeckItem[]
-
-  @@map("public_deck")
-}
-
-model PublicDeckItem {
-  id                Int        @id @default(autoincrement())
-  deckId            Int
-  headword          String     @db.VarChar(128)
-  pos               String?    // noun/verb/adj...
-  definition        String?    @db.Text
-  // example           String?    @db.Text
-  // ipa               String?    @db.VarChar(128)
-  // collocations      String[]   // ["reduce emissions", "renewable energy", ...]
-  tags              String[]   // ["ielts","environment"]
-  source            String?    // "datamuse","dictionaryapi.dev","wordnik","wiktionary"
-  // sourceAttribution String?    // "Wiktionary (CC BY-SA 4.0) via Datamuse"
-  // sourceUrl         String?
-  // license           String?    // "CC BY-SA 4.0", "Wordnik API ToS", ...
-  // lang              String     @default("en")
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-
-  deck PublicDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
-
-  @@index([deckId, headword])
-  @@unique([deckId, headword, pos]) // tránh trùng item trong cùng deck
-  @@map("public_deck_item")
-}
-
-model Vocab {
-  id             Int       @id @default(autoincrement())
-  userId         Int
-  word           String    @db.VarChar(128)
-  meaningVi      String    @db.Text
-  explanationEn  String?   @db.Text
-  notes          String?   @db.Text
-  tags           String[]
-
-  // optional context
-  // timecodeSec    Int?
-
-  // // batch grouping
-  // captureBatchId Int?
-
-  // timestamps
-  addedAt        DateTime  @default(now())
-  lastReviewedAt DateTime?
-
-  // control
-  isSuspended    Boolean   @default(false)
-
-  // SRS-lite
-  dueAt          DateTime  @default(now())
-  intervalDays   Int       @default(0)
-  ease           Int       @default(250)   // 2.5 * 100
-  repetitions    Int       @default(0)
-  lapses         Int       @default(0)
-  lastResult     ReviewResult?
-
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // captureBatch  CaptureBatch? @relation(fields: [captureBatchId], references: [id], onDelete: SetNull)
-  reviews       VocabReview[]
-
-  @@index([addedAt])
-  @@index([lastReviewedAt])
-  @@index([dueAt])
-  @@unique([userId, word])
-  @@map("vocab")
-}
-
-model VocabReview {
-  id          Int          @id @default(autoincrement())
-  vocabId     Int
-  userId      Int
-  reviewedAt  DateTime     @default(now())
-  result      ReviewResult
-  durationSec Int?
-  notes       String?      @db.Text
-
-  vocab Vocab @relation(fields: [vocabId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, reviewedAt])
-  @@index([vocabId, reviewedAt])
-  @@map("vocab_review")
+  @@map("users")
 }
