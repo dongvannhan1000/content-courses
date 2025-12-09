@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
@@ -7,5 +7,7 @@ export class LoginDto {
     example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjFkYzBmM...',
   })
   @IsString()
+  @IsNotEmpty({ message: 'ID token is required' })
   idToken!: string;
 }
+
