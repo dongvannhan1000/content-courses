@@ -343,6 +343,156 @@ Organize your tests like this:
 
 ---
 
+## 5. Role-Based Authorization (RBAC)
+
+**Hệ thống phân quyền với 3 vai trò: USER, INSTRUCTOR, ADMIN**
+
+### Cách tạo Admin đầu tiên
+
+> [!IMPORTANT]
+> User mặc định có role `USER`. Để tạo admin đầu tiên:
+> 1. Thêm `ADMIN_EMAIL=your-email@example.com` vào `.env`
+> 2. Đăng ký với email đó → User tự động là ADMIN
+> 3. Hoặc update trực tiếp trong database:
+> ```sql
+> UPDATE users SET role = 'ADMIN' WHERE email = 'your-email@example.com';
+> ```
+
+### 5.1 Login Response với Role
+
+Login response giờ bao gồm trường `role`:
+
+```json
+{
+  "user": {
+    "id": 1,
+    "firebaseUid": "abc123...",
+    "email": "test@example.com",
+    "name": "Test User",
+    "emailVerified": false,
+    "photoURL": null,
+    "role": "USER"
+  }
+}
+```
+
+### 5.2 Get All Users (Admin Only)
+
+**Chỉ ADMIN mới được phép truy cập.**
+
+```http
+GET /api/auth/users
+Authorization: Bearer <admin_token>
+```
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "email": "admin@example.com",
+    "name": "Admin User",
+    "role": "ADMIN",
+    "emailVerified": true,
+    "createdAt": "2025-12-09T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "email": "instructor@example.com",
+    "name": "Instructor User",
+    "role": "INSTRUCTOR",
+    "emailVerified": false,
+    "createdAt": "2025-12-09T01:00:00.000Z"
+  }
+]
+```
+
+| Test Case | Token | Expected Result |
+|-----------|-------|-----------------|
+| ✅ Admin token | Token của user có role ADMIN | 200 OK |
+| ❌ User token | Token của user có role USER | 403 Forbidden |
+| ❌ Instructor token | Token của user có role INSTRUCTOR | 403 Forbidden |
+| ❌ No token | None | 401 Unauthorized |
+
+### 5.3 Update User Role (Admin Only)
+
+**Thay đổi role của user khác. Admin không thể tự thay đổi role của mình.**
+
+```http
+PATCH /api/auth/users/:id/role
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "role": "INSTRUCTOR"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": 2,
+  "email": "instructor@example.com",
+  "name": "Instructor User",
+  "role": "INSTRUCTOR"
+}
+```
+
+| Test Case | User ID | Role | Expected Result |
+|-----------|---------|------|-----------------|
+| ✅ Promote to INSTRUCTOR | 2 | `INSTRUCTOR` | 200 OK |
+| ✅ Promote to ADMIN | 2 | `ADMIN` | 200 OK |
+| ✅ Demote to USER | 2 | `USER` | 200 OK |
+| ❌ Change own role | admin's id | `USER` | 403 Forbidden |
+| ❌ Invalid role | 2 | `SUPERADMIN` | 400 Bad Request |
+| ❌ User not found | 9999 | `ADMIN` | 404 Not Found |
+| ❌ Non-admin caller | Any | Any | 403 Forbidden |
+
+### 5.4 Profile Endpoint với Role
+
+```http
+GET /api/auth/profile
+Authorization: Bearer <token>
+```
+
+Response giờ bao gồm `role`:
+
+```json
+{
+  "uid": "abc123def456",
+  "email": "test@example.com",
+  "emailVerified": false,
+  "name": "Test User",
+  "picture": null,
+  "dbId": 1,
+  "role": "USER"
+}
+```
+
+### Role Values
+
+| Role | Description |
+|------|-------------|
+| `USER` | Người dùng thông thường (default) |
+| `INSTRUCTOR` | Giảng viên - có thể tạo/quản lý khóa học |
+| `ADMIN` | Quản trị viên - full quyền quản lý users và hệ thống |
+
+### Quick Test Checklist for Authorization
+
+- [ ] Đăng ký user mới → Verify role = `USER`
+- [ ] Đăng ký với ADMIN_EMAIL → Verify role = `ADMIN`
+- [ ] Login → Verify response chứa `role`
+- [ ] GET /profile → Verify response chứa `role`
+- [ ] GET /users với USER token → Expect 403
+- [ ] GET /users với ADMIN token → Expect 200
+- [ ] PATCH /users/:id/role với ADMIN token → Success
+- [ ] PATCH /users/:id/role (thay đổi chính mình) → Expect 403
+
+---
+
 ## Next Steps
 
 After manual testing passes:
@@ -350,3 +500,4 @@ After manual testing passes:
 2. ✅ Add email verification flow
 3. ✅ Implement refresh token logic
 4. ✅ Add rate limiting for auth endpoints
+

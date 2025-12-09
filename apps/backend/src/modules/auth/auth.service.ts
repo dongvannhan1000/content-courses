@@ -3,23 +3,35 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  NotFoundException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { FirebaseService } from '../../infra/firebase/firebase.service';
 import { RegisterDto } from './dto/register.dto';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly adminEmail: string | undefined;
 
   constructor(
     private prisma: PrismaService,
     private firebaseService: FirebaseService,
-  ) { }
+    private configService: ConfigService,
+  ) {
+    this.adminEmail = this.configService.get<string>('ADMIN_EMAIL');
+    if (this.adminEmail) {
+      this.logger.log(`Admin email configured: ${this.adminEmail}`);
+    }
+  }
 
   /**
    * Register a new user with Firebase Auth and sync to database
+   * If email matches ADMIN_EMAIL env, user will be assigned ADMIN role
    */
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
     const { email, password, name } = registerDto;
@@ -41,6 +53,9 @@ export class AuthService {
         displayName: name,
       });
 
+      // Determine role: ADMIN if email matches ADMIN_EMAIL, otherwise USER
+      const role: Role = this.isAdminEmail(email) ? Role.ADMIN : Role.USER;
+
       // Sync user to our database
       await this.prisma.user.create({
         data: {
@@ -49,10 +64,11 @@ export class AuthService {
           name: firebaseUser.displayName || name,
           emailVerified: firebaseUser.emailVerified,
           photoURL: firebaseUser.photoURL,
+          role,
         },
       });
 
-      this.logger.log(`User registered successfully: ${email}`);
+      this.logger.log(`User registered successfully: ${email} with role: ${role}`);
       return { message: 'User registered successfully' };
     } catch (error: any) {
       this.logger.error('Registration failed', error);
@@ -83,6 +99,13 @@ export class AuthService {
   }
 
   /**
+   * Check if email matches configured ADMIN_EMAIL
+   */
+  private isAdminEmail(email: string): boolean {
+    return !!this.adminEmail && email.toLowerCase() === this.adminEmail.toLowerCase();
+  }
+
+  /**
    * Login user by verifying Firebase ID token
    */
   async login(idToken: string) {
@@ -100,7 +123,7 @@ export class AuthService {
         user = await this.syncFirebaseUser(decodedToken.uid);
       }
 
-      this.logger.log(`User logged in: ${user.email}`);
+      this.logger.log(`User logged in: ${user.email} (role: ${user.role})`);
 
       return {
         user: {
@@ -110,6 +133,7 @@ export class AuthService {
           name: user.name,
           emailVerified: user.emailVerified,
           photoURL: user.photoURL,
+          role: user.role,
         },
       };
     } catch (error: any) {
@@ -133,6 +157,9 @@ export class AuthService {
     try {
       const firebaseUser = await this.firebaseService.getUserByUid(firebaseUid);
 
+      // Determine role for new users synced from Firebase
+      const role: Role = this.isAdminEmail(firebaseUser.email!) ? Role.ADMIN : Role.USER;
+
       const user = await this.prisma.user.upsert({
         where: { firebaseUid },
         update: {
@@ -147,6 +174,7 @@ export class AuthService {
           name: firebaseUser.displayName,
           emailVerified: firebaseUser.emailVerified,
           photoURL: firebaseUser.photoURL,
+          role,
         },
       });
 
@@ -156,6 +184,38 @@ export class AuthService {
       this.logger.error(`Failed to sync Firebase user: ${firebaseUid}`, error);
       throw error;
     }
+  }
+
+  /**
+   * Update user role (ADMIN only)
+   */
+  async updateUserRole(userId: number, newRole: Role, adminUserId: number) {
+    // Prevent admin from changing their own role
+    if (userId === adminUserId) {
+      throw new ForbiddenException('Cannot change your own role');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    });
+
+    this.logger.log(`Role updated for user ${user.email}: ${user.role} -> ${newRole}`);
+    return updatedUser;
   }
 
   /**
@@ -197,6 +257,7 @@ export class AuthService {
         name: true,
         emailVerified: true,
         photoURL: true,
+        role: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -216,9 +277,28 @@ export class AuthService {
         name: true,
         emailVerified: true,
         photoURL: true,
+        role: true,
         createdAt: true,
         updatedAt: true,
       },
     });
   }
+
+  /**
+   * Get all users (ADMIN only)
+   */
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        emailVerified: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
+

@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { FirebaseService } from '../../../infra/firebase/firebase.service';
+import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
     constructor(
         private firebaseService: FirebaseService,
+        private prisma: PrismaService,
         private reflector: Reflector,
     ) { }
 
@@ -41,13 +43,22 @@ export class FirebaseAuthGuard implements CanActivate {
             // Verify Firebase ID token
             const decodedToken = await this.firebaseService.verifyIdToken(token);
 
-            // Attach user info to request
+            // Fetch user from database to get role
+            const dbUser = await this.prisma.user.findUnique({
+                where: { firebaseUid: decodedToken.uid },
+                select: { id: true, role: true },
+            });
+
+            // Attach user info to request (including role from database)
             request['user'] = {
                 uid: decodedToken.uid,
                 email: decodedToken.email,
                 emailVerified: decodedToken.email_verified,
                 name: decodedToken.name,
                 picture: decodedToken.picture,
+                // Include database user info
+                dbId: dbUser?.id,
+                role: dbUser?.role || 'USER',
             };
 
             return true;
@@ -73,3 +84,4 @@ export class FirebaseAuthGuard implements CanActivate {
         return undefined;
     }
 }
+

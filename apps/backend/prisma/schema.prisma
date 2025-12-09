@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Role enum for authorization
+enum Role {
+  USER
+  INSTRUCTOR
+  ADMIN
+}
+
 model User {
   id            Int      @id @default(autoincrement())
   firebaseUid   String   @unique @map("firebase_uid")
@@ -15,6 +22,7 @@ model User {
   password      String?  // Optional: kept for backward compatibility
   emailVerified Boolean  @default(false) @map("email_verified")
   photoURL      String?  @map("photo_url")
+  role          Role     @default(USER)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
