@@ -23,12 +23,15 @@ import { FirebaseAuthGuard } from './guards/firebase-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Public } from './decorators/public.decorator';
 import { Roles } from './decorators/roles.decorator';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('auth')
 @Controller('api/auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
 
+  // Strict rate limiting for registration: 3 per minute
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -37,6 +40,8 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  // Strict rate limiting for login: 5 per minute (prevent brute force)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -56,12 +61,28 @@ export class AuthController {
     return req['user'];
   }
 
+  // Strict rate limiting for password reset: 3 per minute (prevent spam)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset via Firebase' })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.requestPasswordReset(forgotPasswordDto.email);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(FirebaseAuthGuard)
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Refresh session - get updated user info with new token',
+    description: 'Client should call this after refreshing Firebase ID token to get latest user data from database',
+  })
+  async refreshSession(@NestRequest() req: Request) {
+    const firebaseUid = (req['user'] as any).uid;
+    const user = await this.authService.getUserByFirebaseUid(firebaseUid);
+    return { user };
   }
 
   // ============ Admin Endpoints ============

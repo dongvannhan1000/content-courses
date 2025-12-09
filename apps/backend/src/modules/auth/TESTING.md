@@ -493,6 +493,86 @@ Response giờ bao gồm `role`:
 
 ---
 
+## 6. Refresh Session
+
+**Endpoint để refresh user data sau khi client đã refresh Firebase ID token.**
+
+```http
+POST /api/auth/refresh
+Authorization: Bearer <new_firebase_id_token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "user": {
+    "id": 1,
+    "firebaseUid": "abc123...",
+    "email": "test@example.com",
+    "name": "Test User",
+    "emailVerified": false,
+    "photoURL": null,
+    "role": "USER",
+    "createdAt": "2025-12-09T00:00:00.000Z",
+    "updatedAt": "2025-12-09T00:00:00.000Z"
+  }
+}
+```
+
+| Test Case | Expected Result |
+|-----------|-----------------|
+| ✅ Valid token | 200 OK với user data mới nhất |
+| ❌ No token | 401 Unauthorized |
+| ❌ Invalid token | 401 Unauthorized |
+
+---
+
+## 7. Rate Limiting
+
+**Bảo vệ auth endpoints khỏi brute force và spam.**
+
+### Limits cụ thể
+
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| POST /api/auth/register | 3 requests | 60 seconds |
+| POST /api/auth/login | 5 requests | 60 seconds |
+| POST /api/auth/forgot-password | 3 requests | 60 seconds |
+
+### Response khi bị rate limited
+
+**Status: 429 Too Many Requests**
+```json
+{
+  "statusCode": 429,
+  "message": "ThrottlerException: Too Many Requests"
+}
+```
+
+### Test Rate Limiting
+
+1. Gọi POST `/api/auth/register` 4 lần liên tiếp
+2. Request thứ 4 phải trả về 429
+3. Đợi 60 giây và thử lại → Phải thành công
+
+---
+
+## 8. Running Automated Tests
+
+**E2E tests cho auth module.**
+
+```bash
+# Run all e2e tests
+npm run test:e2e
+
+# Run only auth tests
+npm run test:e2e -- --testPathPattern=auth.e2e-spec.ts
+```
+
+Test file: `test/auth.e2e-spec.ts`
+
+---
+
 ## Next Steps
 
 After manual testing passes:
@@ -500,4 +580,5 @@ After manual testing passes:
 2. ✅ Add email verification flow
 3. ✅ Implement refresh token logic
 4. ✅ Add rate limiting for auth endpoints
+
 
