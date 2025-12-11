@@ -16,3 +16,4 @@ apps/**/.env
 
 # IDE - VSCode
 .vscode
+plans
