@@ -11,6 +11,7 @@ import { FirebaseModule } from './infra/firebase/firebase.module';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { FirebaseAuthGuard } from './modules/auth/guards/firebase-auth.guard';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { UsersModule } from './modules/users/users.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CoursesModule } from './modules/courses/courses.module';
@@ -59,10 +60,18 @@ import { MediaModule } from './modules/media/media.module';
   controllers: [AppController, HealthController],
   providers: [
     AppService,
+    // Global guards - order matters!
+    // 1. FirebaseAuthGuard: Authenticate user (attach user to request)
     {
       provide: APP_GUARD,
       useClass: FirebaseAuthGuard,
     },
+    // 2. RolesGuard: Check user.role against @Roles() decorator
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+    // 3. ThrottlerGuard: Rate limiting
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
