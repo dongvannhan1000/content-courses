@@ -5,11 +5,11 @@ import { LessonType } from '@prisma/client';
 export class CreateLessonDto {
     @ApiProperty()
     @IsString()
-    title: string;
+    title!: string;
 
     @ApiProperty()
     @IsString()
-    slug: string;
+    slug!: string;
 
     @ApiPropertyOptional()
     @IsString()
@@ -38,5 +38,5 @@ export class CreateLessonDto {
 
     @ApiProperty()
     @IsInt()
-    courseId: number;
+    courseId!: number;
 }

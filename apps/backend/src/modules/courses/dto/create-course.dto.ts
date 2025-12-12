@@ -5,15 +5,15 @@ import { Type } from 'class-transformer';
 export class CreateCourseDto {
     @ApiProperty()
     @IsString()
-    title: string;
+    title!: string;
 
     @ApiProperty()
     @IsString()
-    slug: string;
+    slug!: string;
 
     @ApiProperty()
     @IsString()
-    description: string;
+    description!: string;
 
     @ApiPropertyOptional()
     @IsString()
@@ -24,7 +24,7 @@ export class CreateCourseDto {
     @IsNumber()
     @Type(() => Number)
     @Min(0)
-    price: number;
+    price!: number;
 
     @ApiPropertyOptional()
     @IsNumber()

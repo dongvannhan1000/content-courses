@@ -4,5 +4,5 @@ import { ApiProperty } from '@nestjs/swagger';
 export class EnrollDto {
     @ApiProperty()
     @IsInt()
-    courseId: number;
+    courseId!: number;
 }

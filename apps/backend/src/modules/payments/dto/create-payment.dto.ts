@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreatePaymentDto {
     @ApiProperty()
     @IsInt()
-    courseId: number;
+    courseId!: number;
 
     @ApiPropertyOptional()
     @IsString()

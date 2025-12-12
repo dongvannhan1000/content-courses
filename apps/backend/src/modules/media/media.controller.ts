@@ -3,6 +3,16 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { MediaService } from './media.service';
 
+// Define file type to avoid Express.Multer dependency issues
+interface UploadedFileType {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+}
+
 @ApiTags('Media')
 @ApiBearerAuth()
 @Controller('media')
@@ -13,7 +23,7 @@ export class MediaController {
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
     @ApiOperation({ summary: 'Upload video to Bunny Stream' })
-    async uploadVideo(@UploadedFile() file: Express.Multer.File) {
+    async uploadVideo(@UploadedFile() file: UploadedFileType | undefined) {
         // TODO: Implement - upload to Bunny Stream
         return { message: 'Upload video - TODO' };
     }
@@ -22,7 +32,7 @@ export class MediaController {
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
     @ApiOperation({ summary: 'Upload document to Cloudflare R2' })
-    async uploadDocument(@UploadedFile() file: Express.Multer.File) {
+    async uploadDocument(@UploadedFile() file: UploadedFileType | undefined) {
         // TODO: Implement - upload to R2
         return { message: 'Upload document - TODO' };
     }
