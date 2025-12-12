@@ -26,7 +26,7 @@ import { Roles } from './decorators/roles.decorator';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('auth')
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
 

@@ -1,4 +1,3 @@
-require('dotenv').config();
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -10,6 +9,9 @@ console.log(FRONTEND_URL);
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Set global API prefix
+  app.setGlobalPrefix('api');
 
   // Enable cookie parser for HTTP-only cookies
   app.use(cookieParser());

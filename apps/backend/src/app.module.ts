@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,6 +21,11 @@ import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
+    // Load .env file and make ConfigService available globally
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     CommonModule,
     FirebaseModule,
     AuthModule,
