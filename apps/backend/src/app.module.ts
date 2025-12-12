@@ -10,12 +10,26 @@ import { FirebaseModule } from './infra/firebase/firebase.module';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { FirebaseAuthGuard } from './modules/auth/guards/firebase-auth.guard';
+import { UsersModule } from './modules/users/users.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { CoursesModule } from './modules/courses/courses.module';
+import { LessonsModule } from './modules/lessons/lessons.module';
+import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
     CommonModule,
     FirebaseModule,
     AuthModule,
+    UsersModule,
+    CategoriesModule,
+    CoursesModule,
+    LessonsModule,
+    EnrollmentsModule,
+    PaymentsModule,
+    MediaModule,
     PrismaModule,
     // Rate limiting configuration
     ThrottlerModule.forRoot([
