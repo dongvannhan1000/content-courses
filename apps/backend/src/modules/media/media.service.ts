@@ -110,10 +110,12 @@ export class MediaService {
         }
     }
 
-    // ============ CREATE (Step 2 of Direct Upload) ============
+    // ============ CREATE (Step 2 of Direct Upload OR YouTube Embed) ============
 
     /**
-     * Create media record after successful upload
+     * Create media record
+     * - For VIDEO/DOCUMENT/IMAGE: after upload to Bunny/R2
+     * - For YOUTUBE_EMBED: directly with YouTube URL
      */
     async create(
         lessonId: number,
@@ -132,10 +134,16 @@ export class MediaService {
         });
         const nextOrder = dto.order ?? (maxOrderMedia ? maxOrderMedia.order + 1 : 0);
 
-        // Build public URL from key
-        const url = dto.type === MediaType.VIDEO
-            ? `${BUNNY_CDN_URL}/${dto.key}`
-            : `${R2_PUBLIC_URL}/${dto.key}`;
+        // Build URL based on media type
+        let url: string;
+        if (dto.type === MediaType.YOUTUBE_EMBED) {
+            // YouTube: convert to embed URL format
+            url = this.normalizeYoutubeUrl(dto.youtubeUrl!);
+        } else if (dto.type === MediaType.VIDEO) {
+            url = `${BUNNY_CDN_URL}/${dto.key}`;
+        } else {
+            url = `${R2_PUBLIC_URL}/${dto.key}`;
+        }
 
         const media = await this.prisma.media.create({
             data: {
@@ -151,12 +159,39 @@ export class MediaService {
             },
         });
 
-        // Update lesson duration if video
+        // Update lesson duration if video (not YouTube, since duration may not be accurate)
         if (dto.type === MediaType.VIDEO && dto.duration) {
             await this.updateLessonDuration(lessonId);
         }
 
         return this.mapToResponse(media);
+    }
+
+    /**
+     * Normalize YouTube URL to embed format
+     * Supports: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+     */
+    private normalizeYoutubeUrl(url: string): string {
+        let videoId: string | null = null;
+
+        // Match youtube.com/watch?v=ID
+        const watchMatch = url.match(/youtube\.com\/watch\?v=([\w-]+)/);
+        if (watchMatch) videoId = watchMatch[1];
+
+        // Match youtu.be/ID
+        const shortMatch = url.match(/youtu\.be\/([\w-]+)/);
+        if (shortMatch) videoId = shortMatch[1];
+
+        // Match youtube.com/embed/ID
+        const embedMatch = url.match(/youtube\.com\/embed\/([\w-]+)/);
+        if (embedMatch) videoId = embedMatch[1];
+
+        if (videoId) {
+            return `https://www.youtube.com/embed/${videoId}`;
+        }
+
+        // Fallback: return as-is
+        return url;
     }
 
     // ============ UPDATE ============

@@ -1,24 +1,44 @@
-import { IsString, IsOptional, IsInt, IsEnum, IsNotEmpty, MaxLength, Min } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsEnum, IsNotEmpty, MaxLength, Min, ValidateIf, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MediaType } from '@prisma/client';
 import { Type } from 'class-transformer';
 
 /**
- * DTO for creating media record after successful upload
- * Frontend calls this AFTER uploading file to Bunny/R2
+ * DTO for creating media record
+ * 
+ * For VIDEO/DOCUMENT/IMAGE: use presigned-url flow
+ * For YOUTUBE_EMBED: just provide the YouTube URL directly
  */
 export class CreateMediaDto {
-    @ApiProperty({ enum: MediaType, example: 'VIDEO' })
+    @ApiProperty({
+        enum: MediaType,
+        example: 'VIDEO',
+        description: 'VIDEO | DOCUMENT | IMAGE (presigned-url flow) or YOUTUBE_EMBED (direct URL)'
+    })
     @IsEnum(MediaType)
     type!: MediaType;
 
-    @ApiProperty({
+    @ApiPropertyOptional({
         example: 'videos/lesson-1/abc123.mp4',
-        description: 'Key returned from presigned-url endpoint'
+        description: 'Key from presigned-url endpoint (required for VIDEO/DOCUMENT/IMAGE)',
     })
+    @ValidateIf((o) => o.type !== 'YOUTUBE_EMBED')
     @IsString()
     @IsNotEmpty()
-    key!: string;
+    key?: string;
+
+    @ApiPropertyOptional({
+        example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        description: 'YouTube URL (required for YOUTUBE_EMBED)',
+    })
+    @ValidateIf((o) => o.type === 'YOUTUBE_EMBED')
+    @IsString()
+    @IsNotEmpty()
+    @Matches(
+        /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]+/,
+        { message: 'Invalid YouTube URL format' }
+    )
+    youtubeUrl?: string;
 
     @ApiPropertyOptional({ example: 'Video bài giảng phần 1' })
     @IsString()
