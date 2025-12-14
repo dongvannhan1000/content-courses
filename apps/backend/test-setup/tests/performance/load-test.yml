@@ -1,0 +1,59 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      name: "Load test"
+    - duration: 60
+      arrivalRate: 20
+      name: "Peak load"
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool down"
+
+scenarios:
+  - name: "Health Check"
+    weight: 20
+    flow:
+      - get:
+          url: "/health"
+
+  - name: "Public API Endpoints"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/categories"
+      - get:
+          url: "/api/courses"
+          qs:
+            status: "published"
+            limit: 10
+
+  - name: "Authenticated User Flow"
+    weight: 40
+    flow:
+      # Login (mock)
+      - post:
+          url: "/api/auth/login"
+          json:
+            idToken: "mock-test-token"
+          capture:
+            - json: "$.access_token"
+              as: "authToken"
+
+      # Get user profile
+      - get:
+          url: "/api/auth/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      # Get user's enrollments
+      - get:
+          url: "/api/enrollments"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+processor: "./load-test-processor.js"
