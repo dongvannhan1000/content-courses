@@ -1,4 +1,4 @@
- n# Media API Testing Guide
+ # Media API Testing Guide
 
 Manual test cases for testing Media API with Postman.
 
@@ -21,7 +21,7 @@ http://localhost:3000/api
 **POST** `/lessons/:lessonId/media/presigned-url`
 
 | Field | Value |
-|-------|-------|
+|-------|-------
 | Method | POST |
 | URL | `{{baseUrl}}/lessons/1/media/presigned-url` |
 | Headers | `Authorization: Bearer {{instructorToken}}` |

@@ -1,24 +1,3 @@
-node_modules
-dist
-.build
-.next
-*.log
-.env
-apps/**/.env
-.prisma
-.turbo
-
-.agent
-.shared
-
-# IDE - IntelliJ / WebStorm
-.idea
-
-# IDE - VSCode
-.vscode
-plans
-queries
-
 docs/*
 plans/*
 assets/*
