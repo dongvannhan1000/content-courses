@@ -49,7 +49,8 @@ export class CoursesService {
             where.category = { slug: category };
         }
         if (level) {
-            where.level = level;
+            // Case-insensitive match: 'beginner' -> 'Beginner', etc.
+            where.level = { equals: level, mode: 'insensitive' };
         }
         if (minPrice !== undefined || maxPrice !== undefined) {
             where.price = {};
