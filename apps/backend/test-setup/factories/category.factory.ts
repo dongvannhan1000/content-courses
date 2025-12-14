@@ -4,11 +4,16 @@ import { BaseFactory } from './base.factory';
 import { Prisma } from '@prisma/client';
 
 /**
+ * Category data interface for factory creation
+ */
+type CategoryCreateData = Omit<Prisma.CategoryCreateInput, 'parent' | 'children' | 'courses'>;
+
+/**
  * Category factory for creating test categories
  * Supports hierarchical categories and various configurations
  */
 export class CategoryFactory extends BaseFactory<Category> {
-  create(overrides?: Partial<Prisma.CategoryCreateInput>): Prisma.CategoryCreateInput {
+  create(overrides?: Partial<CategoryCreateData>): CategoryCreateData {
     const name = faker.lorem.words(2);
 
     return {
@@ -27,9 +32,23 @@ export class CategoryFactory extends BaseFactory<Category> {
   }
 
   /**
+   * Generate slug from text
+   */
+  private static generateSlug(text: string): string {
+    return faker.helpers.slugify(text).toLowerCase();
+  }
+
+  /**
+   * Generate random int for static methods
+   */
+  private static randomInt(min: number, max: number): number {
+    return faker.number.int({ min, max });
+  }
+
+  /**
    * Create active category
    */
-  static createActive(overrides?: Partial<Prisma.CategoryCreateInput>): Prisma.CategoryCreateInput {
+  static createActive(overrides?: Partial<CategoryCreateData>): CategoryCreateData {
     return new CategoryFactory().create({
       isActive: true,
       ...overrides,
@@ -39,7 +58,7 @@ export class CategoryFactory extends BaseFactory<Category> {
   /**
    * Create inactive category
    */
-  static createInactive(overrides?: Partial<Prisma.CategoryCreateInput>): Prisma.CategoryCreateInput {
+  static createInactive(overrides?: Partial<CategoryCreateData>): CategoryCreateData {
     return new CategoryFactory().create({
       isActive: false,
       ...overrides,
@@ -49,7 +68,7 @@ export class CategoryFactory extends BaseFactory<Category> {
   /**
    * Create root category (no parent)
    */
-  static createRootCategory(overrides?: Partial<Prisma.CategoryCreateInput>): Prisma.CategoryCreateInput {
+  static createRootCategory(overrides?: Partial<CategoryCreateData>): CategoryCreateData {
     const name = faker.helpers.arrayElement([
       'Technology',
       'Business',
@@ -69,7 +88,7 @@ export class CategoryFactory extends BaseFactory<Category> {
       order: this.randomInt(0, 10),
       isActive: true,
       ...overrides,
-    });
+    } as any);
   }
 
   /**
@@ -77,7 +96,7 @@ export class CategoryFactory extends BaseFactory<Category> {
    */
   static async createSubcategory(
     parentId: number,
-    overrides?: Partial<Prisma.CategoryCreateInput>
+    overrides?: Partial<CategoryCreateData>
   ): Promise<Category> {
     const factory = new CategoryFactory();
     const parentName = faker.lorem.words(2);
@@ -91,7 +110,7 @@ export class CategoryFactory extends BaseFactory<Category> {
       order: this.randomInt(0, 50),
       isActive: true,
       ...overrides,
-    });
+    } as any);
   }
 
   /**
@@ -99,8 +118,8 @@ export class CategoryFactory extends BaseFactory<Category> {
    */
   static async createHierarchy(
     childCount: number = 3,
-    parentOverrides?: Partial<Prisma.CategoryCreateInput>,
-    childOverrides?: Partial<Prisma.CategoryCreateInput>
+    parentOverrides?: Partial<CategoryCreateData>,
+    childOverrides?: Partial<CategoryCreateData>
   ): Promise<{ parent: Category; children: Category[] }> {
     const factory = new CategoryFactory();
 
@@ -116,7 +135,7 @@ export class CategoryFactory extends BaseFactory<Category> {
       parentId: null,
       isActive: true,
       ...parentOverrides,
-    });
+    } as any);
 
     // Create child categories
     const children: Category[] = [];
@@ -134,7 +153,7 @@ export class CategoryFactory extends BaseFactory<Category> {
   /**
    * Create category with icon
    */
-  static createWithIcon(iconUrl: string, overrides?: Partial<Prisma.CategoryCreateInput>): Prisma.CategoryCreateInput {
+  static createWithIcon(iconUrl: string, overrides?: Partial<CategoryCreateData>): CategoryCreateData {
     return new CategoryFactory().create({
       icon: iconUrl,
       ...overrides,
@@ -144,7 +163,7 @@ export class CategoryFactory extends BaseFactory<Category> {
   /**
    * Create category without icon
    */
-  static createWithoutIcon(overrides?: Partial<Prisma.CategoryCreateInput>): Prisma.CategoryCreateInput {
+  static createWithoutIcon(overrides?: Partial<CategoryCreateData>): CategoryCreateData {
     return new CategoryFactory().create({
       icon: null,
       ...overrides,
@@ -154,7 +173,7 @@ export class CategoryFactory extends BaseFactory<Category> {
   /**
    * Create predefined categories for common subjects
    */
-  static createProgrammingCategory(): Prisma.CategoryCreateInput {
+  static createProgrammingCategory(): CategoryCreateData {
     return new CategoryFactory().create({
       name: 'Programming',
       slug: 'programming',
@@ -165,7 +184,7 @@ export class CategoryFactory extends BaseFactory<Category> {
     });
   }
 
-  static createWebDevelopmentCategory(): Prisma.CategoryCreateInput {
+  static createWebDevelopmentCategory(): CategoryCreateData {
     return new CategoryFactory().create({
       name: 'Web Development',
       slug: 'web-development',
@@ -176,7 +195,7 @@ export class CategoryFactory extends BaseFactory<Category> {
     });
   }
 
-  static createMobileDevelopmentCategory(): Prisma.CategoryCreateInput {
+  static createMobileDevelopmentCategory(): CategoryCreateData {
     return new CategoryFactory().create({
       name: 'Mobile Development',
       slug: 'mobile-development',
@@ -187,7 +206,7 @@ export class CategoryFactory extends BaseFactory<Category> {
     });
   }
 
-  static createDataScienceCategory(): Prisma.CategoryCreateInput {
+  static createDataScienceCategory(): CategoryCreateData {
     return new CategoryFactory().create({
       name: 'Data Science',
       slug: 'data-science',
@@ -198,7 +217,7 @@ export class CategoryFactory extends BaseFactory<Category> {
     });
   }
 
-  static createDesignCategory(): Prisma.CategoryCreateInput {
+  static createDesignCategory(): CategoryCreateData {
     return new CategoryFactory().create({
       name: 'Design',
       slug: 'design',
@@ -225,7 +244,7 @@ export class CategoryFactory extends BaseFactory<Category> {
 
     const createdCategories: Category[] = [];
     for (const categoryData of categories) {
-      const category = await factory.createAndSave(categoryData);
+      const category = await factory.createAndSave(categoryData as any);
       createdCategories.push(category);
     }
 
@@ -301,9 +320,9 @@ export class CategoryFactory extends BaseFactory<Category> {
    */
   async createWithCoursesCount(
     coursesCount: number = 0,
-    overrides?: Partial<Prisma.CategoryCreateInput>
+    overrides?: Partial<CategoryCreateData>
   ): Promise<Category> {
-    const category = await this.createAndSave(overrides);
+    const category = await this.createAndSave(overrides as any);
 
     // Note: Actual course creation would require CourseFactory
     // This is just a placeholder for the structure

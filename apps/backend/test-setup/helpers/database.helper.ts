@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
 
-let prisma: PrismaClient;
+let prisma: PrismaClient | null = null;
 
 /**
  * Database helper for testing environment
@@ -14,11 +14,6 @@ export class DatabaseHelper {
   static getClient(): PrismaClient {
     if (!prisma) {
       prisma = new PrismaClient({
-        datasources: {
-          db: {
-            url: process.env.DATABASE_URL,
-          },
-        },
         log: process.env.NODE_ENV === 'test' ? [] : ['query', 'info', 'warn', 'error'],
       });
     }
@@ -54,7 +49,7 @@ export class DatabaseHelper {
   static async closeConnection(): Promise<void> {
     if (prisma) {
       await prisma.$disconnect();
-      prisma = null as any;
+      prisma = null;
     }
   }
 
@@ -87,75 +82,83 @@ export class DatabaseHelper {
   }
 
   /**
-   * Start database transaction for test isolation
+   * Execute database operation in a transaction
+   * Use this for test isolation
    */
-  static async startTransaction(): Promise<any> {
-    return this.getClient().$transaction();
+  static async executeInTransaction<T>(
+    callback: (prisma: PrismaClient) => Promise<T>
+  ): Promise<T> {
+    const client = this.getClient();
+    return await client.$transaction(async (tx) => {
+      return await callback(tx as unknown as PrismaClient);
+    });
   }
 
   /**
    * Create test database if it doesn't exist
+   * Note: This requires running PostgreSQL locally with proper permissions
    */
   static async ensureTestDatabase(): Promise<void> {
-    // For PostgreSQL test database, ensure it exists
-    const adminClient = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL?.replace('/nghe_content_test', '/postgres'),
-        },
+    // In Prisma v7, we skip programmatic database creation
+    // The test database should be set up manually or via docker-compose
+    // Just verify connection is working
+    try {
+      await this.getClient().$queryRaw`SELECT 1`;
+      console.log('Test database connection successful');
+    } catch (error) {
+      console.error('Test database connection failed:', error);
+      throw new Error('Test database is not available. Please ensure PostgreSQL is running and the database exists.');
+    }
+  }
+
+  /**
+   * Clean up test data after each test
+   * More efficient than truncating all tables
+   */
+  static async cleanupTestData(): Promise<void> {
+    const client = this.getClient();
+
+    // Delete in reverse order of dependencies
+    await client.progress.deleteMany({});
+    await client.review.deleteMany({});
+    await client.media.deleteMany({});
+    await client.enrollment.deleteMany({});
+    await client.lesson.deleteMany({});
+    await client.payment.deleteMany({});
+    await client.course.deleteMany({});
+    await client.user.deleteMany({});
+    await client.category.deleteMany({});
+  }
+
+  /**
+   * Seed minimal test data
+   */
+  static async seedMinimalTestData(): Promise<{
+    adminUser: any;
+    testCategory: any;
+  }> {
+    const client = this.getClient();
+
+    const adminUser = await client.user.create({
+      data: {
+        firebaseUid: 'test-admin-uid',
+        email: 'admin@test.com',
+        name: 'Test Admin',
+        role: 'ADMIN',
+        emailVerified: true,
       },
     });
 
-    try {
-      await adminClient.$executeRaw`CREATE DATABASE nghe_content_test`;
-    } catch (error) {
-      // Database might already exist, which is fine
-      console.log('Test database already exists or creation failed:', error);
-    } finally {
-      await adminClient.$disconnect();
-    }
+    const testCategory = await client.category.create({
+      data: {
+        name: 'Test Category',
+        slug: 'test-category',
+        description: 'A category for testing',
+        isActive: true,
+        order: 1,
+      },
+    });
+
+    return { adminUser, testCategory };
   }
 }
-
-// Global test setup and teardown
-beforeAll(async () => {
-  // Ensure we're in test environment
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('Tests must run in NODE_ENV=test');
-  }
-
-  // Wait for database to be ready
-  let retries = 10;
-  while (retries > 0 && !(await DatabaseHelper.isConnectionReady())) {
-    console.log(`Waiting for database... ${retries} retries left`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    retries--;
-  }
-
-  if (!(await DatabaseHelper.isConnectionReady())) {
-    throw new Error('Database connection failed after retries');
-  }
-
-  // Run migrations
-  await DatabaseHelper.runMigrations();
-});
-
-afterAll(async () => {
-  await DatabaseHelper.closeConnection();
-});
-
-// Test isolation with transactions
-let transaction: any;
-
-beforeEach(async () => {
-  // Start transaction for test isolation
-  const client = DatabaseHelper.getClient();
-  transaction = await client.$begin();
-});
-
-afterEach(async () => {
-  // Rollback transaction to ensure test isolation
-  if (transaction) {
-    await transaction.rollback();
-  }
-});

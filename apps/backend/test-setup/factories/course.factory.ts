@@ -4,11 +4,16 @@ import { BaseFactory } from './base.factory';
 import { Prisma } from '@prisma/client';
 
 /**
+ * Course data interface for factory creation
+ */
+type CourseCreateData = Omit<Prisma.CourseCreateInput, 'category' | 'instructor' | 'lessons' | 'enrollments' | 'reviews' | 'media'>;
+
+/**
  * Course factory for creating test courses
  * Supports different course statuses, pricing, and configurations
  */
 export class CourseFactory extends BaseFactory<Course> {
-  create(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  create(overrides?: Partial<CourseCreateData>): CourseCreateData {
     const title = faker.helpers.arrayElement([
       'Complete Web Development Bootcamp',
       'Advanced JavaScript Masterclass',
@@ -25,15 +30,15 @@ export class CourseFactory extends BaseFactory<Course> {
       slug: this.generateSlug(title),
       description: faker.lorem.paragraphs(4),
       shortDesc: faker.lorem.sentences(2),
-      price: faker.datatype.number({ min: 99000, max: 2999000 }), // 99K - 2,999K VND
-      discountPrice: this.randomBoolean(0.3) ? faker.datatype.number({ min: 49000, max: 1999000 }) : null,
+      price: faker.number.int({ min: 99000, max: 2999000 }), // 99K - 2,999K VND
+      discountPrice: this.randomBoolean(0.3) ? faker.number.int({ min: 49000, max: 1999000 }) : null,
       status: CourseStatus.DRAFT,
       level: faker.helpers.arrayElement(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
-      duration: faker.datatype.number({ min: 1, max: 100 }), // hours
-      categoryId: null, // Will be set when creating
-      instructorId: null, // Will be set when creating
+      duration: faker.number.int({ min: 1, max: 100 }), // hours
+      categoryId: undefined, // Will be set when creating
+      instructorId: undefined, // Will be set when creating
       ...overrides,
-    };
+    } as any;
   }
 
   getModelName(): string {
@@ -43,7 +48,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create draft course
    */
-  static createDraft(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createDraft(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       status: CourseStatus.DRAFT,
       ...overrides,
@@ -53,7 +58,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create published course
    */
-  static createPublished(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createPublished(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       status: CourseStatus.PUBLISHED,
       publishedAt: new Date(),
@@ -64,7 +69,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create pending course (awaiting approval)
    */
-  static createPending(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createPending(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       status: CourseStatus.PENDING,
       ...overrides,
@@ -74,7 +79,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create archived course
    */
-  static createArchived(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createArchived(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       status: CourseStatus.ARCHIVED,
       ...overrides,
@@ -84,7 +89,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create free course
    */
-  static createFree(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createFree(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       price: 0,
       discountPrice: null,
@@ -95,9 +100,9 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create paid course
    */
-  static createPaid(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createPaid(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
-      price: faker.datatype.number({ min: 199000, max: 2999000 }),
+      price: faker.number.int({ min: 199000, max: 2999000 }),
       ...overrides,
     });
   }
@@ -108,8 +113,8 @@ export class CourseFactory extends BaseFactory<Course> {
   static createWithDiscount(
     originalPrice: number,
     discountPercentage: number = 20,
-    overrides?: Partial<Prisma.CourseCreateInput>
-  ): Prisma.CourseCreateInput {
+    overrides?: Partial<CourseCreateData>
+  ): CourseCreateData {
     const discountPrice = originalPrice * (1 - discountPercentage / 100);
 
     return new CourseFactory().create({
@@ -122,7 +127,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create beginner course
    */
-  static createBeginnerCourse(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createBeginnerCourse(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       level: 'BEGINNER',
       title: faker.helpers.arrayElement([
@@ -131,7 +136,7 @@ export class CourseFactory extends BaseFactory<Course> {
         'JavaScript for Beginners',
         'Python Fundamentals',
       ]),
-      duration: faker.datatype.number({ min: 5, max: 20 }),
+      duration: faker.number.int({ min: 5, max: 20 }),
       ...overrides,
     });
   }
@@ -139,7 +144,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create intermediate course
    */
-  static createIntermediateCourse(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createIntermediateCourse(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       level: 'INTERMEDIATE',
       title: faker.helpers.arrayElement([
@@ -148,7 +153,7 @@ export class CourseFactory extends BaseFactory<Course> {
         'Node.js Backend Architecture',
         'Database Design Patterns',
       ]),
-      duration: faker.datatype.number({ min: 15, max: 50 }),
+      duration: faker.number.int({ min: 15, max: 50 }),
       ...overrides,
     });
   }
@@ -156,7 +161,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create advanced course
    */
-  static createAdvancedCourse(overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createAdvancedCourse(overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       level: 'ADVANCED',
       title: faker.helpers.arrayElement([
@@ -165,8 +170,8 @@ export class CourseFactory extends BaseFactory<Course> {
         'Advanced DevOps Practices',
         'Cloud Architecture Patterns',
       ]),
-      duration: faker.datatype.number({ min: 40, max: 100 }),
-      price: faker.datatype.number({ min: 990000, max: 2999000 }),
+      duration: faker.number.int({ min: 40, max: 100 }),
+      price: faker.number.int({ min: 990000, max: 2999000 }),
       ...overrides,
     });
   }
@@ -174,7 +179,7 @@ export class CourseFactory extends BaseFactory<Course> {
   /**
    * Create course with thumbnail
    */
-  static createWithThumbnail(thumbnailUrl: string, overrides?: Partial<Prisma.CourseCreateInput>): Prisma.CourseCreateInput {
+  static createWithThumbnail(thumbnailUrl: string, overrides?: Partial<CourseCreateData>): CourseCreateData {
     return new CourseFactory().create({
       thumbnail: thumbnailUrl,
       ...overrides,
@@ -187,7 +192,7 @@ export class CourseFactory extends BaseFactory<Course> {
   static async createForCategory(
     categoryId: number,
     instructorId: number,
-    overrides?: Partial<Prisma.CourseCreateInput>
+    overrides?: Partial<CourseCreateData>
   ): Promise<Course> {
     const factory = new CourseFactory();
 
@@ -195,7 +200,7 @@ export class CourseFactory extends BaseFactory<Course> {
       categoryId,
       instructorId,
       ...overrides,
-    });
+    } as any);
   }
 
   /**
@@ -204,7 +209,7 @@ export class CourseFactory extends BaseFactory<Course> {
   static async createForInstructor(
     instructorId: number,
     count: number = 1,
-    overrides?: Partial<Prisma.CourseCreateInput>
+    overrides?: Partial<CourseCreateData>
   ): Promise<Course[]> {
     const factory = new CourseFactory();
     const courses: Course[] = [];
@@ -215,7 +220,7 @@ export class CourseFactory extends BaseFactory<Course> {
         status: CourseStatus.PUBLISHED,
         publishedAt: new Date(),
         ...overrides,
-      });
+      } as any);
       courses.push(course);
     }
 
@@ -227,13 +232,13 @@ export class CourseFactory extends BaseFactory<Course> {
    */
   async createWithLessons(
     lessonCount: number = 5,
-    overrides?: Partial<Prisma.CourseCreateInput>
+    overrides?: Partial<CourseCreateData>
   ): Promise<{ course: Course; lessons: any[] }> {
     const course = await this.createAndSave({
       status: CourseStatus.PUBLISHED,
       publishedAt: new Date(),
       ...overrides,
-    });
+    } as any);
 
     // Note: This would require LessonFactory to be available
     // For now, return the course without lessons
@@ -348,13 +353,13 @@ export class CourseFactory extends BaseFactory<Course> {
    */
   async createWithEnrollmentStats(
     targetEnrollments: number = 50,
-    overrides?: Partial<Prisma.CourseCreateInput>
+    overrides?: Partial<CourseCreateData>
   ): Promise<Course> {
     const course = await this.createAndSave({
       status: CourseStatus.PUBLISHED,
-      publishedAt: new Date(Date.now() - faker.datatype.number({ min: 30, max: 365 }) * 24 * 60 * 60 * 1000),
+      publishedAt: new Date(Date.now() - faker.number.int({ min: 30, max: 365 }) * 24 * 60 * 60 * 1000),
       ...overrides,
-    });
+    } as any);
 
     // Note: Actual enrollment creation would require EnrollmentFactory
     // This is just a placeholder for the structure
@@ -367,13 +372,13 @@ export class CourseFactory extends BaseFactory<Course> {
    */
   async createWithReviews(
     reviewCount: number = 5,
-    overrides?: Partial<Prisma.CourseCreateInput>
+    overrides?: Partial<CourseCreateData>
   ): Promise<{ course: Course; reviews: any[] }> {
     const course = await this.createAndSave({
       status: CourseStatus.PUBLISHED,
       publishedAt: new Date(),
       ...overrides,
-    });
+    } as any);
 
     // Note: This would require ReviewFactory to be available
     // For now, return the course without reviews

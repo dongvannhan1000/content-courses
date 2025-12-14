@@ -7,23 +7,25 @@ import { DatabaseHelper } from '../helpers/database.helper';
  * Provides common functionality for all factory classes
  */
 export abstract class BaseFactory<T> {
-  protected prisma = DatabaseHelper.getClient();
+  protected prisma: PrismaClient = DatabaseHelper.getClient();
 
   /**
    * Create a single entity with optional overrides
    * Must be implemented by concrete factory classes
    */
-  abstract create(overrides?: Partial<T>): T;
+  abstract create(overrides?: Partial<any>): any;
 
   /**
    * Create and save a single entity to database
    */
-  async createAndSave(overrides?: Partial<T>): Promise<T> {
-    const data = this.create(overrides) as any;
+  async createAndSave(overrides?: Partial<any>): Promise<T> {
+    const data = this.create(overrides);
     const modelName = this.getModelName();
 
     try {
-      return await this.prisma[modelName].create({ data });
+      // Use type assertion to access Prisma model dynamically
+      const model = (this.prisma as any)[modelName];
+      return await model.create({ data });
     } catch (error) {
       console.error(`Failed to create ${modelName}:`, error);
       throw error;
@@ -33,7 +35,7 @@ export abstract class BaseFactory<T> {
   /**
    * Create multiple entities
    */
-  async createMany(count: number, overrides?: Partial<T>): Promise<T[]> {
+  async createMany(count: number, overrides?: Partial<any>): Promise<T[]> {
     const items: T[] = [];
 
     for (let i = 0; i < count; i++) {
@@ -46,19 +48,22 @@ export abstract class BaseFactory<T> {
   /**
    * Create entities in batch (more efficient for large numbers)
    */
-  async createBatch(count: number, overrides?: Partial<T>): Promise<T[]> {
-    const items: T[] = [];
+  async createBatch(count: number, overrides?: Partial<any>): Promise<T[]> {
+    const items: any[] = [];
     const modelName = this.getModelName();
 
     for (let i = 0; i < count; i++) {
-      items.push(this.create(overrides) as any);
+      items.push(this.create(overrides));
     }
 
     try {
-      return await this.prisma[modelName].createMany({
+      const model = (this.prisma as any)[modelName];
+      await model.createMany({
         data: items,
         skipDuplicates: true,
       });
+      // Return the items (note: createMany doesn't return created records)
+      return items as T[];
     } catch (error) {
       console.error(`Failed to batch create ${modelName}:`, error);
       // Fallback to individual creation
@@ -77,7 +82,8 @@ export abstract class BaseFactory<T> {
    */
   async findById(id: number): Promise<T | null> {
     const modelName = this.getModelName();
-    return await this.prisma[modelName].findUnique({
+    const model = (this.prisma as any)[modelName];
+    return await model.findUnique({
       where: { id },
     });
   }
@@ -87,22 +93,24 @@ export abstract class BaseFactory<T> {
    */
   async findMany(where: any = {}, orderBy: any = {}, limit?: number): Promise<T[]> {
     const modelName = this.getModelName();
+    const model = (this.prisma as any)[modelName];
 
     const query: any = { where, orderBy };
     if (limit) {
       query.take = limit;
     }
 
-    return await this.prisma[modelName].findMany(query);
+    return await model.findMany(query);
   }
 
   /**
    * Update an entity
    */
-  async update(id: number, data: Partial<T>): Promise<T> {
+  async update(id: number, data: Partial<any>): Promise<T> {
     const modelName = this.getModelName();
+    const model = (this.prisma as any)[modelName];
 
-    return await this.prisma[modelName].update({
+    return await model.update({
       where: { id },
       data,
     });
@@ -113,8 +121,9 @@ export abstract class BaseFactory<T> {
    */
   async delete(id: number): Promise<T> {
     const modelName = this.getModelName();
+    const model = (this.prisma as any)[modelName];
 
-    return await this.prisma[modelName].delete({
+    return await model.delete({
       where: { id },
     });
   }
@@ -124,50 +133,51 @@ export abstract class BaseFactory<T> {
    */
   async count(where: any = {}): Promise<number> {
     const modelName = this.getModelName();
+    const model = (this.prisma as any)[modelName];
 
-    return await this.prisma[modelName].count({ where });
+    return await model.count({ where });
   }
 
   /**
    * Generate random number
    */
   protected randomInt(min: number, max: number): number {
-    return faker.datatype.number({ min, max });
+    return faker.number.int({ min, max });
   }
 
   /**
    * Generate random string
    */
   protected randomString(length: number = 10): string {
-    return faker.random.alphaNumeric(length);
+    return faker.string.alphanumeric(length);
   }
 
   /**
    * Generate random boolean
    */
   protected randomBoolean(probability: number = 0.5): boolean {
-    return faker.datatype.boolean({ probability });
+    return Math.random() < probability;
   }
 
   /**
    * Generate random date
    */
   protected randomDate(from?: Date, to?: Date): Date {
-    return faker.date.between(from || new Date(2020, 0, 1), to || new Date());
+    return faker.date.between({ from: from || new Date(2020, 0, 1), to: to || new Date() });
   }
 
   /**
    * Generate random email
    */
   protected randomEmail(firstName?: string, lastName?: string): string {
-    return faker.internet.email(firstName, lastName);
+    return faker.internet.email({ firstName, lastName });
   }
 
   /**
    * Generate random phone number
    */
   protected randomPhoneNumber(): string {
-    return faker.phone.number('+84#########');
+    return faker.phone.number({ style: 'international' });
   }
 
   /**
@@ -181,7 +191,7 @@ export abstract class BaseFactory<T> {
    * Generate random UUID
    */
   protected randomUuid(): string {
-    return faker.datatype.uuid();
+    return faker.string.uuid();
   }
 
   /**

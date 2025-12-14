@@ -19,9 +19,9 @@ export class MockFirebase {
    */
   static createMockUser(overrides?: Partial<MockFirebaseUser>): MockFirebaseUser {
     return {
-      uid: faker.datatype.uuid(),
+      uid: faker.string.uuid(),
       email: faker.internet.email(),
-      displayName: faker.name.fullName(),
+      displayName: faker.person.fullName(),
       emailVerified: true,
       photoURL: faker.image.avatar(),
       ...overrides,
@@ -145,7 +145,7 @@ export class MockFirebase {
             update: jest.fn().mockResolvedValue(undefined),
             delete: jest.fn().mockResolvedValue(undefined),
           }),
-          add: jest.fn().mockResolvedValue({ id: faker.datatype.uuid() }),
+          add: jest.fn().mockResolvedValue({ id: faker.string.uuid() }),
           where: jest.fn().mockReturnThis(),
           orderBy: jest.fn().mockReturnThis(),
           limit: jest.fn().mockReturnThis(),
@@ -158,11 +158,11 @@ export class MockFirebase {
           file: jest.fn().mockReturnValue({
             create: jest.fn().mockResolvedValue(undefined),
             delete: jest.fn().mockResolvedValue(undefined),
-            get: jest.fn().mockResolvedValue([0], null),
+            get: jest.fn().mockResolvedValue([Buffer.from(''), null]),
             makePublic: jest.fn().mockResolvedValue(undefined),
             getSignedUrl: jest.fn().mockResolvedValue([faker.internet.url()]),
           }),
-          upload: jest.fn().mockResolvedValue([[0], null]),
+          upload: jest.fn().mockResolvedValue([Buffer.from(''), null]),
         }),
       }),
     };

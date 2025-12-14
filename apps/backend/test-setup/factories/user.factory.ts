@@ -4,16 +4,21 @@ import { BaseFactory } from './base.factory';
 import { Prisma } from '@prisma/client';
 
 /**
+ * User data interface for factory creation
+ */
+type UserCreateData = Omit<Prisma.UserCreateInput, 'courses' | 'enrollments' | 'payments' | 'progress' | 'reviews'>;
+
+/**
  * User factory for creating test users
  * Supports different user roles and custom configurations
  */
 export class UserFactory extends BaseFactory<User> {
-  create(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
-    const firstName = faker.name.firstName();
-    const lastName = faker.name.lastName();
+  create(overrides?: Partial<UserCreateData>): UserCreateData {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
 
     return {
-      firebaseUid: faker.datatype.uuid(),
+      firebaseUid: faker.string.uuid(),
       email: this.randomEmail(firstName, lastName),
       name: `${firstName} ${lastName}`,
       emailVerified: this.randomBoolean(0.9), // 90% chance of verified
@@ -31,7 +36,7 @@ export class UserFactory extends BaseFactory<User> {
   /**
    * Create admin user
    */
-  static createAdmin(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
+  static createAdmin(overrides?: Partial<UserCreateData>): UserCreateData {
     return new UserFactory().create({
       role: Role.ADMIN,
       email: 'admin@test.com',
@@ -43,9 +48,9 @@ export class UserFactory extends BaseFactory<User> {
   /**
    * Create instructor user
    */
-  static createInstructor(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
-    const firstName = faker.name.firstName();
-    const lastName = faker.name.lastName();
+  static createInstructor(overrides?: Partial<UserCreateData>): UserCreateData {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
 
     return new UserFactory().create({
       role: Role.INSTRUCTOR,
@@ -60,9 +65,9 @@ export class UserFactory extends BaseFactory<User> {
   /**
    * Create student user
    */
-  static createStudent(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
-    const firstName = faker.name.firstName();
-    const lastName = faker.name.lastName();
+  static createStudent(overrides?: Partial<UserCreateData>): UserCreateData {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
 
     return new UserFactory().create({
       role: Role.USER,
@@ -78,8 +83,8 @@ export class UserFactory extends BaseFactory<User> {
    */
   static createWithFirebaseUid(
     firebaseUid: string,
-    overrides?: Partial<Prisma.UserCreateInput>
-  ): Prisma.UserCreateInput {
+    overrides?: Partial<UserCreateData>
+  ): UserCreateData {
     return new UserFactory().create({
       firebaseUid,
       emailVerified: true,
@@ -90,7 +95,7 @@ export class UserFactory extends BaseFactory<User> {
   /**
    * Create unverified user
    */
-  static createUnverified(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
+  static createUnverified(overrides?: Partial<UserCreateData>): UserCreateData {
     return new UserFactory().create({
       emailVerified: false,
       ...overrides,
@@ -100,7 +105,7 @@ export class UserFactory extends BaseFactory<User> {
   /**
    * Create user with profile photo
    */
-  static createWithProfilePhoto(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
+  static createWithProfilePhoto(overrides?: Partial<UserCreateData>): UserCreateData {
     return new UserFactory().create({
       photoURL: faker.image.avatar(),
       ...overrides,
@@ -110,7 +115,7 @@ export class UserFactory extends BaseFactory<User> {
   /**
    * Create user without profile photo
    */
-  static createWithoutProfilePhoto(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
+  static createWithoutProfilePhoto(overrides?: Partial<UserCreateData>): UserCreateData {
     return new UserFactory().create({
       photoURL: null,
       ...overrides,
@@ -124,7 +129,6 @@ export class UserFactory extends BaseFactory<User> {
     const factory = new UserFactory();
     const users: User[] = [];
 
-    const roles = [Role.USER, Role.INSTRUCTOR, Role.ADMIN];
     const roleDistribution = [
       Role.USER, // 70% students
       Role.INSTRUCTOR, // 25% instructors
@@ -168,14 +172,14 @@ export class UserFactory extends BaseFactory<User> {
    * Create user for testing authentication flows
    */
   static createForAuthTest(): {
-    user: Prisma.UserCreateInput;
+    user: UserCreateData;
     firebaseUid: string;
     email: string;
     password?: string;
   } {
-    const firebaseUid = faker.datatype.uuid();
+    const firebaseUid = faker.string.uuid();
     const email = faker.internet.email();
-    const password = faker.internet.password(12);
+    const password = faker.internet.password({ length: 12 });
 
     return {
       user: this.createWithFirebaseUid(firebaseUid, { email }),
@@ -224,9 +228,9 @@ export class UserFactory extends BaseFactory<User> {
    */
   async createWithEnrollments(
     courseCount: number = 3,
-    overrides?: Partial<Prisma.UserCreateInput>
+    overrides?: Partial<UserCreateData>
   ): Promise<{ user: User; enrollments: any[] }> {
-    const user = await this.createAndSave(overrides);
+    const user = await this.createAndSave(overrides as any);
 
     // This would require CourseFactory to be available
     // For now, return the user without enrollments

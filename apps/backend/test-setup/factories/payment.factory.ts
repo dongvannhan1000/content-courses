@@ -4,28 +4,33 @@ import { BaseFactory } from './base.factory';
 import { Prisma } from '@prisma/client';
 
 /**
+ * Payment data interface for factory creation
+ */
+type PaymentCreateData = Omit<Prisma.PaymentCreateInput, 'user' | 'enrollment'>;
+
+/**
  * Payment factory for creating test payments
  * Supports different payment statuses, methods, and amounts
  */
 export class PaymentFactory extends BaseFactory<Payment> {
-  create(overrides?: Partial<Prisma.PaymentCreateInput>): Prisma.PaymentCreateInput {
-    const amount = faker.datatype.number({ min: 99000, max: 2999000 }); // 99K - 2,999K VND
+  create(overrides?: Partial<PaymentCreateData>): PaymentCreateData {
+    const amount = faker.number.int({ min: 99000, max: 2999000 }); // 99K - 2,999K VND
 
     return {
       amount,
       currency: 'VND',
       status: PaymentStatus.PENDING,
       method: 'PAYOS',
-      transactionId: faker.datatype.uuid(),
+      transactionId: faker.string.uuid(),
       paymentData: {
-        orderCode: faker.datatype.number({ min: 100000, max: 999999 }),
+        orderCode: faker.number.int({ min: 100000, max: 999999 }),
         checkoutUrl: faker.internet.url(),
         qrCode: faker.image.dataUri(),
       },
-      userId: null, // Will be set when creating
-      enrollmentId: null, // Will be set when creating
+      userId: undefined, // Will be set when creating
+      enrollmentId: undefined, // Will be set when creating
       ...overrides,
-    };
+    } as any;
   }
 
   getModelName(): string {
@@ -35,7 +40,7 @@ export class PaymentFactory extends BaseFactory<Payment> {
   /**
    * Create pending payment
    */
-  static createPending(overrides?: Partial<Prisma.PaymentCreateInput>): Prisma.PaymentCreateInput {
+  static createPending(overrides?: Partial<PaymentCreateData>): PaymentCreateData {
     return new PaymentFactory().create({
       status: PaymentStatus.PENDING,
       ...overrides,
@@ -45,7 +50,7 @@ export class PaymentFactory extends BaseFactory<Payment> {
   /**
    * Create completed payment
    */
-  static createCompleted(overrides?: Partial<Prisma.PaymentCreateInput>): Prisma.PaymentCreateInput {
+  static createCompleted(overrides?: Partial<PaymentCreateData>): PaymentCreateData {
     return new PaymentFactory().create({
       status: PaymentStatus.COMPLETED,
       paidAt: new Date(),
@@ -56,7 +61,7 @@ export class PaymentFactory extends BaseFactory<Payment> {
   /**
    * Create failed payment
    */
-  static createFailed(overrides?: Partial<Prisma.PaymentCreateInput>): Prisma.PaymentCreateInput {
+  static createFailed(overrides?: Partial<PaymentCreateData>): PaymentCreateData {
     return new PaymentFactory().create({
       status: PaymentStatus.FAILED,
       paymentData: {
@@ -70,14 +75,14 @@ export class PaymentFactory extends BaseFactory<Payment> {
   /**
    * Create refunded payment
    */
-  static createRefunded(overrides?: Partial<Prisma.PaymentCreateInput>): Prisma.PaymentCreateInput {
+  static createRefunded(overrides?: Partial<PaymentCreateData>): PaymentCreateData {
     const completedPayment = this.createCompleted(overrides);
 
     return {
       ...completedPayment,
       status: PaymentStatus.REFUNDED,
       paymentData: {
-        ...completedPayment.paymentData as any,
+        ...(completedPayment.paymentData as any),
         refundedAt: new Date().toISOString(),
         refundReason: 'Customer requested refund',
       },
@@ -90,7 +95,7 @@ export class PaymentFactory extends BaseFactory<Payment> {
   static async createForUserAndEnrollment(
     userId: number,
     enrollmentId: number,
-    overrides?: Partial<Prisma.PaymentCreateInput>
+    overrides?: Partial<PaymentCreateData>
   ): Promise<Payment> {
     const factory = new PaymentFactory();
 
@@ -98,7 +103,7 @@ export class PaymentFactory extends BaseFactory<Payment> {
       userId,
       enrollmentId,
       ...overrides,
-    });
+    } as any);
   }
 
   /**
@@ -106,17 +111,17 @@ export class PaymentFactory extends BaseFactory<Payment> {
    */
   static createWithPayOSData(
     orderCode: number,
-    overrides?: Partial<Prisma.PaymentCreateInput>
-  ): Prisma.PaymentCreateInput {
+    overrides?: Partial<PaymentCreateData>
+  ): PaymentCreateData {
     return new PaymentFactory().create({
       method: 'PAYOS',
       paymentData: {
         orderCode,
-        checkoutUrl: `https://payos.vn/checkout/${faker.datatype.uuid()}`,
+        checkoutUrl: `https://payos.vn/checkout/${faker.string.uuid()}`,
         qrCode: faker.image.dataUri(),
         expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes
       },
-      transactionId: `PAYOS_${orderCode}_${faker.datatype.uuid()}`,
+      transactionId: `PAYOS_${orderCode}_${faker.string.uuid()}`,
       ...overrides,
     });
   }
@@ -126,8 +131,8 @@ export class PaymentFactory extends BaseFactory<Payment> {
    */
   static createWithAmount(
     amount: number,
-    overrides?: Partial<Prisma.PaymentCreateInput>
-  ): Prisma.PaymentCreateInput {
+    overrides?: Partial<PaymentCreateData>
+  ): PaymentCreateData {
     return new PaymentFactory().create({
       amount,
       ...overrides,
@@ -141,7 +146,7 @@ export class PaymentFactory extends BaseFactory<Payment> {
     userId: number,
     courseId: number,
     coursePrice: number,
-    overrides?: Partial<Prisma.PaymentCreateInput>
+    overrides?: Partial<PaymentCreateData>
   ): Promise<{ payment: Payment; enrollment?: any }> {
     const factory = new PaymentFactory();
 
@@ -156,7 +161,7 @@ export class PaymentFactory extends BaseFactory<Payment> {
         description: `Course purchase - Course ID: ${courseId}`,
       },
       ...overrides,
-    });
+    } as any);
 
     return {
       payment,
@@ -169,8 +174,8 @@ export class PaymentFactory extends BaseFactory<Payment> {
    */
   static createWithWebhookData(
     webhookPayload: any,
-    overrides?: Partial<Prisma.PaymentCreateInput>
-  ): Prisma.PaymentCreateInput {
+    overrides?: Partial<PaymentCreateData>
+  ): PaymentCreateData {
     return new PaymentFactory().create({
       status: webhookPayload.status === 'PAID' ? PaymentStatus.COMPLETED : PaymentStatus.PENDING,
       paidAt: webhookPayload.status === 'PAID' ? new Date() : undefined,
@@ -271,7 +276,11 @@ export class PaymentFactory extends BaseFactory<Payment> {
 
     const stats = payments.reduce(
       (acc, payment) => {
-        acc.totalAmount += payment.amount.toNumber();
+        // Handle both number and Decimal types
+        const amount = typeof payment.amount === 'number'
+          ? payment.amount
+          : Number(payment.amount);
+        acc.totalAmount += amount;
 
         switch (payment.status) {
           case PaymentStatus.COMPLETED:
@@ -302,10 +311,10 @@ export class PaymentFactory extends BaseFactory<Payment> {
    * Create payment test scenarios
    */
   static createTestScenarios(): {
-    successfulPayment: Prisma.PaymentCreateInput;
-    failedPayment: Prisma.PaymentCreateInput;
-    refundedPayment: Prisma.PaymentCreateInput;
-    pendingPayment: Prisma.PaymentCreateInput;
+    successfulPayment: PaymentCreateData;
+    failedPayment: PaymentCreateData;
+    refundedPayment: PaymentCreateData;
+    pendingPayment: PaymentCreateData;
   } {
     return {
       successfulPayment: this.createCompleted({
@@ -372,9 +381,9 @@ export class PaymentFactory extends BaseFactory<Payment> {
       const payment = await this.createAndSave({
         userId,
         status: PaymentStatus.COMPLETED,
-        paidAt: new Date(Date.now() - faker.datatype.number({ min: 1, max: 30 }) * 24 * 60 * 60 * 1000),
-        amount: faker.datatype.number({ min: 99000, max: 2999000 }),
-      });
+        paidAt: new Date(Date.now() - faker.number.int({ min: 1, max: 30 }) * 24 * 60 * 60 * 1000),
+        amount: faker.number.int({ min: 99000, max: 2999000 }),
+      } as any);
       payments.push(payment);
     }
 
@@ -383,8 +392,8 @@ export class PaymentFactory extends BaseFactory<Payment> {
       const payment = await this.createAndSave({
         userId,
         status: PaymentStatus.PENDING,
-        amount: faker.datatype.number({ min: 99000, max: 2999000 }),
-      });
+        amount: faker.number.int({ min: 99000, max: 2999000 }),
+      } as any);
       payments.push(payment);
     }
 
@@ -393,12 +402,12 @@ export class PaymentFactory extends BaseFactory<Payment> {
       const payment = await this.createAndSave({
         userId,
         status: PaymentStatus.FAILED,
-        amount: faker.datatype.number({ min: 99000, max: 2999000 }),
+        amount: faker.number.int({ min: 99000, max: 2999000 }),
         paymentData: {
           errorCode: 'PROCESSING_ERROR',
           errorMessage: 'Payment processing failed',
         },
-      });
+      } as any);
       payments.push(payment);
     }
 

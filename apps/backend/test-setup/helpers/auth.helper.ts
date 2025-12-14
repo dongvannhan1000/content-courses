@@ -1,4 +1,3 @@
-import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 
 export interface TestUserPayload {
@@ -12,29 +11,20 @@ export interface TestUserPayload {
 
 /**
  * Authentication helper for testing
- * Provides utilities for generating test tokens and creating test users
+ * Provides utilities for generating mock Firebase tokens and creating test users
+ * 
+ * Note: This uses mock Firebase tokens for testing. The actual Firebase Admin SDK
+ * is mocked in firebase.mock.ts to verify these tokens.
  */
 export class AuthHelper {
-  private static jwtService = new JwtService({
-    secret: process.env.JWT_SECRET || 'test-secret-key-for-testing-only',
-  });
-
   /**
-   * Generate a mock JWT token for testing
+   * Generate a mock Firebase ID token for testing
+   * The MockFirebase class will parse this token based on role keywords
    */
-  static generateTestToken(payload: TestUserPayload): string {
-    return this.jwtService.sign({
-      sub: payload.uid,
-      email: payload.email,
-      name: payload.name || 'Test User',
-      role: payload.role || 'USER',
-      email_verified: payload.emailVerified ?? true,
-      picture: payload.photoURL,
-      aud: 'test',
-      iss: 'test',
-      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour
-      iat: Math.floor(Date.now() / 1000),
-    });
+  static generateMockToken(payload: TestUserPayload): string {
+    // Create a mock token that includes role info for MockFirebase to parse
+    const rolePrefix = payload.role?.toLowerCase() || 'user';
+    return `mock-firebase-token-${rolePrefix}-${payload.uid}`;
   }
 
   /**
@@ -82,15 +72,15 @@ export class AuthHelper {
    * Generate test tokens for different user types
    */
   static generateAdminToken(): string {
-    return this.generateTestToken(this.createTestUser('admin'));
+    return this.generateMockToken(this.createTestUser('admin'));
   }
 
   static generateInstructorToken(): string {
-    return this.generateTestToken(this.createTestUser('instructor'));
+    return this.generateMockToken(this.createTestUser('instructor'));
   }
 
   static generateStudentToken(): string {
-    return this.generateTestToken(this.createTestUser('student'));
+    return this.generateMockToken(this.createTestUser('student'));
   }
 
   /**
@@ -126,38 +116,34 @@ export class AuthHelper {
       ...overrides,
     };
 
-    const token = this.generateTestToken(user);
+    const token = this.generateMockToken(user);
     const headers = this.getAuthHeaders(token);
 
     return { user, token, headers };
   }
 
   /**
-   * Verify token (for testing purposes)
-   */
-  static verifyToken(token: string): any {
-    try {
-      return this.jwtService.verify(token);
-    } catch (error) {
-      throw new Error('Invalid token');
-    }
-  }
-
-  /**
    * Generate expired token for testing auth failures
+   * MockFirebase will recognize 'expired-token' and throw appropriate error
    */
   static generateExpiredToken(): string {
-    const payload = this.createTestUser('student');
-    return this.jwtService.sign({
-      ...payload,
-      exp: Math.floor(Date.now() / 1000) - 60, // Expired 1 minute ago
-    });
+    return 'expired-token';
   }
 
   /**
    * Generate invalid token (malformed)
+   * MockFirebase will recognize 'invalid-token' and throw appropriate error
    */
   static generateInvalidToken(): string {
-    return 'invalid.token.here';
+    return 'invalid-token';
+  }
+
+  /**
+   * Get headers for unauthenticated requests
+   */
+  static getUnauthenticatedHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+    };
   }
 }

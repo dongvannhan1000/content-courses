@@ -1,0 +1,107 @@
+test-setup/factories/base.factory.ts(135,27): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/base.factory.ts(142,18): error TS2339: Property 'random' does not exist on type 'Faker'.
+test-setup/factories/base.factory.ts(156,61): error TS2554: Expected 1 arguments, but got 2.
+test-setup/factories/base.factory.ts(163,44): error TS2554: Expected 0-1 arguments, but got 2.
+test-setup/factories/base.factory.ts(170,31): error TS2559: Type '"+84#########"' has no properties in common with type '{ style?: "human" | "national" | "international"; }'.
+test-setup/factories/base.factory.ts(184,27): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/factories/category.factory.ts(11,3): error TS2416: Property 'create' in type 'CategoryFactory' is not assignable to the same property in base type 'BaseFactory<{ name: string; id: number; createdAt: Date; updatedAt: Date; slug: string; description: string; icon: string; parentId: number; order: number; isActive: boolean; }>'.
+  Type '(overrides?: Partial<CategoryCreateInput>) => CategoryCreateInput' is not assignable to type '(overrides?: Partial<{ name: string; id: number; createdAt: Date; updatedAt: Date; slug: string; description: string; icon: string; parentId: number; order: number; isActive: boolean; }>) => { ...; }'.
+    Type 'CategoryCreateInput' is missing the following properties from type '{ name: string; id: number; createdAt: Date; updatedAt: Date; slug: string; description: string; icon: string; parentId: number; order: number; isActive: boolean; }': id, parentId
+test-setup/factories/category.factory.ts(66,18): error TS2339: Property 'generateSlug' does not exist on type 'typeof CategoryFactory'.
+test-setup/factories/category.factory.ts(68,7): error TS2561: Object literal may only specify known properties, but 'parentId' does not exist in type 'Partial<CategoryCreateInput>'. Did you mean to write 'parent'?
+test-setup/factories/category.factory.ts(69,19): error TS2339: Property 'randomInt' does not exist on type 'typeof CategoryFactory'.
+test-setup/factories/category.factory.ts(86,40): error TS2345: Argument of type '{ name: string; slug: string; description: string | null; icon?: string | null; order: any; isActive: boolean; createdAt?: Date | string; updatedAt?: Date | string; parent?: Prisma.CategoryCreateNestedOneWithoutChildrenInput; children?: Prisma.CategoryCreateNestedManyWithoutParentInput; courses?: Prisma.CourseCreate...' is not assignable to parameter of type 'Partial<{ name: string; id: number; createdAt: Date; updatedAt: Date; slug: string; description: string; icon: string; parentId: number; order: number; isActive: boolean; }>'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | Date' is not assignable to type 'Date'.
+      Type 'string' is not assignable to type 'Date'.
+test-setup/factories/category.factory.ts(91,19): error TS2339: Property 'randomInt' does not exist on type 'typeof CategoryFactory'.
+test-setup/factories/category.factory.ts(108,48): error TS2345: Argument of type '{ name: string; slug?: string; description?: string | null; icon?: string | null; order?: number; isActive: boolean; createdAt?: Date | string; updatedAt?: Date | string; parent?: Prisma.CategoryCreateNestedOneWithoutChildrenInput; children?: Prisma.CategoryCreateNestedManyWithoutParentInput; courses?: Prisma.Course...' is not assignable to parameter of type 'Partial<{ name: string; id: number; createdAt: Date; updatedAt: Date; slug: string; description: string; icon: string; parentId: number; order: number; isActive: boolean; }>'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | Date' is not assignable to type 'Date'.
+      Type 'string' is not assignable to type 'Date'.
+test-setup/factories/category.factory.ts(228,52): error TS2345: Argument of type 'CategoryCreateInput' is not assignable to parameter of type 'Partial<{ name: string; id: number; createdAt: Date; updatedAt: Date; slug: string; description: string; icon: string; parentId: number; order: number; isActive: boolean; }>'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | Date' is not assignable to type 'Date'.
+      Type 'string' is not assignable to type 'Date'.
+test-setup/factories/category.factory.ts(306,47): error TS2345: Argument of type 'Partial<CategoryCreateInput>' is not assignable to parameter of type 'Partial<{ name: string; id: number; createdAt: Date; updatedAt: Date; slug: string; description: string; icon: string; parentId: number; order: number; isActive: boolean; }>'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | Date' is not assignable to type 'Date'.
+      Type 'string' is not assignable to type 'Date'.
+test-setup/factories/course.factory.ts(11,3): error TS2416: Property 'create' in type 'CourseFactory' is not assignable to the same property in base type 'BaseFactory<{ level: string; id: number; createdAt: Date; updatedAt: Date; title: string; slug: string; description: string; shortDesc: string; thumbnail: string; price: Decimal; discountPrice: Decimal; ... 4 more ...; publishedAt: Date; }>'.
+  Type '(overrides?: Partial<CourseCreateInput>) => CourseCreateInput' is not assignable to type '(overrides?: Partial<{ level: string; id: number; createdAt: Date; updatedAt: Date; title: string; slug: string; description: string; shortDesc: string; thumbnail: string; price: Decimal; ... 5 more ...; publishedAt: Date; }>) => { ...; }'.
+    Type 'CourseCreateInput' is missing the following properties from type '{ level: string; id: number; createdAt: Date; updatedAt: Date; title: string; slug: string; description: string; shortDesc: string; thumbnail: string; price: Decimal; discountPrice: Decimal; ... 4 more ...; publishedAt: Date; }': id, instructorId, categoryId
+test-setup/factories/course.factory.ts(28,29): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(29,63): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(32,32): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(33,7): error TS2561: Object literal may only specify known properties, but 'categoryId' does not exist in type 'CourseCreateInput'. Did you mean to write 'category'?
+test-setup/factories/course.factory.ts(100,29): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(134,32): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(151,32): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(168,32): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(169,29): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(194,40): error TS2345: Argument of type '{ title?: string; slug?: string; description?: string; shortDesc?: string | null; thumbnail?: string | null; price?: Prisma.Decimal | Prisma.DecimalJsLike | number | string; ... 13 more ...; instructorId: number; }' is not assignable to parameter of type 'Partial<{ level: string; id: number; createdAt: Date; updatedAt: Date; title: string; slug: string; description: string; shortDesc: string; thumbnail: string; price: Decimal; discountPrice: Decimal; ... 4 more ...; publishedAt: Date; }>'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | Date' is not assignable to type 'Date'.
+      Type 'string' is not assignable to type 'Date'.
+test-setup/factories/course.factory.ts(216,9): error TS2322: Type 'string | Date' is not assignable to type 'Date'.
+  Type 'string' is not assignable to type 'Date'.
+test-setup/factories/course.factory.ts(234,7): error TS2322: Type 'string | Date' is not assignable to type 'Date'.
+  Type 'string' is not assignable to type 'Date'.
+test-setup/factories/course.factory.ts(355,7): error TS2322: Type 'string | Date' is not assignable to type 'Date'.
+  Type 'string' is not assignable to type 'Date'.
+test-setup/factories/course.factory.ts(355,57): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/course.factory.ts(374,7): error TS2322: Type 'string | Date' is not assignable to type 'Date'.
+  Type 'string' is not assignable to type 'Date'.
+test-setup/factories/payment.factory.ts(11,3): error TS2416: Property 'create' in type 'PaymentFactory' is not assignable to the same property in base type 'BaseFactory<{ id: number; createdAt: Date; updatedAt: Date; status: PaymentStatus; userId: number; amount: Decimal; currency: string; method: string; transactionId: string; paymentData: JsonValue; enrollmentId: number; paidAt: Date; }>'.
+  Type '(overrides?: Partial<PaymentCreateInput>) => PaymentCreateInput' is not assignable to type '(overrides?: Partial<{ id: number; createdAt: Date; updatedAt: Date; status: PaymentStatus; userId: number; amount: Decimal; currency: string; method: string; transactionId: string; paymentData: JsonValue; enrollmentId: number; paidAt: Date; }>) => { ...; }'.
+    Type 'PaymentCreateInput' is missing the following properties from type '{ id: number; createdAt: Date; updatedAt: Date; status: PaymentStatus; userId: number; amount: Decimal; currency: string; method: string; transactionId: string; paymentData: JsonValue; enrollmentId: number; paidAt: Date; }': id, userId, enrollmentId
+test-setup/factories/payment.factory.ts(12,35): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(19,37): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(21,35): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(25,7): error TS2561: Object literal may only specify known properties, but 'userId' does not exist in type 'PaymentCreateInput'. Did you mean to write 'user'?
+test-setup/factories/payment.factory.ts(97,40): error TS2345: Argument of type '{ amount?: Prisma.Decimal | Prisma.DecimalJsLike | number | string; currency?: string; status?: $Enums.PaymentStatus; ... 9 more ...; enrollmentId: number; }' is not assignable to parameter of type 'Partial<{ id: number; createdAt: Date; updatedAt: Date; status: PaymentStatus; userId: number; amount: Decimal; currency: string; method: string; transactionId: string; paymentData: JsonValue; enrollmentId: number; paidAt: Date; }>'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | Date' is not assignable to type 'Date'.
+      Type 'string' is not assignable to type 'Date'.
+test-setup/factories/payment.factory.ts(115,66): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(119,59): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(151,7): error TS2322: Type 'number' is not assignable to type 'Decimal'.
+test-setup/factories/payment.factory.ts(153,7): error TS2322: Type 'string | Date' is not assignable to type 'Date'.
+  Type 'string' is not assignable to type 'Date'.
+test-setup/factories/payment.factory.ts(154,7): error TS2322: Type 'NullableJsonNullValueInput | InputJsonValue' is not assignable to type 'JsonValue'.
+  Type 'DbNull' is not assignable to type 'JsonValue'.
+test-setup/factories/payment.factory.ts(375,54): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(376,32): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(386,32): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/payment.factory.ts(396,32): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/factories/user.factory.ts(11,3): error TS2416: Property 'create' in type 'UserFactory' is not assignable to the same property in base type 'BaseFactory<{ name: string; id: number; firebaseUid: string; email: string; emailVerified: boolean; photoURL: string; bio: string; role: Role; createdAt: Date; updatedAt: Date; }>'.
+  Type '(overrides?: Partial<UserCreateInput>) => UserCreateInput' is not assignable to type '(overrides?: Partial<{ name: string; id: number; firebaseUid: string; email: string; emailVerified: boolean; photoURL: string; bio: string; role: Role; createdAt: Date; updatedAt: Date; }>) => { ...; }'.
+    Property 'id' is missing in type 'UserCreateInput' but required in type '{ name: string; id: number; firebaseUid: string; email: string; emailVerified: boolean; photoURL: string; bio: string; role: Role; createdAt: Date; updatedAt: Date; }'.
+test-setup/factories/user.factory.ts(12,29): error TS2339: Property 'name' does not exist on type 'Faker'.
+test-setup/factories/user.factory.ts(13,28): error TS2339: Property 'name' does not exist on type 'Faker'.
+test-setup/factories/user.factory.ts(16,35): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/factories/user.factory.ts(47,29): error TS2339: Property 'name' does not exist on type 'Faker'.
+test-setup/factories/user.factory.ts(48,28): error TS2339: Property 'name' does not exist on type 'Faker'.
+test-setup/factories/user.factory.ts(64,29): error TS2339: Property 'name' does not exist on type 'Faker'.
+test-setup/factories/user.factory.ts(65,28): error TS2339: Property 'name' does not exist on type 'Faker'.
+test-setup/factories/user.factory.ts(176,40): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/factories/user.factory.ts(178,46): error TS2559: Type '12' has no properties in common with type '{ length?: number; memorable?: boolean; pattern?: RegExp; prefix?: string; }'.
+test-setup/factories/user.factory.ts(229,43): error TS2345: Argument of type 'Partial<UserCreateInput>' is not assignable to parameter of type 'Partial<{ name: string; id: number; firebaseUid: string; email: string; emailVerified: boolean; photoURL: string; bio: string; role: Role; createdAt: Date; updatedAt: Date; }>'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | Date' is not assignable to type 'Date'.
+      Type 'string' is not assignable to type 'Date'.
+test-setup/helpers/auth.helper.ts(1,28): error TS2307: Cannot find module '@nestjs/jwt' or its corresponding type declarations.
+test-setup/helpers/database.helper.ts(17,9): error TS2322: Type '{ db: { url: string; }; }' is not assignable to type 'never'.
+test-setup/helpers/database.helper.ts(93,29): error TS2554: Expected 1-2 arguments, but got 0.
+test-setup/helpers/database.helper.ts(102,7): error TS2353: Object literal may only specify known properties, and 'datasources' does not exist in type 'Subset<PrismaClientOptions, PrismaClientOptions>'.
+test-setup/helpers/database.helper.ts(153,30): error TS2339: Property '$begin' does not exist on type 'PrismaClient<PrismaClientOptions, LogLevel, DefaultArgs>'.
+test-setup/mocks/firebase.mock.ts(22,27): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/mocks/firebase.mock.ts(24,26): error TS2339: Property 'name' does not exist on type 'Faker'.
+test-setup/mocks/firebase.mock.ts(148,65): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/mocks/firebase.mock.ts(161,51): error TS2554: Expected 1 arguments, but got 2.
+test-setup/mocks/payos.mock.ts(37,56): error TS2339: Property 'number' does not exist on type 'DatatypeModule'.
+test-setup/mocks/payos.mock.ts(43,64): error TS2339: Property 'uuid' does not exist on type 'DatatypeModule'.
+test-setup/mocks/payos.mock.ts(66,37): error TS2339: Property 'string' does not exist on type 'DatatypeModule'.
+test-setup/mocks/payos.mock.ts(128,36): error TS2339: Property 'string' does not exist on type 'DatatypeModule'.
+test-setup/mocks/payos.mock.ts(148,37): error TS2339: Property 'string' does not exist on type 'DatatypeModule'.
+test-setup/mocks/payos.mock.ts(152,33): error TS2339: Property 'string' does not exist on type 'DatatypeModule'.

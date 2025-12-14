@@ -3,6 +3,10 @@
  * Central exports for all testing utilities
  */
 
+import { DatabaseHelper } from './helpers/database.helper';
+import { MockFirebase } from './mocks/firebase.mock';
+import { MockPayOS } from './mocks/payos.mock';
+
 // Database helpers
 export { DatabaseHelper } from './helpers/database.helper';
 
@@ -42,7 +46,6 @@ export {
 // Test configuration constants
 export const TEST_CONFIG = {
   DATABASE_URL: process.env.DATABASE_URL || 'postgresql://test:test@localhost:5433/nghe_content_test',
-  JWT_SECRET: process.env.JWT_SECRET || 'test-secret-key-for-testing-only',
   NODE_ENV: 'test',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || 'test-project',

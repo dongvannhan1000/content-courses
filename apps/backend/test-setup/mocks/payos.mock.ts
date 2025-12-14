@@ -34,13 +34,13 @@ export class MockPayOS {
     description: string;
     orderCode?: number;
   }): MockPaymentOrder {
-    const orderCode = data.orderCode || faker.datatype.number({ min: 100000, max: 999999 });
+    const orderCode = data.orderCode || faker.number.int({ min: 100000, max: 999999 });
 
     const order: MockPaymentOrder = {
       orderCode,
       amount: data.amount,
       description: data.description,
-      checkoutUrl: `https://payos.vn/checkout/${faker.datatype.uuid()}`,
+      checkoutUrl: `https://payos.vn/checkout/${faker.string.uuid()}`,
       qrCode: faker.image.dataUri(), // Mock QR code
       expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes from now
       status: 'PENDING',
@@ -63,7 +63,7 @@ export class MockPayOS {
       status,
       amount: order.amount,
       orderCode,
-      transactionId: faker.datatype.string(36),
+      transactionId: faker.string.alphanumeric(36),
       paidAt: status === 'PAID' ? new Date() : undefined,
       cancelledAt: status === 'CANCELLED' ? new Date() : undefined,
     };
@@ -125,7 +125,7 @@ export class MockPayOS {
       refundPayment: jest.fn().mockImplementation(async (data: any) => {
         return {
           status: 'success',
-          refundId: faker.datatype.string(36),
+          refundId: faker.string.alphanumeric(36),
           amount: data.amount,
         };
       }),
@@ -145,11 +145,11 @@ export class MockPayOS {
       orderCode,
       status,
       amount: order.amount,
-      transactionId: faker.datatype.string(36),
+      transactionId: faker.string.alphanumeric(36),
       description: order.description,
       paidAt: status === 'PAID' ? new Date().toISOString() : undefined,
       cancelledAt: status === 'CANCELLED' ? new Date().toISOString() : undefined,
-      signature: faker.datatype.string(64), // Mock signature
+      signature: faker.string.alphanumeric(64), // Mock signature
     };
   }
 
