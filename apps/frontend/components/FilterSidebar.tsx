@@ -1,7 +1,7 @@
 "use client";
 
 import { Star, Check } from "lucide-react";
-import { useState } from "react";
+import { mockCategories } from "@/lib/mockData";
 
 interface FilterSidebarProps {
     selectedCategories: string[];
@@ -12,15 +12,6 @@ interface FilterSidebarProps {
     onRatingChange: (rating: number) => void;
     onClearFilters: () => void;
 }
-
-const categories = [
-    "Content Marketing",
-    "SEO",
-    "Social Media",
-    "Video Marketing",
-    "Email Marketing",
-    "Strategy",
-];
 
 const priceRanges = [
     { id: "under-1m", label: "Dưới 1.000.000đ" },
@@ -41,10 +32,10 @@ export default function FilterSidebar({
         <div className="space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-lg text-gray-900">Bộ lọc</h3>
+                <h3 className="font-display font-bold text-lg text-gray-900 dark:text-white">Bộ lọc</h3>
                 <button
                     onClick={onClearFilters}
-                    className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors cursor-pointer"
+                    className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors cursor-pointer"
                 >
                     Xóa tất cả
                 </button>
@@ -52,26 +43,26 @@ export default function FilterSidebar({
 
             {/* Categories */}
             <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900">Danh mục</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white">Danh mục</h4>
                 <div className="space-y-2">
-                    {categories.map((category) => (
+                    {mockCategories.map((category) => (
                         <label
-                            key={category}
+                            key={category.id}
                             className="flex items-center gap-3 cursor-pointer group"
                         >
                             <div
-                                className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${selectedCategories.includes(category)
+                                className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${selectedCategories.includes(category.name)
                                         ? "bg-primary-500 border-primary-500"
-                                        : "border-gray-300 bg-white group-hover:border-primary-400"
+                                        : "border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 group-hover:border-primary-400"
                                     }`}
-                                onClick={() => onCategoryChange(category)}
+                                onClick={() => onCategoryChange(category.name)}
                             >
-                                {selectedCategories.includes(category) && (
+                                {selectedCategories.includes(category.name) && (
                                     <Check className="w-3.5 h-3.5 text-white" />
                                 )}
                             </div>
-                            <span className="text-gray-600 group-hover:text-primary-600 transition-colors">
-                                {category}
+                            <span className="text-gray-600 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                {category.name}
                             </span>
                         </label>
                     ))}
@@ -80,7 +71,7 @@ export default function FilterSidebar({
 
             {/* Price */}
             <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900">Giá khóa học</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white">Giá khóa học</h4>
                 <div className="space-y-2">
                     {priceRanges.map((range) => (
                         <label
@@ -90,7 +81,7 @@ export default function FilterSidebar({
                             <div
                                 className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${selectedPriceRange === range.id
                                         ? "border-primary-500"
-                                        : "border-gray-300 group-hover:border-primary-400"
+                                        : "border-gray-300 dark:border-gray-600 group-hover:border-primary-400"
                                     }`}
                                 onClick={() => onPriceChange(range.id)}
                             >
@@ -98,7 +89,7 @@ export default function FilterSidebar({
                                     <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />
                                 )}
                             </div>
-                            <span className="text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <span className="text-gray-600 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                                 {range.label}
                             </span>
                         </label>
@@ -108,7 +99,7 @@ export default function FilterSidebar({
 
             {/* Rating */}
             <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900">Đánh giá</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white">Đánh giá</h4>
                 <div className="space-y-2">
                     {[5, 4, 3].map((rating) => (
                         <label
@@ -119,7 +110,7 @@ export default function FilterSidebar({
                             <div
                                 className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${selectedRating === rating
                                         ? "border-primary-500"
-                                        : "border-gray-300 group-hover:border-primary-400"
+                                        : "border-gray-300 dark:border-gray-600 group-hover:border-primary-400"
                                     }`}
                             >
                                 {selectedRating === rating && (
@@ -133,12 +124,12 @@ export default function FilterSidebar({
                                             key={i}
                                             className={`w-4 h-4 ${i < rating
                                                     ? "fill-yellow-400 text-yellow-400"
-                                                    : "fill-gray-200 text-gray-200"
+                                                    : "fill-gray-200 dark:fill-gray-700 text-gray-200 dark:text-gray-700"
                                                 }`}
                                         />
                                     ))}
                                 </div>
-                                <span className="text-sm text-gray-500 group-hover:text-primary-600 transition-colors">
+                                <span className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                                     {rating === 5 ? "" : "trở lên"}
                                 </span>
                             </div>

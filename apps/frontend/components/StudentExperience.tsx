@@ -58,14 +58,14 @@ export default function StudentExperience() {
     };
 
     return (
-        <section id="student-experience" className="py-20 px-4 bg-gradient-to-b from-white to-primary-50/30">
+        <section id="student-experience" className="py-20 px-4 bg-gradient-to-b from-white to-primary-50/30 dark:from-slate-900 dark:to-slate-800/50">
             <div className="max-w-7xl mx-auto">
                 {/* Section Header */}
                 <div className="text-center mb-16 space-y-4">
-                    <h2 className="font-display font-bold text-4xl text-gray-900">
+                    <h2 className="font-display font-bold text-4xl text-gray-900 dark:text-white">
                         Trải nghiệm học viên
                     </h2>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                         Lắng nghe chia sẻ từ những học viên đã thành công cùng Content Course
                     </p>
                 </div>
@@ -76,7 +76,7 @@ export default function StudentExperience() {
                     onMouseEnter={() => setIsAutoPlay(false)}
                     onMouseLeave={() => setIsAutoPlay(true)}
                 >
-                    <div className="overflow-hidden rounded-3xl glass shadow-xl border border-white/50">
+                    <div className="overflow-hidden rounded-3xl glass shadow-xl border border-white/50 dark:border-slate-700/50">
                         <div
                             className="flex transition-transform duration-500 ease-out"
                             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -93,14 +93,14 @@ export default function StudentExperience() {
                                             </div>
 
                                             <div className="relative">
-                                                <Quote className="absolute -top-4 -left-4 w-8 h-8 text-primary-200 rotate-180" />
-                                                <p className="text-xl text-gray-700 italic relative z-10 leading-relaxed">
-                                                    "{item.feedback}"
+                                                <Quote className="absolute -top-4 -left-4 w-8 h-8 text-primary-200 dark:text-primary-800 rotate-180" />
+                                                <p className="text-xl text-gray-700 dark:text-gray-300 italic relative z-10 leading-relaxed">
+                                                    &ldquo;{item.feedback}&rdquo;
                                                 </p>
                                             </div>
 
-                                            <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-                                                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-primary-100">
+                                            <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-primary-100 dark:border-primary-800">
                                                     <Image
                                                         src={item.avatar}
                                                         alt={item.name}
@@ -109,9 +109,9 @@ export default function StudentExperience() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-gray-900">{item.name}</h4>
-                                                    <p className="text-sm text-primary-600 font-medium">{item.role}</p>
-                                                    <p className="text-xs text-gray-500 mt-0.5">Học viên khóa: {item.course}</p>
+                                                    <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
+                                                    <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">{item.role}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Học viên khóa: {item.course}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -126,7 +126,7 @@ export default function StudentExperience() {
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                                             <div className="absolute bottom-4 left-4 right-4">
-                                                <span className="inline-block px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-primary-700 shadow-sm">
+                                                <span className="inline-block px-3 py-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-full text-xs font-semibold text-primary-700 dark:text-primary-400 shadow-sm">
                                                     Kết quả thực tế
                                                 </span>
                                             </div>
@@ -140,14 +140,14 @@ export default function StudentExperience() {
                     {/* Navigation Buttons */}
                     <button
                         onClick={prevSlide}
-                        className="absolute left-4 md:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:text-primary-600 hover:scale-110 transition-all duration-200 focus:outline-none z-10"
+                        className="absolute left-4 md:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 z-10 cursor-pointer"
                         aria-label="Previous slide"
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </button>
                     <button
                         onClick={nextSlide}
-                        className="absolute right-4 md:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:text-primary-600 hover:scale-110 transition-all duration-200 focus:outline-none z-10"
+                        className="absolute right-4 md:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 z-10 cursor-pointer"
                         aria-label="Next slide"
                     >
                         <ChevronRight className="w-6 h-6" />
@@ -159,9 +159,9 @@ export default function StudentExperience() {
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}
-                                className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentIndex
-                                        ? "bg-primary-600 w-8"
-                                        : "bg-gray-300 hover:bg-primary-300"
+                                className={`h-3 rounded-full transition-all duration-300 cursor-pointer ${index === currentIndex
+                                        ? "bg-primary-600 dark:bg-primary-500 w-8"
+                                        : "bg-gray-300 dark:bg-gray-600 hover:bg-primary-300 dark:hover:bg-primary-700 w-3"
                                     }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />

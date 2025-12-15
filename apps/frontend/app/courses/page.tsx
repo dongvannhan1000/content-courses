@@ -19,24 +19,26 @@ export default function CoursesPage() {
             // Category Filter
             if (
                 selectedCategories.length > 0 &&
-                !selectedCategories.includes(course.category)
+                course.category &&
+                !selectedCategories.includes(course.category.name)
             ) {
                 return false;
             }
 
-            // Price Filter
+            // Price Filter (using discountPrice or price)
+            const effectivePrice = course.discountPrice || course.price;
             if (selectedPriceRange) {
-                if (selectedPriceRange === "under-1m" && course.price >= 1000000) return false;
+                if (selectedPriceRange === "under-1m" && effectivePrice >= 1000000) return false;
                 if (
                     selectedPriceRange === "1m-2m" &&
-                    (course.price < 1000000 || course.price > 2000000)
+                    (effectivePrice < 1000000 || effectivePrice > 2000000)
                 )
                     return false;
-                if (selectedPriceRange === "over-2m" && course.price <= 2000000) return false;
+                if (selectedPriceRange === "over-2m" && effectivePrice <= 2000000) return false;
             }
 
             // Rating Filter
-            if (selectedRating && course.rating < selectedRating) {
+            if (selectedRating && course.rating && course.rating < selectedRating) {
                 return false;
             }
 
@@ -67,16 +69,16 @@ export default function CoursesPage() {
     };
 
     return (
-        <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+        <main className="min-h-screen">
             <Header />
 
             {/* Page Header */}
-            <div className="bg-white/50 backdrop-blur-sm border-b border-gray-200/50">
+            <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="max-w-7xl mx-auto px-4 py-12">
-                    <h1 className="font-display font-bold text-3xl md:text-4xl text-gray-900 mb-4">
+                    <h1 className="font-display font-bold text-3xl md:text-4xl text-gray-900 dark:text-white mb-4">
                         Tất cả khóa học
                     </h1>
-                    <p className="text-gray-600 max-w-2xl">
+                    <p className="text-gray-600 dark:text-gray-400 max-w-2xl">
                         Khám phá kho tàng kiến thức Content Marketing từ cơ bản đến chuyên sâu.
                         Tìm khóa học phù hợp nhất với mục tiêu của bạn.
                     </p>
@@ -104,7 +106,7 @@ export default function CoursesPage() {
                     <div className="lg:hidden mb-6">
                         <button
                             onClick={() => setIsMobileFilterOpen(true)}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 glass rounded-xl font-medium text-gray-700 hover:bg-white/60 transition-colors"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 glass rounded-xl font-medium text-gray-700 dark:text-gray-200 hover:bg-white/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
                         >
                             <Filter className="w-5 h-5" />
                             Bộ lọc & Sắp xếp
@@ -115,12 +117,12 @@ export default function CoursesPage() {
                     <div className="flex-1">
                         {/* Results Info */}
                         <div className="flex items-center justify-between mb-6">
-                            <p className="text-gray-600">
-                                Hiển thị <span className="font-bold text-gray-900">{filteredCourses.length}</span> khóa học
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Hiển thị <span className="font-bold text-gray-900 dark:text-white">{filteredCourses.length}</span> khóa học
                             </p>
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500 hidden sm:inline">Sắp xếp theo:</span>
-                                <button className="flex items-center gap-2 px-3 py-1.5 glass rounded-lg text-sm font-medium text-gray-700 hover:bg-white/60 transition-colors">
+                                <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:inline">Sắp xếp theo:</span>
+                                <button className="flex items-center gap-2 px-3 py-1.5 glass rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-white/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer">
                                     Mới nhất <SlidersHorizontal className="w-4 h-4" />
                                 </button>
                             </div>
@@ -135,18 +137,18 @@ export default function CoursesPage() {
                             </div>
                         ) : (
                             <div className="text-center py-20 glass rounded-2xl">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Filter className="w-8 h-8 text-gray-400" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                                     Không tìm thấy khóa học nào
                                 </h3>
-                                <p className="text-gray-500 mb-6">
+                                <p className="text-gray-500 dark:text-gray-400 mb-6">
                                     Thử thay đổi hoặc xóa bộ lọc để xem thêm kết quả
                                 </p>
                                 <button
                                     onClick={clearFilters}
-                                    className="px-6 py-2 gradient-primary text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
+                                    className="px-6 py-2 gradient-primary text-white font-medium rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
                                 >
                                     Xóa bộ lọc
                                 </button>
@@ -163,14 +165,14 @@ export default function CoursesPage() {
                         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
                         onClick={() => setIsMobileFilterOpen(false)}
                     />
-                    <div className="absolute inset-y-0 right-0 w-full max-w-xs bg-white shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
+                    <div className="absolute inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-y-auto animate-slide-in-right">
                         <div className="flex items-center justify-between mb-8">
-                            <h3 className="font-display font-bold text-xl text-gray-900">Bộ lọc</h3>
+                            <h3 className="font-display font-bold text-xl text-gray-900 dark:text-white">Bộ lọc</h3>
                             <button
                                 onClick={() => setIsMobileFilterOpen(false)}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors cursor-pointer"
                             >
-                                <X className="w-6 h-6 text-gray-500" />
+                                <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
                             </button>
                         </div>
                         <FilterSidebar
@@ -182,10 +184,10 @@ export default function CoursesPage() {
                             onRatingChange={handleRatingChange}
                             onClearFilters={clearFilters}
                         />
-                        <div className="mt-8 pt-6 border-t border-gray-100">
+                        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
                             <button
                                 onClick={() => setIsMobileFilterOpen(false)}
-                                className="w-full py-3 gradient-primary text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+                                className="w-full py-3 gradient-primary text-white font-semibold rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
                             >
                                 Xem {filteredCourses.length} kết quả
                             </button>
