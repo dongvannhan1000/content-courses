@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { ThemeProvider } from "@/components/providers";
+import { ToastProvider } from "@/components/ui";
 import "./globals.css";
 
 const inter = Inter({
@@ -65,9 +66,11 @@ export default function RootLayout({
                 className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
             >
                 <ThemeProvider defaultTheme="system">
-                    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-                        {children}
-                    </div>
+                    <ToastProvider>
+                        <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+                            {children}
+                        </div>
+                    </ToastProvider>
                 </ThemeProvider>
             </body>
         </html>
