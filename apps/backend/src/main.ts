@@ -18,8 +18,10 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'http://localhost:5173',
-      'http://localhost:4173', // Vite
+      'http://localhost:3000', // Next.js
+      'http://localhost:3001', // Next.js fallback
+      'http://localhost:5173', // Vite
+      'http://localhost:4173', // Vite preview
       `${FRONTEND_URL}`,
     ],
     credentials: true, // Enable credentials for cookies
@@ -49,7 +51,7 @@ async function bootstrap() {
       jsonDocumentUrl: 'openapi.json',
     });
   }
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+  const port = process.env.PORT ? Number(process.env.PORT) : 3001;
   await app.listen(port);
   console.log(`✅ API running on http://localhost:${port}`);
 }
