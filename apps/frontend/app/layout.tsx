@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
-import { ThemeProvider, QueryProvider } from "@/components/providers";
+import { ThemeProvider, QueryProvider, AuthProvider } from "@/components/providers";
 import { ToastProvider } from "@/components/ui";
 import { SkipLink } from "@/components/SkipLink";
 import "./globals.css";
@@ -67,14 +67,16 @@ export default function RootLayout({
                 className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
             >
                 <ThemeProvider defaultTheme="system">
-                    <QueryProvider>
-                        <ToastProvider>
-                            <SkipLink />
-                            <div id="main-content" className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-                                {children}
-                            </div>
-                        </ToastProvider>
-                    </QueryProvider>
+                    <AuthProvider>
+                        <QueryProvider>
+                            <ToastProvider>
+                                <SkipLink />
+                                <div id="main-content" className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+                                    {children}
+                                </div>
+                            </ToastProvider>
+                        </QueryProvider>
+                    </AuthProvider>
                 </ThemeProvider>
             </body>
         </html>

@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import {
     signInWithEmailAndPassword,
     signOut,
-    onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
-    type User as FirebaseUser,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { useAuthStore } from "@/lib/stores";
 import { apiClient } from "@/lib/api/client";
-import type { User } from "@/types";
 
 interface AuthError {
     code: string;
@@ -63,67 +60,15 @@ export async function getIdToken(): Promise<string | null> {
     }
 }
 
+/**
+ * useAuth hook - Provides auth state and actions
+ * 
+ * Note: Firebase auth state listener is handled by AuthProvider.
+ * This hook only provides auth actions and consumes state from the store.
+ */
 export function useAuth() {
-    const { user, isAuthenticated, isLoading, setLoading, setError, login, logout } = useAuthStore();
+    const { user, isAuthenticated, isLoading, setLoading, setError, logout } = useAuthStore();
     const [authError, setAuthError] = useState<string | null>(null);
-
-    // Use ref to prevent dependency issues
-    const loginRef = useRef(login);
-    const logoutRef = useRef(logout);
-    const setLoadingRef = useRef(setLoading);
-
-    // Update refs
-    loginRef.current = login;
-    logoutRef.current = logout;
-    setLoadingRef.current = setLoading;
-
-    // Listen to Firebase auth state changes
-    useEffect(() => {
-        const auth = getFirebaseAuth();
-
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                try {
-                    // Get ID token from Firebase
-                    const idToken = await firebaseUser.getIdToken();
-
-                    // Sync with backend - POST /auth/login with idToken in body
-                    try {
-                        const { data } = await apiClient.post("/auth/login", {
-                            idToken,
-                        });
-
-                        // Backend returns { user: { id, email, name, role, ... } }
-                        if (data?.user) {
-                            loginRef.current(data.user as User);
-                        }
-                    } catch (backendError) {
-                        // Backend might not be running or user not synced
-                        // Fallback to Firebase user data
-                        console.warn("Backend sync failed, using Firebase data:", backendError);
-                        const userData: User = {
-                            id: 0, // Will be updated when backend syncs
-                            email: firebaseUser.email || "",
-                            name: firebaseUser.displayName || "Người dùng",
-                            photoURL: firebaseUser.photoURL || undefined,
-                            role: "USER",
-                            isActive: true,
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                        };
-                        loginRef.current(userData);
-                    }
-                } catch (error) {
-                    console.error("Error getting user data:", error);
-                    setLoadingRef.current(false);
-                }
-            } else {
-                logoutRef.current();
-            }
-        });
-
-        return () => unsubscribe();
-    }, []); // Empty deps - uses refs
 
     // Clear error - stable reference
     const clearError = useCallback(() => {
