@@ -8,8 +8,8 @@ apps/**/.env
 .prisma
 .turbo
 
-.agent
-.shared
+# .agent
+# .shared
 
 # IDE - IntelliJ / WebStorm
 .idea
