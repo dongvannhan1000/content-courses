@@ -2,12 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingCart, Menu, User, X } from "lucide-react";
+import { Search, ShoppingCart, Menu, User, X, ChevronDown, LogOut, Settings, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/providers";
+import { Button, Avatar, Badge } from "@/components/ui";
+import { AuthModal } from "@/components/features/auth";
+
+// Mock user state - will be replaced with Zustand store
+const mockUser = null; // Set to { name: "Nguyen Van A", email: "test@example.com", photoURL: null } to test logged in state
+const mockCartItems = 2;
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authModalTab, setAuthModalTab] = useState<"login" | "register">("login");
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const pathname = usePathname();
 
     const isActive = (path: string) => pathname === path;
@@ -18,113 +27,227 @@ export default function Header() {
         { href: "/blog", label: "Blog" },
     ];
 
+    const openAuthModal = (tab: "login" | "register") => {
+        setAuthModalTab(tab);
+        setIsAuthModalOpen(true);
+    };
+
     return (
-        <header className="sticky top-4 left-4 right-4 z-50 mx-4">
-            <nav className="glass rounded-2xl px-6 py-4 max-w-7xl mx-auto">
-                <div className="flex items-center justify-between">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-                            <span className="text-white font-bold text-xl">CC</span>
-                        </div>
-                        <span className="font-display font-bold text-xl text-primary-700 dark:text-primary-400 hidden sm:block">
-                            Content Course
-                        </span>
-                    </Link>
-
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center gap-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={`transition-colors duration-200 font-medium ${isActive(link.href)
-                                        ? "text-primary-600 dark:text-primary-400 font-semibold"
-                                        : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
-                                    }`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
-                    </div>
-
-                    {/* Right Actions */}
-                    <div className="flex items-center gap-2">
-                        {/* Search Button */}
-                        <button
-                            aria-label="Tìm kiếm"
-                            className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
-                        >
-                            <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        </button>
-
-                        {/* Theme Toggle */}
-                        <ThemeToggle />
-
-                        {/* Cart Button */}
-                        <button
-                            aria-label="Giỏ hàng"
-                            className="hidden sm:flex p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 relative cursor-pointer"
-                        >
-                            <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                0
+        <>
+            <header className="sticky top-4 left-4 right-4 z-50 mx-4">
+                <nav className="glass rounded-2xl px-6 py-4 max-w-7xl mx-auto">
+                    <div className="flex items-center justify-between">
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+                                <span className="text-white font-bold text-xl">CC</span>
+                            </div>
+                            <span className="font-display font-bold text-xl text-primary-700 dark:text-primary-400 hidden sm:block">
+                                Content Course
                             </span>
-                        </button>
+                        </Link>
 
-                        {/* User/Login Button */}
-                        <button
-                            aria-label="Đăng nhập"
-                            className="hidden sm:flex items-center gap-2 px-4 py-2 gradient-primary text-white rounded-xl font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer"
-                        >
-                            <User className="w-4 h-4" />
-                            <span>Đăng nhập</span>
-                        </button>
-
-                        {/* Mobile Menu Button */}
-                        <button
-                            aria-label={isMenuOpen ? "Đóng menu" : "Mở menu"}
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="md:hidden p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
-                        >
-                            {isMenuOpen ? (
-                                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            ) : (
-                                <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Menu */}
-                {isMenuOpen && (
-                    <div className="md:hidden mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-in">
-                        <div className="flex flex-col gap-3">
+                        {/* Desktop Navigation */}
+                        <div className="hidden md:flex items-center gap-8">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`transition-colors duration-200 font-medium py-2 ${isActive(link.href)
+                                    className={`transition-colors duration-200 font-medium ${isActive(link.href)
                                             ? "text-primary-600 dark:text-primary-400 font-semibold"
                                             : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
                                         }`}
-                                    onClick={() => setIsMenuOpen(false)}
                                 >
                                     {link.label}
                                 </Link>
                             ))}
-                            <div className="flex gap-3 pt-2">
-                                <button className="flex-1 px-4 py-2.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-xl font-medium hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors duration-200 cursor-pointer">
-                                    Đăng nhập
-                                </button>
-                                <button className="flex-1 px-4 py-2.5 gradient-primary text-white rounded-xl font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer">
-                                    Đăng ký
-                                </button>
-                            </div>
+                        </div>
+
+                        {/* Right Actions */}
+                        <div className="flex items-center gap-2">
+                            {/* Search Button */}
+                            <button
+                                aria-label="Tìm kiếm"
+                                className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
+                            >
+                                <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                            </button>
+
+                            {/* Theme Toggle */}
+                            <ThemeToggle />
+
+                            {/* Cart Button */}
+                            <Link
+                                href="/cart"
+                                className="hidden sm:flex p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 relative cursor-pointer"
+                            >
+                                <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                {mockCartItems > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                        {mockCartItems}
+                                    </span>
+                                )}
+                            </Link>
+
+                            {/* User/Auth Section */}
+                            {mockUser ? (
+                                // Logged in state
+                                <div className="relative hidden sm:block">
+                                    <button
+                                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                        className="flex items-center gap-2 p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-colors cursor-pointer"
+                                    >
+                                        <Avatar
+                                            src={(mockUser as any).photoURL}
+                                            name={(mockUser as any).name}
+                                            size="sm"
+                                        />
+                                        <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                    </button>
+
+                                    {/* User Dropdown */}
+                                    {isUserMenuOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            />
+                                            <div className="absolute right-0 top-full mt-2 w-64 glass rounded-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 py-2 z-20 animate-scale-in">
+                                                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                                                    <p className="font-semibold text-gray-900 dark:text-white">
+                                                        {(mockUser as any).name}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {(mockUser as any).email}
+                                                    </p>
+                                                </div>
+                                                <div className="py-1">
+                                                    <Link
+                                                        href="/dashboard"
+                                                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                                                    >
+                                                        <BookOpen className="w-5 h-5" />
+                                                        Khóa học của tôi
+                                                    </Link>
+                                                    <Link
+                                                        href="/dashboard/settings"
+                                                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                                                    >
+                                                        <Settings className="w-5 h-5" />
+                                                        Cài đặt tài khoản
+                                                    </Link>
+                                                </div>
+                                                <div className="border-t border-gray-100 dark:border-gray-700 pt-1">
+                                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">
+                                                        <LogOut className="w-5 h-5" />
+                                                        Đăng xuất
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                // Not logged in state
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => openAuthModal("login")}
+                                    >
+                                        Đăng nhập
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={() => openAuthModal("register")}
+                                    >
+                                        Đăng ký
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* Mobile Menu Button */}
+                            <button
+                                aria-label={isMenuOpen ? "Đóng menu" : "Mở menu"}
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="md:hidden p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
+                            >
+                                {isMenuOpen ? (
+                                    <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                ) : (
+                                    <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                )}
+                            </button>
                         </div>
                     </div>
-                )}
-            </nav>
-        </header>
+
+                    {/* Mobile Menu */}
+                    {isMenuOpen && (
+                        <div className="md:hidden mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-in">
+                            <div className="flex flex-col gap-3">
+                                {navLinks.map((link) => (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className={`transition-colors duration-200 font-medium py-2 ${isActive(link.href)
+                                                ? "text-primary-600 dark:text-primary-400 font-semibold"
+                                                : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                                            }`}
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                ))}
+
+                                {/* Mobile Cart */}
+                                <Link
+                                    href="/cart"
+                                    className="flex items-center justify-between py-2 text-gray-700 dark:text-gray-300"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    <span className="font-medium">Giỏ hàng</span>
+                                    {mockCartItems > 0 && (
+                                        <Badge variant="accent" size="sm">
+                                            {mockCartItems}
+                                        </Badge>
+                                    )}
+                                </Link>
+
+                                <div className="flex gap-3 pt-2">
+                                    <Button
+                                        variant="secondary"
+                                        fullWidth
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            openAuthModal("login");
+                                        }}
+                                    >
+                                        Đăng nhập
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        fullWidth
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            openAuthModal("register");
+                                        }}
+                                    >
+                                        Đăng ký
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </nav>
+            </header>
+
+            {/* Auth Modal */}
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                defaultTab={authModalTab}
+            />
+        </>
     );
 }

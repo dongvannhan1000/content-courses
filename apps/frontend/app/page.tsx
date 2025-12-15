@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CourseCard from "@/components/CourseCard";
 import StudentExperience from "@/components/StudentExperience";
+import Footer from "@/components/Footer";
 import { mockCourses, mockCategories } from "@/lib/mockData";
 import { Filter, SlidersHorizontal, BookOpen, Users, Award, Star } from "lucide-react";
 import Link from "next/link";
@@ -166,94 +167,7 @@ export default function Home() {
             </section>
 
             {/* Footer */}
-            <footer className="py-12 px-4 border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-slate-900/50">
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                        {/* Brand */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center">
-                                    <span className="text-white font-bold text-xl">CC</span>
-                                </div>
-                                <span className="font-display font-bold text-xl text-primary-700 dark:text-primary-400">
-                                    Content Course
-                                </span>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Nền tảng học Content Marketing hàng đầu Việt Nam
-                            </p>
-                        </div>
-
-                        {/* Links */}
-                        <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Khóa học</h3>
-                            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Content Marketing
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        SEO Content
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Social Media
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Khám phá</h3>
-                            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                <li>
-                                    <a href="/#student-experience" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Trải nghiệm học viên
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Giảng viên
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Liên hệ
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Hỗ trợ</h3>
-                            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Trung tâm trợ giúp
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Điều khoản
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">
-                                        Chính sách
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="pt-8 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400">
-                        © 2024 Content Course. All rights reserved.
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </main>
     );
 }
