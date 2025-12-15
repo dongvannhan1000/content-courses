@@ -2,15 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingCart, Menu, User, X, ChevronDown, LogOut, Settings, BookOpen } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, ChevronDown, LogOut, Settings, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/providers";
 import { Button, Avatar, Badge } from "@/components/ui";
 import { AuthModal } from "@/components/features/auth";
-
-// Mock user state - will be replaced with Zustand store
-const mockUser = null; // Set to { name: "Nguyen Van A", email: "test@example.com", photoURL: null } to test logged in state
-const mockCartItems = 2;
+import { useAuth } from "@/lib/hooks";
+import { useCartStore } from "@/lib/stores";
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,6 +16,13 @@ export default function Header() {
     const [authModalTab, setAuthModalTab] = useState<"login" | "register">("login");
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const pathname = usePathname();
+
+    // Real auth state
+    const { user, isAuthenticated, isLoading, signOut } = useAuth();
+
+    // Cart state
+    const cartItems = useCartStore((state) => state.items);
+    const cartItemCount = cartItems.length;
 
     const isActive = (path: string) => pathname === path;
 
@@ -30,6 +35,11 @@ export default function Header() {
     const openAuthModal = (tab: "login" | "register") => {
         setAuthModalTab(tab);
         setIsAuthModalOpen(true);
+    };
+
+    const handleSignOut = async () => {
+        await signOut();
+        setIsUserMenuOpen(false);
     };
 
     return (
@@ -54,8 +64,8 @@ export default function Header() {
                                     key={link.href}
                                     href={link.href}
                                     className={`transition-colors duration-200 font-medium ${isActive(link.href)
-                                            ? "text-primary-600 dark:text-primary-400 font-semibold"
-                                            : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                                        ? "text-primary-600 dark:text-primary-400 font-semibold"
+                                        : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
                                         }`}
                                 >
                                     {link.label}
@@ -82,15 +92,18 @@ export default function Header() {
                                 className="hidden sm:flex p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 relative cursor-pointer"
                             >
                                 <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                {mockCartItems > 0 && (
+                                {cartItemCount > 0 && (
                                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                        {mockCartItems}
+                                        {cartItemCount}
                                     </span>
                                 )}
                             </Link>
 
                             {/* User/Auth Section */}
-                            {mockUser ? (
+                            {isLoading ? (
+                                // Loading state
+                                <div className="hidden sm:block w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                            ) : isAuthenticated && user ? (
                                 // Logged in state
                                 <div className="relative hidden sm:block">
                                     <button
@@ -98,8 +111,8 @@ export default function Header() {
                                         className="flex items-center gap-2 p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-colors cursor-pointer"
                                     >
                                         <Avatar
-                                            src={(mockUser as any).photoURL}
-                                            name={(mockUser as any).name}
+                                            src={user.photoURL || undefined}
+                                            name={user.name}
                                             size="sm"
                                         />
                                         <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -115,16 +128,17 @@ export default function Header() {
                                             <div className="absolute right-0 top-full mt-2 w-64 glass rounded-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 py-2 z-20 animate-scale-in">
                                                 <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                                                     <p className="font-semibold text-gray-900 dark:text-white">
-                                                        {(mockUser as any).name}
+                                                        {user.name}
                                                     </p>
                                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {(mockUser as any).email}
+                                                        {user.email}
                                                     </p>
                                                 </div>
                                                 <div className="py-1">
                                                     <Link
                                                         href="/dashboard"
                                                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                                                        onClick={() => setIsUserMenuOpen(false)}
                                                     >
                                                         <BookOpen className="w-5 h-5" />
                                                         Khóa học của tôi
@@ -132,13 +146,17 @@ export default function Header() {
                                                     <Link
                                                         href="/dashboard/settings"
                                                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                                                        onClick={() => setIsUserMenuOpen(false)}
                                                     >
                                                         <Settings className="w-5 h-5" />
                                                         Cài đặt tài khoản
                                                     </Link>
                                                 </div>
                                                 <div className="border-t border-gray-100 dark:border-gray-700 pt-1">
-                                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">
+                                                    <button
+                                                        onClick={handleSignOut}
+                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+                                                    >
                                                         <LogOut className="w-5 h-5" />
                                                         Đăng xuất
                                                     </button>
@@ -191,8 +209,8 @@ export default function Header() {
                                         key={link.href}
                                         href={link.href}
                                         className={`transition-colors duration-200 font-medium py-2 ${isActive(link.href)
-                                                ? "text-primary-600 dark:text-primary-400 font-semibold"
-                                                : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                                            ? "text-primary-600 dark:text-primary-400 font-semibold"
+                                            : "text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
                                             }`}
                                         onClick={() => setIsMenuOpen(false)}
                                     >
@@ -207,35 +225,60 @@ export default function Header() {
                                     onClick={() => setIsMenuOpen(false)}
                                 >
                                     <span className="font-medium">Giỏ hàng</span>
-                                    {mockCartItems > 0 && (
+                                    {cartItemCount > 0 && (
                                         <Badge variant="accent" size="sm">
-                                            {mockCartItems}
+                                            {cartItemCount}
                                         </Badge>
                                     )}
                                 </Link>
 
-                                <div className="flex gap-3 pt-2">
-                                    <Button
-                                        variant="secondary"
-                                        fullWidth
-                                        onClick={() => {
-                                            setIsMenuOpen(false);
-                                            openAuthModal("login");
-                                        }}
-                                    >
-                                        Đăng nhập
-                                    </Button>
-                                    <Button
-                                        variant="primary"
-                                        fullWidth
-                                        onClick={() => {
-                                            setIsMenuOpen(false);
-                                            openAuthModal("register");
-                                        }}
-                                    >
-                                        Đăng ký
-                                    </Button>
-                                </div>
+                                {/* Mobile Auth/User */}
+                                {isAuthenticated && user ? (
+                                    <>
+                                        <Link
+                                            href="/dashboard"
+                                            className="flex items-center gap-3 py-2 text-gray-700 dark:text-gray-300"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            <Avatar src={user.photoURL || undefined} name={user.name} size="sm" />
+                                            <span className="font-medium">{user.name}</span>
+                                        </Link>
+                                        <Button
+                                            variant="outline"
+                                            fullWidth
+                                            onClick={() => {
+                                                setIsMenuOpen(false);
+                                                handleSignOut();
+                                            }}
+                                        >
+                                            <LogOut className="w-4 h-4 mr-2" />
+                                            Đăng xuất
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <div className="flex gap-3 pt-2">
+                                        <Button
+                                            variant="secondary"
+                                            fullWidth
+                                            onClick={() => {
+                                                setIsMenuOpen(false);
+                                                openAuthModal("login");
+                                            }}
+                                        >
+                                            Đăng nhập
+                                        </Button>
+                                        <Button
+                                            variant="primary"
+                                            fullWidth
+                                            onClick={() => {
+                                                setIsMenuOpen(false);
+                                                openAuthModal("register");
+                                            }}
+                                        >
+                                            Đăng ký
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getIdToken } from "@/lib/hooks/useAuth";
 
 // Create axios instance with default config
 export const apiClient = axios.create({
@@ -9,13 +10,11 @@ export const apiClient = axios.create({
     },
 });
 
-// Request interceptor - add auth token
+// Request interceptor - add auth token from Firebase
 apiClient.interceptors.request.use(
-    (config) => {
-        // Get token from localStorage or auth store
-        const token = typeof window !== "undefined"
-            ? localStorage.getItem("auth-token")
-            : null;
+    async (config) => {
+        // Get token directly from Firebase (not localStorage)
+        const token = await getIdToken();
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -37,12 +36,9 @@ apiClient.interceptors.response.use(
             const { status, data } = error.response;
 
             if (status === 401) {
-                // Unauthorized - clear auth and redirect
-                if (typeof window !== "undefined") {
-                    localStorage.removeItem("auth-token");
-                    localStorage.removeItem("auth-storage");
-                    // Could redirect to login or trigger auth modal
-                }
+                // Unauthorized - Firebase will handle token refresh
+                // If still 401 after refresh, user needs to re-login
+                console.warn("Unauthorized request - token may be invalid");
             }
 
             // Return formatted error
