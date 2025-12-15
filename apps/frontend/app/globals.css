@@ -3,37 +3,38 @@
 @tailwind utilities;
 
 @layer base {
+
     /* ============ Light Theme Variables ============ */
     :root {
         /* Background & Foreground */
         --background: 0 0% 100%;
         --foreground: 180 100% 15%;
-        
+
         /* Primary (Teal) */
         --primary: 174 84% 32%;
         --primary-foreground: 0 0% 100%;
-        
+
         /* Secondary */
         --secondary: 210 40% 96%;
         --secondary-foreground: 222 47% 11%;
-        
+
         /* Accent (Orange) */
         --accent: 21 90% 48%;
         --accent-foreground: 0 0% 100%;
-        
+
         /* Muted */
         --muted: 210 40% 96%;
         --muted-foreground: 215 16% 47%;
-        
+
         /* Card */
         --card: 0 0% 100%;
         --card-foreground: 222 84% 5%;
-        
+
         /* Border & Input */
         --border: 214 32% 91%;
         --input: 214 32% 91%;
         --ring: 174 84% 32%;
-        
+
         /* Semantic */
         --success: 160 84% 39%;
         --warning: 38 92% 50%;
@@ -45,32 +46,32 @@
     .dark {
         --background: 222 47% 6%;
         --foreground: 210 40% 98%;
-        
+
         /* Primary (Teal - adjusted for dark) */
         --primary: 174 72% 46%;
         --primary-foreground: 222 47% 6%;
-        
+
         /* Secondary */
         --secondary: 217 33% 17%;
         --secondary-foreground: 210 40% 98%;
-        
+
         /* Accent */
         --accent: 24 95% 53%;
         --accent-foreground: 0 0% 100%;
-        
+
         /* Muted */
         --muted: 217 33% 17%;
         --muted-foreground: 215 20% 65%;
-        
+
         /* Card */
         --card: 222 47% 9%;
         --card-foreground: 210 40% 98%;
-        
+
         /* Border & Input */
         --border: 217 33% 17%;
         --input: 217 33% 17%;
         --ring: 174 72% 46%;
-        
+
         /* Semantic */
         --success: 160 60% 45%;
         --warning: 38 92% 50%;
@@ -125,9 +126,31 @@
     ::-webkit-scrollbar-thumb:hover {
         @apply bg-muted-foreground/50;
     }
+
+    /* ============ Focus Styles for Accessibility ============ */
+    /* Enhanced focus-visible for keyboard navigation */
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-primary-500;
+    }
+
+    /* Remove default focus outline when using mouse */
+    :focus:not(:focus-visible) {
+        outline: none;
+    }
+
+    /* Interactive elements focus state */
+    a:focus-visible,
+    button:focus-visible,
+    [role="button"]:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        @apply ring-2 ring-primary-500 ring-offset-2 ring-offset-background;
+    }
 }
 
 @layer components {
+
     /* ============ Glass Effect ============ */
     .glass {
         @apply bg-white/80 backdrop-blur-xl border border-gray-200/50 shadow-lg;
@@ -152,12 +175,7 @@
 
     /* ============ Button Base ============ */
     .btn {
-        @apply inline-flex items-center justify-center gap-2 
-               font-semibold rounded-xl 
-               transition-all duration-200 
-               focus:outline-none focus:ring-2 focus:ring-offset-2
-               disabled:opacity-50 disabled:cursor-not-allowed
-               cursor-pointer;
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
     }
 
     .btn-sm {
@@ -174,40 +192,28 @@
 
     /* Button Variants */
     .btn-primary {
-        @apply btn bg-gradient-to-br from-primary-400 to-primary-600 
-               text-white shadow-lg shadow-primary-500/30
-               hover:opacity-90 focus:ring-primary-500;
+        @apply btn bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-lg shadow-primary-500/30 hover:opacity-90 focus:ring-primary-500;
     }
 
     .btn-secondary {
-        @apply btn glass text-gray-700 dark:text-gray-200
-               hover:shadow-xl focus:ring-primary-500;
+        @apply btn glass text-gray-700 dark:text-gray-200 hover:shadow-xl focus:ring-primary-500;
     }
 
     .btn-accent {
-        @apply btn bg-gradient-to-br from-accent-400 to-accent-600 
-               text-white shadow-lg shadow-accent-500/20
-               hover:opacity-90 focus:ring-accent-500;
+        @apply btn bg-gradient-to-br from-accent-400 to-accent-600 text-white shadow-lg shadow-accent-500/20 hover:opacity-90 focus:ring-accent-500;
     }
 
     .btn-ghost {
-        @apply btn bg-transparent text-primary-600 dark:text-primary-400
-               hover:bg-primary-50 dark:hover:bg-primary-900/20 
-               focus:ring-primary-500;
+        @apply btn bg-transparent text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 focus:ring-primary-500;
     }
 
     .btn-danger {
-        @apply btn bg-red-500 text-white
-               hover:bg-red-600 focus:ring-red-500;
+        @apply btn bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
     }
 
     /* ============ Input Styles ============ */
     .input {
-        @apply w-full px-4 py-3 
-               bg-background border border-input rounded-xl
-               text-foreground placeholder:text-muted-foreground
-               focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
-               transition-colors duration-200;
+        @apply w-full px-4 py-3 bg-background border border-input rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors duration-200;
     }
 
     .input-error {
@@ -228,6 +234,7 @@
 }
 
 @layer utilities {
+
     /* ============ Gradient Utilities ============ */
     .gradient-primary {
         @apply bg-gradient-to-br from-primary-400 to-primary-600;
@@ -248,8 +255,7 @@
 
     /* ============ Card Hover Effect ============ */
     .card-hover {
-        @apply transition-all duration-300 ease-in-out 
-               hover:shadow-2xl hover:-translate-y-1;
+        @apply transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1;
     }
 
     /* ============ Focus Ring ============ */
