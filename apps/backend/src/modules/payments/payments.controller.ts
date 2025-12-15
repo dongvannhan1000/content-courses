@@ -10,7 +10,6 @@ import {
     HttpStatus,
     Headers,
     Request as NestRequest,
-    Redirect,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -20,6 +19,7 @@ import {
     ApiParam,
     ApiHeader,
 } from '@nestjs/swagger';
+import { Request } from 'express';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto, PaymentQueryDto } from './dto/create-payment.dto';
 import {
@@ -34,18 +34,6 @@ import { PayOSWebhookPayload } from './payos.config';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-
-// Type for the user object attached by FirebaseAuthGuard
-interface AuthUser {
-    uid: string;
-    email: string;
-    dbId: number;
-    role: Role;
-}
-
-interface Request {
-    user: AuthUser;
-}
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -68,7 +56,7 @@ export class PaymentsController {
         @NestRequest() req: Request,
     ): Promise<CreatePaymentResponseDto> {
         return this.paymentsService.createPayment(
-            req.user.dbId,
+            req.user!.dbId,
             dto.courseId,
             dto.returnUrl,
             dto.cancelUrl,
@@ -105,7 +93,7 @@ export class PaymentsController {
         @Param('orderCode') orderCode: string,
         @NestRequest() req: Request,
     ): Promise<PaymentVerifyResponseDto> {
-        return this.paymentsService.verifyPayment(orderCode, req.user.dbId);
+        return this.paymentsService.verifyPayment(orderCode, req.user!.dbId);
     }
 
     @Get('my-payments')
@@ -116,7 +104,7 @@ export class PaymentsController {
     })
     @ApiResponse({ status: 200, type: [PaymentListItemDto] })
     async getMyPayments(@NestRequest() req: Request): Promise<PaymentListItemDto[]> {
-        return this.paymentsService.findByUser(req.user.dbId);
+        return this.paymentsService.findByUser(req.user!.dbId);
     }
 
     // ============ Mock Endpoint (for local testing) ============

@@ -49,16 +49,20 @@ export class FirebaseAuthGuard implements CanActivate {
                 select: { id: true, role: true },
             });
 
+            // User must exist in database for protected routes
+            if (!dbUser) {
+                throw new UnauthorizedException('User not found in database. Please register first.');
+            }
+
             // Attach user info to request (including role from database)
-            request['user'] = {
+            request.user = {
                 uid: decodedToken.uid,
-                email: decodedToken.email,
+                email: decodedToken.email || '',
                 emailVerified: decodedToken.email_verified,
                 name: decodedToken.name,
-                picture: decodedToken.picture,
                 // Include database user info
-                dbId: dbUser?.id,
-                role: dbUser?.role || 'USER',
+                dbId: dbUser.id,
+                role: dbUser.role,
             };
 
             return true;

@@ -32,14 +32,6 @@ import {
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// Type for the user object attached by FirebaseAuthGuard
-interface AuthUser {
-    uid: string;
-    email: string;
-    dbId: number;
-    role: Role;
-}
-
 // DTO for reorder endpoint
 class ReorderLessonsDto {
     lessonIds!: number[];
@@ -72,7 +64,7 @@ export class LessonsController {
         @Param('courseId', ParseIntPipe) courseId: number,
         @NestRequest() req: Request,
     ): Promise<LessonListItemDto[]> {
-        const user = req['user'] as AuthUser | undefined;
+        const user = req.user;
         return this.lessonsService.findByCourse(courseId, user?.dbId, user?.role);
     }
 
@@ -99,7 +91,7 @@ export class LessonsController {
         @Param('slug') slug: string,
         @NestRequest() req: Request,
     ): Promise<LessonDetailDto> {
-        const user = req['user'] as AuthUser | undefined;
+        const user = req.user;
         return this.lessonsService.findBySlug(courseId, slug, user?.dbId, user?.role);
     }
 
@@ -129,7 +121,7 @@ export class LessonsController {
         @Body() createLessonDto: CreateLessonDto,
         @NestRequest() req: Request,
     ): Promise<LessonDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.lessonsService.create(courseId, createLessonDto, user.dbId, user.role);
     }
 
@@ -159,7 +151,7 @@ export class LessonsController {
         @Body() updateLessonDto: UpdateLessonDto,
         @NestRequest() req: Request,
     ): Promise<LessonDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.lessonsService.update(id, updateLessonDto, user.dbId, user.role);
     }
 
@@ -183,7 +175,7 @@ export class LessonsController {
         @Param('id', ParseIntPipe) id: number,
         @NestRequest() req: Request,
     ): Promise<void> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.lessonsService.delete(id, user.dbId, user.role);
     }
 
@@ -209,7 +201,7 @@ export class LessonsController {
         @Body() body: ReorderLessonsDto,
         @NestRequest() req: Request,
     ): Promise<LessonListItemDto[]> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.lessonsService.reorder(courseId, body.lessonIds, user.dbId, user.role);
     }
 }

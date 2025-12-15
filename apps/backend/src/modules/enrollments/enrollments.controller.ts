@@ -19,6 +19,7 @@ import {
     ApiBearerAuth,
     ApiParam,
 } from '@nestjs/swagger';
+import { Request } from 'express';
 import { EnrollmentsService } from './enrollments.service';
 import { EnrollDto, UpdateProgressDto, AdminUpdateEnrollmentDto, EnrollmentQueryDto } from './dto/enroll.dto';
 import {
@@ -29,18 +30,6 @@ import {
 } from './dto/enrollment-response.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-
-// Type for the user object attached by FirebaseAuthGuard
-interface AuthUser {
-    uid: string;
-    email: string;
-    dbId: number;
-    role: Role;
-}
-
-interface Request {
-    user: AuthUser;
-}
 
 @ApiTags('Enrollments')
 @ApiBearerAuth()
@@ -57,7 +46,7 @@ export class EnrollmentsController {
     })
     @ApiResponse({ status: 200, type: [EnrollmentListItemDto] })
     async getMyEnrollments(@NestRequest() req: Request): Promise<EnrollmentListItemDto[]> {
-        return this.enrollmentsService.findByUser(req.user.dbId);
+        return this.enrollmentsService.findByUser(req.user!.dbId);
     }
 
     @Get(':courseId/check')
@@ -71,7 +60,7 @@ export class EnrollmentsController {
         @Param('courseId', ParseIntPipe) courseId: number,
         @NestRequest() req: Request,
     ): Promise<EnrollmentCheckDto> {
-        return this.enrollmentsService.checkEnrollment(req.user.dbId, courseId);
+        return this.enrollmentsService.checkEnrollment(req.user!.dbId, courseId);
     }
 
     @Post()
@@ -86,7 +75,7 @@ export class EnrollmentsController {
         @Body() enrollDto: EnrollDto,
         @NestRequest() req: Request,
     ): Promise<EnrollmentDetailDto> {
-        return this.enrollmentsService.create(req.user.dbId, enrollDto.courseId);
+        return this.enrollmentsService.create(req.user!.dbId, enrollDto.courseId);
     }
 
     @Patch(':id/progress')
@@ -103,7 +92,7 @@ export class EnrollmentsController {
         @Body() dto: UpdateProgressDto,
         @NestRequest() req: Request,
     ): Promise<EnrollmentDetailDto> {
-        return this.enrollmentsService.updateProgress(id, req.user.dbId, dto.progressPercent);
+        return this.enrollmentsService.updateProgress(id, req.user!.dbId, dto.progressPercent);
     }
 
     @Post(':id/complete')
@@ -120,7 +109,7 @@ export class EnrollmentsController {
         @Param('id', ParseIntPipe) id: number,
         @NestRequest() req: Request,
     ): Promise<EnrollmentDetailDto> {
-        return this.enrollmentsService.markComplete(id, req.user.dbId);
+        return this.enrollmentsService.markComplete(id, req.user!.dbId);
     }
 
     // ============ Admin Endpoints ============

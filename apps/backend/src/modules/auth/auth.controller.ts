@@ -23,7 +23,7 @@ import { FirebaseAuthGuard } from './guards/firebase-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Public } from './decorators/public.decorator';
 import { Roles } from './decorators/roles.decorator';
-import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -58,7 +58,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   getProfile(@NestRequest() req: Request) {
     // Firebase user info + role is attached by FirebaseAuthGuard
-    return req['user'];
+    return req.user;
   }
 
   // Strict rate limiting for password reset: 3 per minute (prevent spam)
@@ -80,7 +80,7 @@ export class AuthController {
     description: 'Client should call this after refreshing Firebase ID token to get latest user data from database',
   })
   async refreshSession(@NestRequest() req: Request) {
-    const firebaseUid = (req['user'] as any).uid;
+    const firebaseUid = req.user!.uid;
     const user = await this.authService.getUserByFirebaseUid(firebaseUid);
     return { user };
   }
@@ -106,8 +106,7 @@ export class AuthController {
     @Body() updateRoleDto: UpdateRoleDto,
     @NestRequest() req: Request,
   ) {
-    const adminUserId = (req['user'] as any).dbId;
+    const adminUserId = req.user!.dbId;
     return this.authService.updateUserRole(id, updateRoleDto.role, adminUserId);
   }
 }
-

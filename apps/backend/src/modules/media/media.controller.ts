@@ -33,14 +33,6 @@ import {
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// Type for the user object attached by FirebaseAuthGuard
-interface AuthUser {
-    uid: string;
-    email: string;
-    dbId: number;
-    role: Role;
-}
-
 // DTO for reorder endpoint
 class ReorderMediaDto {
     mediaIds!: number[];
@@ -71,7 +63,7 @@ export class MediaController {
         @Param('lessonId', ParseIntPipe) lessonId: number,
         @NestRequest() req: Request,
     ): Promise<MediaResponseDto[]> {
-        const user = req['user'] as AuthUser | undefined;
+        const user = req.user;
         return this.mediaService.findByLesson(lessonId, user?.dbId, user?.role);
     }
 
@@ -97,7 +89,7 @@ export class MediaController {
         @Body() dto: PresignedUrlRequestDto,
         @NestRequest() req: Request,
     ): Promise<PresignedUrlResponseDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.mediaService.generatePresignedUrl(lessonId, dto, user.dbId, user.role);
     }
 
@@ -124,7 +116,7 @@ export class MediaController {
         @Body() dto: CreateMediaDto,
         @NestRequest() req: Request,
     ): Promise<MediaResponseDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.mediaService.create(lessonId, dto, user.dbId, user.role);
     }
 
@@ -153,7 +145,7 @@ export class MediaController {
         @Body() dto: UpdateMediaDto,
         @NestRequest() req: Request,
     ): Promise<MediaResponseDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.mediaService.update(id, dto, user.dbId, user.role);
     }
 
@@ -177,7 +169,7 @@ export class MediaController {
         @Param('id', ParseIntPipe) id: number,
         @NestRequest() req: Request,
     ): Promise<void> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.mediaService.delete(id, user.dbId, user.role);
     }
 
@@ -204,7 +196,7 @@ export class MediaController {
         @Body() body: ReorderMediaDto,
         @NestRequest() req: Request,
     ): Promise<MediaResponseDto[]> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.mediaService.reorder(lessonId, body.mediaIds, user.dbId, user.role);
     }
 
@@ -248,7 +240,7 @@ export class MediaController {
         @Param('id', ParseIntPipe) id: number,
         @NestRequest() req: Request,
     ): Promise<SignedUrlResponseDto> {
-        const user = req['user'] as AuthUser | undefined;
+        const user = req.user;
         return this.mediaService.generateSignedUrl(id, user?.dbId, user?.role);
     }
 }

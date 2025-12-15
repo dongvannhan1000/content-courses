@@ -36,14 +36,6 @@ import {
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// Type for the user object attached by FirebaseAuthGuard
-interface AuthUser {
-    uid: string;
-    email: string;
-    dbId: number;
-    role: Role;
-}
-
 @ApiTags('Courses')
 @Controller('courses')
 export class CoursesController {
@@ -104,7 +96,7 @@ export class CoursesController {
         type: [CourseListItemDto],
     })
     async getMyCourses(@NestRequest() req: Request): Promise<CourseListItemDto[]> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.coursesService.findByInstructor(user.dbId);
     }
 
@@ -153,7 +145,7 @@ export class CoursesController {
         @Body() createCourseDto: CreateCourseDto,
         @NestRequest() req: Request,
     ): Promise<CourseDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.coursesService.create(createCourseDto, user.dbId, user.role);
     }
 
@@ -183,7 +175,7 @@ export class CoursesController {
         @Body() updateCourseDto: UpdateCourseDto,
         @NestRequest() req: Request,
     ): Promise<CourseDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.coursesService.update(id, updateCourseDto, user.dbId, user.role);
     }
 
@@ -211,7 +203,7 @@ export class CoursesController {
         @Param('id', ParseIntPipe) id: number,
         @NestRequest() req: Request,
     ): Promise<CourseDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.coursesService.submitForReview(id, user.dbId, user.role);
     }
 
@@ -262,7 +254,7 @@ export class CoursesController {
         @Param('id', ParseIntPipe) id: number,
         @NestRequest() req: Request,
     ): Promise<void> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.coursesService.delete(id, user.dbId, user.role);
     }
 }

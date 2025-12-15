@@ -28,14 +28,6 @@ import {
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// Type for the user object attached by FirebaseAuthGuard
-interface AuthUser {
-    uid: string;
-    email: string;
-    dbId: number;
-    role: Role;
-}
-
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
@@ -57,7 +49,7 @@ export class UsersController {
     })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getProfile(@NestRequest() req: Request): Promise<UserProfileDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.usersService.getProfile(user.dbId);
     }
 
@@ -79,7 +71,7 @@ export class UsersController {
         @NestRequest() req: Request,
         @Body() dto: UpdateProfileDto,
     ): Promise<UserProfileDto> {
-        const user = req['user'] as AuthUser;
+        const user = req.user!;
         return this.usersService.updateProfile(user.dbId, dto);
     }
 
