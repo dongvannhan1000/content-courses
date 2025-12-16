@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Clock, Users, BookOpen, TrendingUp, Sparkles } from "lucide-react";
+import { Star, Clock, Users, BookOpen, TrendingUp, Sparkles, ShoppingCart, Check } from "lucide-react";
 import type { CourseListItem } from "@/types";
+import { useCartStore } from "@/lib/stores";
 
 interface CourseCardProps {
     course: CourseListItem;
@@ -25,12 +26,23 @@ function formatPrice(price: number): string {
 }
 
 export default function CourseCard({ course }: CourseCardProps) {
+    const { isInCart, addItem } = useCartStore();
+    const inCart = isInCart(course.id);
+
     const discountPercentage = course.discountPrice
         ? Math.round(((course.price - course.discountPrice) / course.price) * 100)
         : 0;
 
     const displayPrice = course.discountPrice || course.price;
     const originalPrice = course.discountPrice ? course.price : null;
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!inCart) {
+            addItem(course);
+        }
+    };
 
     return (
         <Link href={`/courses/${course.slug}`} className="block">
@@ -168,8 +180,24 @@ export default function CourseCard({ course }: CourseCardProps) {
                                 </span>
                             )}
                         </div>
-                        <button className="px-4 py-2 gradient-accent text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity duration-200 cursor-pointer whitespace-nowrap shadow-md shadow-accent-500/20">
-                            Mua ngay
+                        <button
+                            onClick={handleAddToCart}
+                            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${inCart
+                                    ? 'bg-green-500 text-white'
+                                    : 'gradient-accent text-white hover:opacity-90 shadow-md shadow-accent-500/20'
+                                }`}
+                        >
+                            {inCart ? (
+                                <>
+                                    <Check className="w-4 h-4" />
+                                    Đã thêm
+                                </>
+                            ) : (
+                                <>
+                                    <ShoppingCart className="w-4 h-4" />
+                                    Thêm giỏ
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
