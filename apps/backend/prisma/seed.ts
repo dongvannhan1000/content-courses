@@ -7,8 +7,24 @@ import {
     EnrollmentStatus,
     PaymentStatus,
 } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import * as dotenv from 'dotenv';
 
-const prisma = new PrismaClient();
+// Load environment variables
+dotenv.config();
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+    throw new Error('DATABASE_URL must be defined in the environment.');
+}
+
+// Initialize Pool and Adapter for Prisma 7.x
+const pool = new Pool({ connectionString: databaseUrl });
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({ adapter });
 
 // ============== HELPER FUNCTIONS ==============
 
@@ -35,98 +51,152 @@ function randomDate(start: Date, end: Date): Date {
     return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
-// ============== SEED DATA TEMPLATES ==============
+// ============== CONTENT MARKETING SEED DATA ==============
 
-const COURSE_TITLES = [
-    // Web Development
-    'React.js Tu Co Ban Den Nang Cao',
-    'Vue.js 3: Complete Developer Guide',
-    'Angular 17 - Full Course',
-    'Next.js 14 - Build Production Apps',
-    'TypeScript Mastery',
-    'Node.js Backend Development',
-    'NestJS Enterprise Backend',
-    'Express.js REST API',
-    'GraphQL voi Apollo',
-    'MongoDB Complete Guide',
-    'PostgreSQL cho Developers',
-    'Redis Caching Strategies',
-    // Mobile
-    'React Native cho Beginners',
-    'Flutter Complete Course',
-    'Swift iOS Development',
-    'Kotlin Android Masterclass',
-    // Data Science
-    'Python cho Data Science',
-    'Machine Learning co ban',
-    'Deep Learning voi TensorFlow',
-    'Data Analysis voi Pandas',
-    'SQL cho Data Analyst',
-    // DevOps
-    'Docker Complete Guide',
-    'Kubernetes trong Production',
-    'CI/CD voi GitHub Actions',
-    'AWS Cloud Practitioner',
-    'Terraform Infrastructure',
-    // Others
-    'Git va GitHub',
-    'Linux cho Developers',
-    'Clean Code Practices',
-    'Design Patterns',
-    'System Design Interview',
+// Course templates - each will be multiplied by variations
+const COURSE_TEMPLATES = [
+    {
+        title: 'Content Marketing từ Zero đến Hero',
+        shortDesc: 'Khóa học toàn diện về Content Marketing, từ cơ bản đến nâng cao. Học cách xây dựng chiến lược nội dung, viết content hấp dẫn.',
+        thumbnail: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&h=450&fit=crop',
+        categorySlug: 'content-marketing',
+    },
+    {
+        title: 'SEO Content Writing chuyên nghiệp',
+        shortDesc: 'Nắm vững kỹ thuật viết content chuẩn SEO, tăng traffic tự nhiên cho website. Học từ chuyên gia nhiều năm kinh nghiệm.',
+        thumbnail: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=800&h=450&fit=crop',
+        categorySlug: 'seo',
+    },
+    {
+        title: 'Social Media Content Creator',
+        shortDesc: 'Trở thành Content Creator chuyên nghiệp trên các nền tảng mạng xã hội. Học cách tạo nội dung viral.',
+        thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=450&fit=crop',
+        categorySlug: 'social-media',
+    },
+    {
+        title: 'Video Content Marketing',
+        shortDesc: 'Làm chủ video marketing từ ý tưởng, kịch bản, quay dựng đến phân phối. Tối ưu hiệu quả với ngân sách hợp lý.',
+        thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=450&fit=crop',
+        categorySlug: 'video-marketing',
+    },
+    {
+        title: 'Email Marketing & Automation',
+        shortDesc: 'Xây dựng hệ thống email marketing tự động, tăng conversion và giữ chân khách hàng hiệu quả.',
+        thumbnail: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=450&fit=crop',
+        categorySlug: 'email-marketing',
+    },
+    {
+        title: 'Content Strategy & Planning',
+        shortDesc: 'Học cách xây dựng chiến lược content dài hạn, lập kế hoạch nội dung, và quản lý content calendar chuyên nghiệp.',
+        thumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=450&fit=crop',
+        categorySlug: 'strategy',
+    },
+    {
+        title: 'Copywriting thuyết phục',
+        shortDesc: 'Nghệ thuật viết copy bán hàng, tạo headline hấp dẫn, CTA hiệu quả. Tăng tỷ lệ chuyển đổi cho mọi chiến dịch.',
+        thumbnail: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&h=450&fit=crop',
+        categorySlug: 'content-writing',
+    },
+    {
+        title: 'TikTok Marketing',
+        shortDesc: 'Chinh phục TikTok cho doanh nghiệp. Tạo video trend, xây dựng cộng đồng, và chạy quảng cáo hiệu quả.',
+        thumbnail: 'https://images.unsplash.com/photo-1611605698335-8b1569810432?w=800&h=450&fit=crop',
+        categorySlug: 'social-media',
+    },
+    {
+        title: 'YouTube SEO và Growth',
+        shortDesc: 'Tối ưu kênh YouTube từ A-Z. Nghiên cứu keyword, tối ưu video, tăng subscriber và monetization.',
+        thumbnail: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=800&h=450&fit=crop',
+        categorySlug: 'video-marketing',
+    },
+    {
+        title: 'Storytelling trong Marketing',
+        shortDesc: 'Sức mạnh của câu chuyện trong marketing. Học cách kể chuyện thương hiệu, tạo emotional connection.',
+        thumbnail: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=800&h=450&fit=crop',
+        categorySlug: 'strategy',
+    },
+    {
+        title: 'Personal Branding',
+        shortDesc: 'Xây dựng thương hiệu cá nhân mạnh mẽ. Định vị bản thân, tạo ảnh hưởng trên mạng xã hội.',
+        thumbnail: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=800&h=450&fit=crop',
+        categorySlug: 'strategy',
+    },
+    {
+        title: 'AI trong Content Marketing',
+        shortDesc: 'Ứng dụng AI và ChatGPT trong content marketing. Tăng năng suất, tối ưu workflow sáng tạo nội dung.',
+        thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=450&fit=crop',
+        categorySlug: 'content-marketing',
+    },
 ];
 
-const LESSON_TEMPLATES = [
-    'Gioi thieu khoa hoc',
-    'Cai dat moi truong',
-    'Khoi tao du an',
-    'Cau truc thu muc',
-    'Cu phap co ban',
-    'Variables va Data Types',
-    'Functions va Methods',
-    'Control Flow',
-    'Loops va Iterations',
-    'Arrays va Collections',
-    'Object-Oriented Programming',
-    'Error Handling',
-    'Async Programming',
-    'API Integration',
-    'State Management',
-    'Testing Basics',
-    'Unit Testing',
-    'Integration Testing',
-    'Performance Optimization',
-    'Security Best Practices',
-    'Deployment',
-    'CI/CD Setup',
-    'Monitoring',
-    'Du an thuc hanh 1',
-    'Du an thuc hanh 2',
-    'Tong ket khoa hoc',
-];
-
-const REVIEW_COMMENTS = [
-    'Khoa hoc rat hay va de hieu! Giang vien giai thich rat chi tiet.',
-    'Noi dung phong phu, practical, ap dung duoc ngay vao du an.',
-    'Dang dong tien bo ra, recommend cho moi nguoi.',
-    'Tot nhung can them mot so vi du thuc te.',
-    'Giang vien nhiet tinh, support nhanh.',
-    'Khoa hoc cap nhat theo trend moi nhat.',
-    'Video chat luong cao, am thanh ro rang.',
-    'Hoc xong la co the di lam duoc luon!',
-    'Can them exercises va projects thuc hanh.',
-    'Perfect course! 5 stars!',
-    'Rat hai long voi khoa hoc nay.',
-    'Da hoan thanh va nhan duoc cong viec moi!',
+// Variations to multiply courses
+const COURSE_VARIATIONS = [
+    { suffix: '', levelIndex: 0 },      // Original - Beginner
+    { suffix: ' - Nâng cao', levelIndex: 1 },  // Advanced version - Intermediate
+    { suffix: ' - Thực chiến', levelIndex: 2 }, // Practical version - Advanced
 ];
 
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
-const PRICES = [299000, 399000, 499000, 599000, 699000, 799000, 899000, 999000, 1299000, 1499000];
+
+// Content Marketing specific lesson templates
+const LESSON_TEMPLATES = [
+    'Giới thiệu khóa học',
+    'Tổng quan về lĩnh vực',
+    'Nghiên cứu đối tượng mục tiêu',
+    'Phân tích đối thủ cạnh tranh',
+    'Xây dựng buyer persona',
+    'Lập kế hoạch content calendar',
+    'Nghiên cứu keyword và trends',
+    'Viết headline hấp dẫn',
+    'Cấu trúc bài viết hiệu quả',
+    'Kỹ thuật storytelling',
+    'Tối ưu SEO on-page',
+    'Sử dụng hình ảnh và media',
+    'Call-to-action hiệu quả',
+    'A/B testing content',
+    'Phân tích metrics và KPIs',
+    'Công cụ hỗ trợ sáng tạo',
+    'Tối ưu workflow làm việc',
+    'Case study thực tế',
+    'Dự án thực hành 1',
+    'Dự án thực hành 2',
+    'Review và feedback',
+    'Tổng kết khóa học',
+];
+
+// Content Marketing specific review comments
+const REVIEW_COMMENTS = [
+    'Khóa học rất hay và thực tế! Giảng viên giải thích rõ ràng, dễ hiểu.',
+    'Nội dung phong phu, áp dụng được ngay vào công việc. Recommend 100%!',
+    'Đáng đồng tiền bỏ ra. Học xong đã tự tin làm content cho công ty.',
+    'Giảng viên nhiệt tình, support nhanh. Có cộng đồng học viên hỗ trợ nhau.',
+    'Khóa học cập nhật theo trend mới nhất. Video chất lượng cao.',
+    'Từ zero giờ đã có thể tự viết content chuẩn SEO. Cảm ơn giảng viên!',
+    'Case study thực tế rất bổ ích. Áp dụng ngay được cho dự án.',
+    'Perfect course! Learned a lot about content strategy.',
+    'Rất hài lòng với khóa học này. Đã recommend cho team marketing.',
+    'Nội dung chi tiết, từ cơ bản đến nâng cao. Worth every penny!',
+    'Sau khóa học traffic website tăng 200%. Quá tuyệt vời!',
+    'Giảng viên chia sẻ nhiều kinh nghiệm thực chiến quý giá.',
+];
+
+// Prices range (VND)
+const PRICES = [990000, 1290000, 1490000, 1790000, 1990000, 2290000, 2490000, 2790000, 2990000, 3290000];
+
+// Instructor data templates
+const INSTRUCTOR_PROFILES = [
+    { name: 'Nguyễn Minh Anh', bio: 'Senior Content Strategist với 10 năm kinh nghiệm tại các agency hàng đầu', avatar: 12 },
+    { name: 'Trần Thị Bình', bio: 'SEO Expert, đã giúp 100+ doanh nghiệp tăng traffic organic', avatar: 45 },
+    { name: 'Lê Hoàng Dũng', bio: 'Social Media Manager, cựu Marketing Lead tại startup unicorn', avatar: 33 },
+    { name: 'Phạm Thu Hà', bio: 'Video Marketing Specialist, YouTuber 500K subscribers', avatar: 27 },
+    { name: 'Hoàng Văn Khoa', bio: 'Email Marketing Consultant, chuyên gia automation', avatar: 56 },
+    { name: 'Đỗ Thanh Lan', bio: 'Content Strategist, tác giả sách về Digital Marketing', avatar: 41 },
+];
 
 // ============== MAIN SEED FUNCTION ==============
 
 async function main() {
-    console.log('🌱 Starting seed (using existing Firebase users)...\n');
+    console.log('🌱 Starting Content Marketing seed...\n');
 
     // Clean existing data EXCEPT users (in reverse order of dependencies)
     console.log('🧹 Cleaning existing data (keeping users)...');
@@ -162,58 +232,83 @@ async function main() {
         return;
     }
 
-    if (students.length === 0) {
-        console.log('\n⚠️  No students found! Courses will be created but no enrollments.\n');
+    // Update instructor profiles with photoURL and bio if missing
+    console.log('📝 Updating instructor profiles...');
+    for (let i = 0; i < instructors.length; i++) {
+        const profile = INSTRUCTOR_PROFILES[i % INSTRUCTOR_PROFILES.length];
+        await prisma.user.update({
+            where: { id: instructors[i].id },
+            data: {
+                photoURL: instructors[i].photoURL || `https://i.pravatar.cc/150?img=${profile.avatar}`,
+                bio: instructors[i].bio || profile.bio,
+                name: instructors[i].name || profile.name,
+            },
+        });
     }
+    console.log('✅ Instructor profiles updated\n');
+
+    // Refresh instructors after update
+    const updatedInstructors = await prisma.user.findMany({
+        where: { role: Role.INSTRUCTOR },
+    });
 
     console.log('✅ Users ready\n');
 
     // ============== CATEGORIES ==============
-    console.log('📁 Creating categories...');
+    console.log('📁 Creating Content Marketing categories...');
     const mainCategories = await Promise.all([
         prisma.category.create({
             data: {
-                name: 'Lap trinh Web',
-                slug: 'lap-trinh-web',
-                description: 'Cac khoa hoc ve phat trien web frontend va backend',
-                icon: 'code',
+                name: 'Content Marketing',
+                slug: 'content-marketing',
+                description: 'Chiến lược và kỹ thuật content marketing tổng thể',
+                icon: 'edit',
                 order: 1,
             },
         }),
         prisma.category.create({
             data: {
-                name: 'Lap trinh Mobile',
-                slug: 'lap-trinh-mobile',
-                description: 'Phat trien ung dung iOS va Android',
-                icon: 'smartphone',
+                name: 'SEO',
+                slug: 'seo',
+                description: 'Tối ưu hóa công cụ tìm kiếm và content SEO',
+                icon: 'search',
                 order: 2,
             },
         }),
         prisma.category.create({
             data: {
-                name: 'Data Science',
-                slug: 'data-science',
-                description: 'Machine Learning, AI va phan tich du lieu',
-                icon: 'chart-bar',
+                name: 'Social Media',
+                slug: 'social-media',
+                description: 'Marketing trên các nền tảng mạng xã hội',
+                icon: 'share',
                 order: 3,
             },
         }),
         prisma.category.create({
             data: {
-                name: 'DevOps va Cloud',
-                slug: 'devops-cloud',
-                description: 'CI/CD, Docker, Kubernetes va Cloud',
-                icon: 'server',
+                name: 'Video Marketing',
+                slug: 'video-marketing',
+                description: 'Sản xuất và marketing video content',
+                icon: 'video',
                 order: 4,
             },
         }),
         prisma.category.create({
             data: {
-                name: 'Ky nang chung',
-                slug: 'ky-nang-chung',
-                description: 'Git, Linux, Clean Code va cac ky nang co ban',
-                icon: 'book',
+                name: 'Email Marketing',
+                slug: 'email-marketing',
+                description: 'Email marketing và automation',
+                icon: 'mail',
                 order: 5,
+            },
+        }),
+        prisma.category.create({
+            data: {
+                name: 'Strategy',
+                slug: 'strategy',
+                description: 'Chiến lược content và branding',
+                icon: 'target',
+                order: 6,
             },
         }),
     ]);
@@ -221,71 +316,59 @@ async function main() {
     // Subcategories
     const subCategories = await Promise.all([
         prisma.category.create({
-            data: { name: 'Frontend', slug: 'frontend', parentId: mainCategories[0].id, order: 1 },
+            data: { name: 'Content Writing', slug: 'content-writing', parentId: mainCategories[0].id, order: 1 },
         }),
         prisma.category.create({
-            data: { name: 'Backend', slug: 'backend', parentId: mainCategories[0].id, order: 2 },
+            data: { name: 'Copywriting', slug: 'copywriting', parentId: mainCategories[0].id, order: 2 },
         }),
         prisma.category.create({
-            data: { name: 'Database', slug: 'database', parentId: mainCategories[0].id, order: 3 },
+            data: { name: 'On-page SEO', slug: 'on-page-seo', parentId: mainCategories[1].id, order: 1 },
         }),
         prisma.category.create({
-            data: { name: 'iOS', slug: 'ios', parentId: mainCategories[1].id, order: 1 },
+            data: { name: 'Link Building', slug: 'link-building', parentId: mainCategories[1].id, order: 2 },
         }),
         prisma.category.create({
-            data: { name: 'Android', slug: 'android', parentId: mainCategories[1].id, order: 2 },
+            data: { name: 'Facebook Marketing', slug: 'facebook-marketing', parentId: mainCategories[2].id, order: 1 },
         }),
         prisma.category.create({
-            data: { name: 'Cross-platform', slug: 'cross-platform', parentId: mainCategories[1].id, order: 3 },
+            data: { name: 'TikTok Marketing', slug: 'tiktok-marketing', parentId: mainCategories[2].id, order: 2 },
         }),
     ]);
 
     const allCategories = [...mainCategories, ...subCategories];
+    const categoryMap = new Map(allCategories.map(c => [c.slug, c.id]));
     console.log(`✅ Created ${allCategories.length} categories\n`);
 
-    // ============== COURSES ==============
+    // ============== COURSES (36 courses) ==============
     console.log('📚 Creating courses...');
     const courses = [];
 
-    // Simple category assignment based on course index ranges
-    const getCategoryForCourse = (index: number): number | null => {
-        if (index <= 4) return subCategories[0]?.id || null; // Frontend (0-4)
-        if (index <= 8) return subCategories[1]?.id || null; // Backend (5-8)
-        if (index <= 11) return subCategories[2]?.id || null; // Database (9-11)
-        if (index === 12) return subCategories[5]?.id || null; // Cross-platform - React Native
-        if (index <= 14) return subCategories[5]?.id || null; // Cross-platform - Flutter
-        if (index === 15) return subCategories[4]?.id || null; // Android - Kotlin
-        if (index <= 20) return mainCategories[2]?.id || null; // Data Science (16-20)
-        if (index <= 25) return mainCategories[3]?.id || null; // DevOps (21-25)
-        return mainCategories[4]?.id || null; // Ky nang chung (26+)
-    };
+    for (const template of COURSE_TEMPLATES) {
+        for (const variation of COURSE_VARIATIONS) {
+            const title = template.title + variation.suffix;
+            const price = randomElement(PRICES);
+            const hasDiscount = Math.random() > 0.4; // 60% have discount
+            const isPublished = Math.random() > 0.15; // 85% published
 
-    for (let i = 0; i < COURSE_TITLES.length; i++) {
-        const title = COURSE_TITLES[i];
-        const price = randomElement(PRICES);
-        const hasDiscount = Math.random() > 0.5;
-        const isPublished = Math.random() > 0.2; // 80% published
-
-        const categoryId = getCategoryForCourse(i);
-
-        const course = await prisma.course.create({
-            data: {
-                title,
-                slug: slugify(title),
-                description: `Khoa hoc ${title} tu co ban den nang cao. Ban se hoc duoc cac kien thuc va ky nang can thiet de lam viec chuyen nghiep. Khoa hoc bao gom nhieu bai tap thuc hanh va du an thuc te.`,
-                shortDesc: `Lam chu ${title} voi du an thuc te`,
-                thumbnail: `https://picsum.photos/seed/${i}/800/450`,
-                price,
-                discountPrice: hasDiscount ? Math.floor(price * 0.7) : null,
-                status: isPublished ? CourseStatus.PUBLISHED : CourseStatus.DRAFT,
-                level: randomElement(LEVELS),
-                duration: randomInt(600, 2400), // 10-40 hours
-                instructorId: randomElement(instructors).id,
-                categoryId,
-                publishedAt: isPublished ? randomDate(new Date('2024-01-01'), new Date()) : null,
-            },
-        });
-        courses.push(course);
+            const course = await prisma.course.create({
+                data: {
+                    title,
+                    slug: slugify(title),
+                    description: `${template.shortDesc}\n\nTrong khóa học này, bạn sẽ được học các kiến thức và kỹ năng thực tế từ chuyên gia hàng đầu trong ngành. Nội dung được cập nhật liên tục theo xu hướng mới nhất.`,
+                    shortDesc: template.shortDesc,
+                    thumbnail: template.thumbnail,
+                    price,
+                    discountPrice: hasDiscount ? Math.floor(price * (0.6 + Math.random() * 0.15)) : null,
+                    status: isPublished ? CourseStatus.PUBLISHED : CourseStatus.DRAFT,
+                    level: LEVELS[variation.levelIndex],
+                    duration: randomInt(28800, 72000), // 8-20 hours in seconds
+                    instructorId: randomElement(updatedInstructors).id,
+                    categoryId: categoryMap.get(template.categorySlug) || mainCategories[0].id,
+                    publishedAt: isPublished ? randomDate(new Date('2024-06-01'), new Date()) : null,
+                },
+            });
+            courses.push(course);
+        }
     }
     console.log(`✅ Created ${courses.length} courses\n`);
 
@@ -295,11 +378,11 @@ async function main() {
     const allLessons = [];
 
     for (const course of courses) {
-        const lessonCount = randomInt(12, 26); // 12-26 lessons per course
+        const lessonCount = randomInt(15, 25);
         for (let i = 0; i < lessonCount; i++) {
             const title = i < LESSON_TEMPLATES.length
                 ? `${i + 1}. ${LESSON_TEMPLATES[i]}`
-                : `${i + 1}. Bai hoc bo sung ${i - LESSON_TEMPLATES.length + 1}`;
+                : `${i + 1}. Bài học bổ sung ${i - LESSON_TEMPLATES.length + 1}`;
 
             const isDocument = Math.random() > 0.85; // 15% documents
             const isFree = i < 2; // First 2 lessons are free
@@ -308,11 +391,11 @@ async function main() {
                 data: {
                     title,
                     slug: slugify(title.replace(/^\d+\.\s*/, '')),
-                    description: `Noi dung bai hoc: ${title}`,
+                    description: `Nội dung bài học: ${title}`,
                     type: isDocument ? LessonType.DOCUMENT : LessonType.VIDEO,
-                    content: isDocument ? `# ${title}\n\nNoi dung tai lieu bai hoc...` : null,
+                    content: isDocument ? `# ${title}\n\nNội dung tài liệu bài học...` : null,
                     order: i + 1,
-                    duration: isDocument ? 0 : randomInt(10, 60),
+                    duration: isDocument ? 0 : randomInt(300, 1800), // 5-30 minutes in seconds
                     isFree,
                     isPublished: course.status === CourseStatus.PUBLISHED,
                     courseId: course.id,
@@ -337,7 +420,7 @@ async function main() {
                 url: `https://example.bunny.net/videos/${lesson.slug}.mp4`,
                 filename: `${lesson.slug}.mp4`,
                 mimeType: 'video/mp4',
-                duration: (lesson.duration || 15) * 60, // Convert to seconds
+                duration: lesson.duration,
                 lessonId: lesson.id,
             },
         });
@@ -354,8 +437,8 @@ async function main() {
         const publishedCourses = courses.filter((c) => c.status === CourseStatus.PUBLISHED);
 
         for (const student of students) {
-            // Each student enrolls in 2-5 random courses
-            const enrollCount = Math.min(randomInt(2, 5), publishedCourses.length);
+            // Each student enrolls in 3-8 random courses
+            const enrollCount = Math.min(randomInt(3, 8), publishedCourses.length);
             const enrolledCourses = [...publishedCourses]
                 .sort(() => Math.random() - 0.5)
                 .slice(0, enrollCount);
@@ -422,8 +505,8 @@ async function main() {
                     await prisma.progress.create({
                         data: {
                             isCompleted,
-                            watchedSeconds: Math.floor((lesson.duration || 15) * 60 * (watchedPercent / 100)),
-                            lastPosition: isCompleted ? 0 : randomInt(0, (lesson.duration || 15) * 60),
+                            watchedSeconds: Math.floor(lesson.duration * (watchedPercent / 100)),
+                            lastPosition: isCompleted ? 0 : randomInt(0, lesson.duration),
                             completedAt: isCompleted ? randomDate(enrollment.enrolledAt, new Date()) : null,
                             userId: enrollment.userId,
                             lessonId: lesson.id,
@@ -440,17 +523,17 @@ async function main() {
         let totalReviews = 0;
 
         // Only completed or high-progress enrollments can leave reviews
-        const reviewableEnrollments = enrollments.filter((e) => e.progressPercent >= 50);
+        const reviewableEnrollments = enrollments.filter((e) => e.progressPercent >= 40);
 
         for (const enrollment of reviewableEnrollments) {
-            // 70% chance to leave a review
-            if (Math.random() > 0.3) {
+            // 75% chance to leave a review
+            if (Math.random() > 0.25) {
                 const rating = randomInt(3, 5); // Mostly positive reviews
                 await prisma.review.create({
                     data: {
                         rating,
                         comment: randomElement(REVIEW_COMMENTS),
-                        isApproved: Math.random() > 0.1, // 90% approved
+                        isApproved: Math.random() > 0.05, // 95% approved
                         userId: enrollment.userId,
                         courseId: enrollment.courseId,
                     },
@@ -465,11 +548,11 @@ async function main() {
 
     // ============== SUMMARY ==============
     console.log('═══════════════════════════════════════');
-    console.log('🎉 Seed completed successfully!');
+    console.log('🎉 Content Marketing Seed completed!');
     console.log('═══════════════════════════════════════');
     console.log('\n📊 Summary:');
     console.log(`  Categories:   ${allCategories.length}`);
-    console.log(`  Instructors:  ${instructors.length} (existing)`);
+    console.log(`  Instructors:  ${updatedInstructors.length} (updated profiles)`);
     console.log(`  Students:     ${students.length} (existing)`);
     console.log(`  Courses:      ${courses.length}`);
     console.log(`  Lessons:      ${totalLessons}`);
@@ -484,4 +567,5 @@ main()
     })
     .finally(async () => {
         await prisma.$disconnect();
+        await pool.end();
     });
