@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { CourseListItem, PaginatedResponse } from "@/types";
+import type { CourseListItem, CourseDetail, PaginatedResponse } from "@/types";
 
 export interface CourseFilters {
     page?: number;
@@ -9,24 +9,38 @@ export interface CourseFilters {
     minPrice?: number;
     maxPrice?: number;
     search?: string;
-    sort?: "price_asc" | "price_desc" | "rating" | "newest" | "popular";
+    sortBy?: "price" | "newest" | "popular" | "rating";
+    sortOrder?: "asc" | "desc";
+}
+
+// Map frontend sort to backend params
+function mapSortParams(filters: CourseFilters): Record<string, unknown> {
+    const params: Record<string, unknown> = { ...filters };
+
+    // Remove undefined values
+    Object.keys(params).forEach(key => {
+        if (params[key] === undefined) delete params[key];
+    });
+
+    return params;
 }
 
 export const coursesApi = {
     // Get all courses with filters
     getAll: async (filters: CourseFilters = {}): Promise<PaginatedResponse<CourseListItem>> => {
-        const { data } = await apiClient.get("/courses", { params: filters });
+        const params = mapSortParams(filters);
+        const { data } = await apiClient.get("/courses", { params });
         return data;
     },
 
     // Get course by slug
-    getBySlug: async (slug: string) => {
-        const { data } = await apiClient.get(`/courses/slug/${slug}`);
+    getBySlug: async (slug: string): Promise<CourseDetail> => {
+        const { data } = await apiClient.get(`/courses/${slug}`);
         return data;
     },
 
     // Get course by ID
-    getById: async (id: number) => {
+    getById: async (id: number): Promise<CourseDetail> => {
         const { data } = await apiClient.get(`/courses/${id}`);
         return data;
     },
@@ -38,14 +52,7 @@ export const coursesApi = {
         });
         return data;
     },
-
-    // Get courses by category
-    getByCategory: async (categorySlug: string, limit: number = 12) => {
-        const { data } = await apiClient.get(`/courses/category/${categorySlug}`, {
-            params: { limit },
-        });
-        return data;
-    },
 };
 
 export default coursesApi;
+

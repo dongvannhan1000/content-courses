@@ -1,9 +1,10 @@
 "use client";
 
 import { Star, Check } from "lucide-react";
-import { mockCategories } from "@/lib/mockData";
+import type { Category } from "@/types";
 
 interface FilterSidebarProps {
+    categories: Category[];
     selectedCategories: string[];
     selectedPriceRange: string | null;
     selectedRating: number | null;
@@ -20,6 +21,7 @@ const priceRanges = [
 ];
 
 export default function FilterSidebar({
+    categories,
     selectedCategories,
     selectedPriceRange,
     selectedRating,
@@ -45,27 +47,37 @@ export default function FilterSidebar({
             <div className="space-y-4">
                 <h4 className="font-semibold text-gray-900 dark:text-white">Danh mục</h4>
                 <div className="space-y-2">
-                    {mockCategories.map((category) => (
-                        <label
-                            key={category.id}
-                            className="flex items-center gap-3 cursor-pointer group"
-                        >
-                            <div
-                                className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${selectedCategories.includes(category.name)
+                    {categories.length > 0 ? (
+                        categories.map((category) => (
+                            <label
+                                key={category.id}
+                                className="flex items-center gap-3 cursor-pointer group"
+                            >
+                                <div
+                                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${selectedCategories.includes(category.slug)
                                         ? "bg-primary-500 border-primary-500"
                                         : "border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 group-hover:border-primary-400"
-                                    }`}
-                                onClick={() => onCategoryChange(category.name)}
-                            >
-                                {selectedCategories.includes(category.name) && (
-                                    <Check className="w-3.5 h-3.5 text-white" />
-                                )}
+                                        }`}
+                                    onClick={() => onCategoryChange(category.slug)}
+                                >
+                                    {selectedCategories.includes(category.slug) && (
+                                        <Check className="w-3.5 h-3.5 text-white" />
+                                    )}
+                                </div>
+                                <span className="text-gray-600 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                    {category.name}
+                                </span>
+                            </label>
+                        ))
+                    ) : (
+                        // Skeleton loading
+                        Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="flex items-center gap-3 animate-pulse">
+                                <div className="w-5 h-5 rounded-md bg-gray-200 dark:bg-gray-700" />
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24" />
                             </div>
-                            <span className="text-gray-600 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                                {category.name}
-                            </span>
-                        </label>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 
@@ -80,8 +92,8 @@ export default function FilterSidebar({
                         >
                             <div
                                 className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${selectedPriceRange === range.id
-                                        ? "border-primary-500"
-                                        : "border-gray-300 dark:border-gray-600 group-hover:border-primary-400"
+                                    ? "border-primary-500"
+                                    : "border-gray-300 dark:border-gray-600 group-hover:border-primary-400"
                                     }`}
                                 onClick={() => onPriceChange(range.id)}
                             >
@@ -109,8 +121,8 @@ export default function FilterSidebar({
                         >
                             <div
                                 className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${selectedRating === rating
-                                        ? "border-primary-500"
-                                        : "border-gray-300 dark:border-gray-600 group-hover:border-primary-400"
+                                    ? "border-primary-500"
+                                    : "border-gray-300 dark:border-gray-600 group-hover:border-primary-400"
                                     }`}
                             >
                                 {selectedRating === rating && (
@@ -123,8 +135,8 @@ export default function FilterSidebar({
                                         <Star
                                             key={i}
                                             className={`w-4 h-4 ${i < rating
-                                                    ? "fill-yellow-400 text-yellow-400"
-                                                    : "fill-gray-200 dark:fill-gray-700 text-gray-200 dark:text-gray-700"
+                                                ? "fill-yellow-400 text-yellow-400"
+                                                : "fill-gray-200 dark:fill-gray-700 text-gray-200 dark:text-gray-700"
                                                 }`}
                                         />
                                     ))}

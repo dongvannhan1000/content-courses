@@ -3,11 +3,49 @@ import Hero from "@/components/Hero";
 import CourseCard from "@/components/CourseCard";
 import StudentExperience from "@/components/StudentExperience";
 import Footer from "@/components/Footer";
-import { mockCourses, mockCategories } from "@/lib/mockData";
 import { Filter, SlidersHorizontal, BookOpen, Users, Award, Star } from "lucide-react";
 import Link from "next/link";
+import type { CourseListItem, Category } from "@/types";
 
-export default function Home() {
+// Server-side data fetching
+async function getFeaturedCourses(): Promise<CourseListItem[]> {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+        const res = await fetch(`${apiUrl}/courses/featured?limit=6`, {
+            next: { revalidate: 60 }, // Revalidate every 60 seconds
+        });
+        if (!res.ok) throw new Error("Failed to fetch courses");
+        return res.json();
+    } catch (error) {
+        console.error("Error fetching featured courses:", error);
+        return [];
+    }
+}
+
+async function getCategories(): Promise<Category[]> {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+        const res = await fetch(`${apiUrl}/categories`, {
+            next: { revalidate: 300 }, // Revalidate every 5 minutes
+        });
+        if (!res.ok) throw new Error("Failed to fetch categories");
+        return res.json();
+    } catch (error) {
+        console.error("Error fetching categories:", error);
+        return [];
+    }
+}
+
+export default async function Home() {
+    // Fetch data in parallel
+    const [courses, categories] = await Promise.all([
+        getFeaturedCourses(),
+        getCategories(),
+    ]);
+
+    // Filter to only show main categories (no parent)
+    const mainCategories = categories.filter(cat => !('parentId' in cat) || cat.parentId === null);
+
     return (
         <main className="min-h-screen">
             {/* Header */}
@@ -29,23 +67,34 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {mockCategories.map((category) => (
-                            <Link
-                                key={category.id}
-                                href={`/courses?category=${category.slug}`}
-                                className="group glass rounded-2xl p-6 text-center card-hover cursor-pointer"
-                            >
-                                <div className="w-12 h-12 mx-auto mb-4 gradient-primary rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                                    <BookOpen className="w-6 h-6 text-white" />
+                        {mainCategories.length > 0 ? (
+                            mainCategories.slice(0, 6).map((category) => (
+                                <Link
+                                    key={category.id}
+                                    href={`/courses?category=${category.slug}`}
+                                    className="group glass rounded-2xl p-6 text-center card-hover cursor-pointer"
+                                >
+                                    <div className="w-12 h-12 mx-auto mb-4 gradient-primary rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                                        <BookOpen className="w-6 h-6 text-white" />
+                                    </div>
+                                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+                                        {category.name}
+                                    </h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {category.courseCount || 0} khóa học
+                                    </p>
+                                </Link>
+                            ))
+                        ) : (
+                            // Skeleton loading state
+                            Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="glass rounded-2xl p-6 text-center animate-pulse">
+                                    <div className="w-12 h-12 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mx-auto mb-2" />
+                                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mx-auto" />
                                 </div>
-                                <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
-                                    {category.name}
-                                </h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {category.courseCount} khóa học
-                                </p>
-                            </Link>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
@@ -115,9 +164,23 @@ export default function Home() {
 
                     {/* Course Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {mockCourses.map((course) => (
-                            <CourseCard key={course.id} course={course} />
-                        ))}
+                        {courses.length > 0 ? (
+                            courses.map((course) => (
+                                <CourseCard key={course.id} course={course} />
+                            ))
+                        ) : (
+                            // Skeleton loading state
+                            Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="glass rounded-2xl overflow-hidden animate-pulse">
+                                    <div className="h-48 bg-gray-200 dark:bg-gray-700" />
+                                    <div className="p-6 space-y-4">
+                                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
 
                     {/* Load More Button */}
