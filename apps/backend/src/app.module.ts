@@ -19,6 +19,7 @@ import { LessonsModule } from './modules/lessons/lessons.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { MediaModule } from './modules/media/media.module';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { MediaModule } from './modules/media/media.module';
     EnrollmentsModule,
     PaymentsModule,
     MediaModule,
+    CartModule,
     PrismaModule,
     // Rate limiting configuration
     ThrottlerModule.forRoot([

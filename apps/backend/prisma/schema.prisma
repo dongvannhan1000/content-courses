@@ -68,6 +68,7 @@ model User {
   progress    Progress[]
   reviews     Review[]
   payments    Payment[]
+  cartItems   CartItem[]
 
   @@index([email])
   @@index([firebaseUid])
@@ -117,6 +118,7 @@ model Course {
   lessons     Lesson[]
   enrollments Enrollment[]
   reviews     Review[]
+  cartItems   CartItem[]
 
   publishedAt DateTime? @map("published_at")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -265,4 +267,18 @@ model Review {
   @@unique([userId, courseId])
   @@index([courseId])
   @@map("reviews")
+}
+
+model CartItem {
+  id       Int      @id @default(autoincrement())
+  userId   Int      @map("user_id")
+  courseId Int      @map("course_id")
+  addedAt  DateTime @default(now()) @map("added_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@map("cart_items")
 }
