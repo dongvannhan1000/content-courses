@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -7,6 +7,8 @@ import { CourseStatus } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
+    private readonly logger = new Logger(CategoriesService.name);
+
     constructor(private prisma: PrismaService) { }
 
     /**
@@ -16,6 +18,7 @@ export class CategoriesService {
      * Uses Prisma _count to avoid N+1 queries
      */
     async findAll(): Promise<CategoryTreeItemDto[]> {
+        this.logger.log('Getting all categories (tree structure)');
         const categories = await this.prisma.category.findMany({
             where: {
                 isActive: true,
@@ -54,6 +57,7 @@ export class CategoriesService {
      * Used for: Category detail page
      */
     async findBySlug(slug: string): Promise<CategoryDetailDto> {
+        this.logger.log(`Getting category by slug: ${slug}`);
         const category = await this.prisma.category.findUnique({
             where: { slug },
             include: {
@@ -102,6 +106,7 @@ export class CategoriesService {
      * Used for: Admin dashboard - category management
      */
     async create(dto: CreateCategoryDto): Promise<CategoryDto> {
+        this.logger.log(`Creating category: ${dto.name} (slug: ${dto.slug})`);
         // Check slug uniqueness
         const existing = await this.prisma.category.findUnique({
             where: { slug: dto.slug },
@@ -140,6 +145,7 @@ export class CategoriesService {
      * Used for: Admin dashboard - category management
      */
     async update(id: number, dto: UpdateCategoryDto): Promise<CategoryDto> {
+        this.logger.log(`Updating category: ${id}`);
         // Check if category exists
         const existing = await this.prisma.category.findUnique({
             where: { id },
@@ -197,6 +203,7 @@ export class CategoriesService {
      * Note: Consider using soft delete (isActive = false) instead
      */
     async delete(id: number): Promise<void> {
+        this.logger.log(`Deleting category: ${id}`);
         const category = await this.prisma.category.findUnique({
             where: { id },
             include: {

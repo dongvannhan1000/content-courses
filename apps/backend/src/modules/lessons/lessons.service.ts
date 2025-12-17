@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { Role, LessonType, EnrollmentStatus } from '@prisma/client';
 import { CreateLessonDto } from './dto/create-lesson.dto';
@@ -12,6 +12,8 @@ import {
 
 @Injectable()
 export class LessonsService {
+    private readonly logger = new Logger(LessonsService.name);
+
     constructor(private prisma: PrismaService) { }
 
     // ============ Public/Semi-Public Endpoints ============
@@ -26,6 +28,7 @@ export class LessonsService {
         userId?: number,
         userRole?: Role,
     ): Promise<LessonListItemDto[]> {
+        this.logger.log(`Getting lessons for course: ${courseId}, user: ${userId || 'anonymous'}`);
         // Check if user is course owner
         const course = await this.prisma.course.findUnique({
             where: { id: courseId },
@@ -60,6 +63,7 @@ export class LessonsService {
         userId?: number,
         userRole?: Role,
     ): Promise<LessonDetailDto> {
+        this.logger.log(`Getting lesson by slug: ${slug} in course: ${courseId}`);
         const lesson = await this.prisma.lesson.findFirst({
             where: { courseId, slug },
             include: {
@@ -102,6 +106,7 @@ export class LessonsService {
         userId: number,
         userRole: Role,
     ): Promise<LessonDto> {
+        this.logger.log(`Creating lesson: ${dto.title} (slug: ${dto.slug}) in course: ${courseId} by user: ${userId}`);
         // Check course ownership
         await this.verifyCourseOwnership(courseId, userId, userRole);
 
@@ -154,6 +159,7 @@ export class LessonsService {
         userId: number,
         userRole: Role,
     ): Promise<LessonDto> {
+        this.logger.log(`Updating lesson: ${lessonId} by user: ${userId}`);
         const lesson = await this.prisma.lesson.findUnique({
             where: { id: lessonId },
             include: { course: { select: { instructorId: true } } },
@@ -203,6 +209,7 @@ export class LessonsService {
      * Delete a lesson
      */
     async delete(lessonId: number, userId: number, userRole: Role): Promise<void> {
+        this.logger.log(`Deleting lesson: ${lessonId} by user: ${userId}`);
         const lesson = await this.prisma.lesson.findUnique({
             where: { id: lessonId },
             include: { course: { select: { instructorId: true } } },
@@ -230,6 +237,7 @@ export class LessonsService {
         userId: number,
         userRole: Role,
     ): Promise<LessonListItemDto[]> {
+        this.logger.log(`Reordering ${lessonIds.length} lessons in course: ${courseId} by user: ${userId}`);
         // Check ownership
         await this.verifyCourseOwnership(courseId, userId, userRole);
 

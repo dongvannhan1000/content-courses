@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
@@ -10,6 +10,8 @@ import {
 
 @Injectable()
 export class UsersService {
+    private readonly logger = new Logger(UsersService.name);
+
     constructor(private prisma: PrismaService) { }
 
     // ============ Current User Profile ============
@@ -18,6 +20,7 @@ export class UsersService {
      * Get current user's full profile
      */
     async getProfile(userId: number): Promise<UserProfileDto> {
+        this.logger.log(`Getting profile for user: ${userId}`);
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
         });
@@ -33,6 +36,7 @@ export class UsersService {
      * Update current user's profile
      */
     async updateProfile(userId: number, dto: UpdateProfileDto): Promise<UserProfileDto> {
+        this.logger.log(`Updating profile for user: ${userId}`);
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
         });
@@ -59,6 +63,7 @@ export class UsersService {
      * Get public profile of a user (for viewing instructors, etc.)
      */
     async getPublicProfile(userId: number): Promise<PublicUserDto> {
+        this.logger.log(`Getting public profile for user: ${userId}`);
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
             select: {
@@ -89,6 +94,7 @@ export class UsersService {
      * Get paginated list of all users (admin only)
      */
     async listUsers(page: number = 1, limit: number = 20): Promise<PaginatedUsersDto> {
+        this.logger.log(`Admin: Listing users (page: ${page}, limit: ${limit})`);
         const skip = (page - 1) * limit;
 
         const [users, total] = await Promise.all([

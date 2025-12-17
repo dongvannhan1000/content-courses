@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { MediaType, Role } from '@prisma/client';
 import { CreateMediaDto } from './dto/create-media.dto';
@@ -18,6 +18,8 @@ const R2_BUCKET = process.env.R2_BUCKET || 'media-bucket';
 
 @Injectable()
 export class MediaService {
+    private readonly logger = new Logger(MediaService.name);
+
     constructor(private prisma: PrismaService) { }
 
     // ============ READ Operations ============
@@ -31,6 +33,7 @@ export class MediaService {
         userId?: number,
         userRole?: Role,
     ): Promise<MediaResponseDto[]> {
+        this.logger.log(`Getting media for lesson: ${lessonId}`);
         // Check if lesson exists and get ownership info
         const lesson = await this.prisma.lesson.findUnique({
             where: { id: lessonId },
@@ -63,6 +66,7 @@ export class MediaService {
      * Get media by ID
      */
     async findById(id: number): Promise<MediaResponseDto> {
+        this.logger.log(`Getting media by ID: ${id}`);
         const media = await this.prisma.media.findUnique({
             where: { id },
         });
@@ -86,6 +90,7 @@ export class MediaService {
         userId: number,
         userRole: Role,
     ): Promise<PresignedUrlResponseDto> {
+        this.logger.log(`Generating presigned URL for lesson: ${lessonId}, type: ${dto.type}, file: ${dto.filename}`);
         // Verify ownership
         await this.verifyLessonOwnership(lessonId, userId, userRole);
 
@@ -123,6 +128,7 @@ export class MediaService {
         userId: number,
         userRole: Role,
     ): Promise<MediaResponseDto> {
+        this.logger.log(`Creating media in lesson: ${lessonId}, type: ${dto.type}, by user: ${userId}`);
         // Verify ownership
         await this.verifyLessonOwnership(lessonId, userId, userRole);
 
@@ -205,6 +211,7 @@ export class MediaService {
         userId: number,
         userRole: Role,
     ): Promise<MediaResponseDto> {
+        this.logger.log(`Updating media: ${mediaId} by user: ${userId}`);
         const media = await this.prisma.media.findUnique({
             where: { id: mediaId },
             include: {
@@ -251,6 +258,7 @@ export class MediaService {
         userId: number,
         userRole: Role,
     ): Promise<void> {
+        this.logger.log(`Deleting media: ${mediaId} by user: ${userId}`);
         const media = await this.prisma.media.findUnique({
             where: { id: mediaId },
             include: {
@@ -293,6 +301,7 @@ export class MediaService {
         userId: number,
         userRole: Role,
     ): Promise<MediaResponseDto[]> {
+        this.logger.log(`Reordering ${mediaIds.length} media in lesson: ${lessonId} by user: ${userId}`);
         // Verify ownership
         await this.verifyLessonOwnership(lessonId, userId, userRole);
 
@@ -333,6 +342,7 @@ export class MediaService {
         userId?: number,
         userRole?: Role,
     ): Promise<SignedUrlResponseDto> {
+        this.logger.log(`Generating signed URL for media: ${mediaId}, user: ${userId || 'anonymous'}`);
         const media = await this.prisma.media.findUnique({
             where: { id: mediaId },
             include: {

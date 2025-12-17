@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CourseStatus, Role } from '@prisma/client';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -16,6 +16,8 @@ import {
 
 @Injectable()
 export class CoursesService {
+    private readonly logger = new Logger(CoursesService.name);
+
     constructor(private prisma: PrismaService) { }
 
     // ============ Public Endpoints ============
@@ -27,6 +29,7 @@ export class CoursesService {
      * N+1 Prevention: Uses Prisma include with select and _count
      */
     async findAll(query: CourseQueryDto): Promise<PaginatedCoursesDto> {
+        this.logger.log(`Finding courses with filters: category=${query.category}, level=${query.level}, search=${query.search}, page=${query.page}`);
         const {
             category,
             level,
@@ -128,6 +131,7 @@ export class CoursesService {
      * Used for: Homepage featured section
      */
     async findFeatured(limit: number = 6): Promise<CourseListItemDto[]> {
+        this.logger.log(`Getting featured courses (limit: ${limit})`);
         const courses = await this.prisma.course.findMany({
             where: { status: CourseStatus.PUBLISHED },
             include: {
@@ -157,6 +161,7 @@ export class CoursesService {
      * Used for: Course detail page
      */
     async findBySlug(slug: string): Promise<CourseDetailDto> {
+        this.logger.log(`Getting course by slug: ${slug}`);
         const course = await this.prisma.course.findUnique({
             where: { slug },
             include: {
@@ -200,6 +205,7 @@ export class CoursesService {
      * Used for: Instructor dashboard "My Courses"
      */
     async findByInstructor(instructorId: number): Promise<CourseListItemDto[]> {
+        this.logger.log(`Getting courses for instructor: ${instructorId}`);
         const courses = await this.prisma.course.findMany({
             where: { instructorId },
             include: {
@@ -228,6 +234,7 @@ export class CoursesService {
      * Used for: Instructor/Admin create course
      */
     async create(dto: CreateCourseDto, userId: number, userRole: Role): Promise<CourseDto> {
+        this.logger.log(`Creating course: ${dto.title} by user: ${userId} (role: ${userRole})`);
         // Check slug uniqueness
         const existing = await this.prisma.course.findUnique({
             where: { slug: dto.slug },
@@ -270,6 +277,7 @@ export class CoursesService {
      * Used for: Instructor/Admin update course
      */
     async update(id: number, dto: UpdateCourseDto, userId: number, userRole: Role): Promise<CourseDto> {
+        this.logger.log(`Updating course: ${id} by user: ${userId} (role: ${userRole})`);
         const course = await this.prisma.course.findUnique({ where: { id } });
 
         if (!course) {
@@ -324,6 +332,7 @@ export class CoursesService {
      * Used for: Instructor submit for admin review
      */
     async submitForReview(id: number, userId: number, userRole: Role): Promise<CourseDto> {
+        this.logger.log(`Submitting course ${id} for review by user: ${userId} (role: ${userRole})`);
         const course = await this.prisma.course.findUnique({ where: { id } });
 
         if (!course) {
@@ -359,6 +368,7 @@ export class CoursesService {
      * Used for: Admin approve/reject course
      */
     async updateStatus(id: number, status: CourseStatus): Promise<CourseDto> {
+        this.logger.log(`Updating course ${id} status to: ${status}`);
         const course = await this.prisma.course.findUnique({ where: { id } });
 
         if (!course) {
@@ -385,6 +395,7 @@ export class CoursesService {
      * Used for: Instructor/Admin delete course
      */
     async delete(id: number, userId: number, userRole: Role): Promise<void> {
+        this.logger.log(`Deleting course: ${id} by user: ${userId} (role: ${userRole})`);
         const course = await this.prisma.course.findUnique({
             where: { id },
             include: {

@@ -1,15 +1,18 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CartDto, CartItemDto } from './dto/cart.dto';
 
 @Injectable()
 export class CartService {
+    private readonly logger = new Logger(CartService.name);
+
     constructor(private readonly prisma: PrismaService) { }
 
     /**
      * Get user's cart with all items
      */
     async getCart(userId: number): Promise<CartDto> {
+        this.logger.log(`Getting cart for user: ${userId}`);
         const items = await this.prisma.cartItem.findMany({
             where: { userId },
             include: {
@@ -41,6 +44,7 @@ export class CartService {
      * Add item to cart
      */
     async addItem(userId: number, courseId: number): Promise<CartDto> {
+        this.logger.log(`Adding course ${courseId} to cart for user: ${userId}`);
         // Check if course exists
         const course = await this.prisma.course.findUnique({
             where: { id: courseId },
@@ -88,6 +92,7 @@ export class CartService {
      * Remove item from cart
      */
     async removeItem(userId: number, courseId: number): Promise<CartDto> {
+        this.logger.log(`Removing course ${courseId} from cart for user: ${userId}`);
         await this.prisma.cartItem.deleteMany({
             where: { userId, courseId },
         });
@@ -99,6 +104,7 @@ export class CartService {
      * Clear all items from cart
      */
     async clearCart(userId: number): Promise<{ success: boolean }> {
+        this.logger.log(`Clearing cart for user: ${userId}`);
         await this.prisma.cartItem.deleteMany({
             where: { userId },
         });
@@ -111,6 +117,7 @@ export class CartService {
      * Used when user logs in to sync their local cart
      */
     async mergeCart(userId: number, courseIds: number[]): Promise<CartDto> {
+        this.logger.log(`Merging ${courseIds.length} local items to cart for user: ${userId}`);
         // Get existing cart items
         const existingItems = await this.prisma.cartItem.findMany({
             where: { userId },

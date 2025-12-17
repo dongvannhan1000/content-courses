@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { EnrollmentStatus, Role } from '@prisma/client';
 import { EnrollmentQueryDto, AdminUpdateEnrollmentDto } from './dto/enroll.dto';
@@ -13,6 +13,8 @@ import {
 
 @Injectable()
 export class EnrollmentsService {
+    private readonly logger = new Logger(EnrollmentsService.name);
+
     constructor(private prisma: PrismaService) { }
 
     // ============ User Methods ============
@@ -23,6 +25,7 @@ export class EnrollmentsService {
      * N+1 Prevention: Single query with course and instructor includes
      */
     async findByUser(userId: number): Promise<EnrollmentListItemDto[]> {
+        this.logger.log(`Getting enrollments for user: ${userId}`);
         const enrollments = await this.prisma.enrollment.findMany({
             where: { userId },
             include: {
@@ -49,6 +52,7 @@ export class EnrollmentsService {
      * Used for: Course detail page to determine button state
      */
     async checkEnrollment(userId: number, courseId: number): Promise<EnrollmentCheckDto> {
+        this.logger.log(`Checking enrollment for user: ${userId}, course: ${courseId}`);
         const enrollment = await this.prisma.enrollment.findUnique({
             where: { userId_courseId: { userId, courseId } },
         });
@@ -80,6 +84,7 @@ export class EnrollmentsService {
      * Used for: After successful payment or free course enrollment
      */
     async create(userId: number, courseId: number): Promise<EnrollmentDetailDto> {
+        this.logger.log(`Creating enrollment for user: ${userId}, course: ${courseId}`);
         // Check if course exists
         const course = await this.prisma.course.findUnique({
             where: { id: courseId },
@@ -136,6 +141,7 @@ export class EnrollmentsService {
         userId: number,
         progressPercent: number,
     ): Promise<EnrollmentDetailDto> {
+        this.logger.log(`Updating progress for enrollment: ${enrollmentId}, user: ${userId}, progress: ${progressPercent}%`);
         const enrollment = await this.prisma.enrollment.findUnique({
             where: { id: enrollmentId },
         });
@@ -178,6 +184,7 @@ export class EnrollmentsService {
      * Used for: When user finishes all lessons
      */
     async markComplete(enrollmentId: number, userId: number): Promise<EnrollmentDetailDto> {
+        this.logger.log(`Marking enrollment complete: ${enrollmentId} for user: ${userId}`);
         const enrollment = await this.prisma.enrollment.findUnique({
             where: { id: enrollmentId },
         });
@@ -223,6 +230,7 @@ export class EnrollmentsService {
      * N+1 Prevention: Single query with all relations
      */
     async findAll(query: EnrollmentQueryDto): Promise<PaginatedEnrollmentsDto> {
+        this.logger.log(`Getting all enrollments (admin): page=${query.page}, status=${query.status}`);
         const page = query.page ?? 1;
         const limit = query.limit ?? 10;
         const skip = (page - 1) * limit;
@@ -269,6 +277,7 @@ export class EnrollmentsService {
      * Used for: Admin detail view
      */
     async findById(id: number): Promise<EnrollmentDetailDto> {
+        this.logger.log(`Getting enrollment by ID: ${id}`);
         const enrollment = await this.prisma.enrollment.findUnique({
             where: { id },
             include: {
@@ -298,6 +307,7 @@ export class EnrollmentsService {
      * Used for: Changing status, extending expiry
      */
     async adminUpdate(id: number, dto: AdminUpdateEnrollmentDto): Promise<EnrollmentDetailDto> {
+        this.logger.log(`Admin updating enrollment: ${id}`);
         const enrollment = await this.prisma.enrollment.findUnique({
             where: { id },
         });
@@ -344,6 +354,7 @@ export class EnrollmentsService {
      * Used for: Admin refund/cancel
      */
     async delete(id: number): Promise<void> {
+        this.logger.log(`Deleting enrollment: ${id}`);
         const enrollment = await this.prisma.enrollment.findUnique({
             where: { id },
         });
