@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -27,6 +28,12 @@ import { CartModule } from './modules/cart/cart.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    // In-Memory Cache configuration
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 300000, // 5 minutes default TTL (in milliseconds)
+      max: 100,    // Maximum number of items in cache
     }),
     CommonModule,
     FirebaseModule,

@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CourseStatus, Role } from '@prisma/client';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -14,11 +16,18 @@ import {
     LessonSummaryDto,
 } from './dto/course-response.dto';
 
+// Cache keys
+const CACHE_KEY_FEATURED = 'courses:featured';
+const CACHE_TTL_FEATURED = 300000; // 5 minutes
+
 @Injectable()
 export class CoursesService {
     private readonly logger = new Logger(CoursesService.name);
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    ) { }
 
     // ============ Public Endpoints ============
 
@@ -131,7 +140,16 @@ export class CoursesService {
      * Used for: Homepage featured section
      */
     async findFeatured(limit: number = 6): Promise<CourseListItemDto[]> {
-        this.logger.log(`Getting featured courses (limit: ${limit})`);
+        const cacheKey = `${CACHE_KEY_FEATURED}:${limit}`;
+
+        // Check cache first
+        const cached = await this.cacheManager.get<CourseListItemDto[]>(cacheKey);
+        if (cached) {
+            this.logger.log(`Getting featured courses (from cache, limit: ${limit})`);
+            return cached;
+        }
+
+        this.logger.log(`Getting featured courses (from database, limit: ${limit})`);
         const courses = await this.prisma.course.findMany({
             where: { status: CourseStatus.PUBLISHED },
             include: {
@@ -153,7 +171,12 @@ export class CoursesService {
             take: limit,
         });
 
-        return courses.map((course) => this.mapToListItem(course));
+        const result = courses.map((course) => this.mapToListItem(course));
+
+        // Store in cache
+        await this.cacheManager.set(cacheKey, result, CACHE_TTL_FEATURED);
+
+        return result;
     }
 
     /**
@@ -360,6 +383,11 @@ export class CoursesService {
             },
         });
 
+        // Invalidate featured courses cache when status changes to PUBLISHED
+        if (newStatus === CourseStatus.PUBLISHED) {
+            await this.invalidateFeaturedCache();
+        }
+
         return this.mapToCourseDto(updated);
     }
 
@@ -386,6 +414,11 @@ export class CoursesService {
             where: { id },
             data: updateData,
         });
+
+        // Invalidate featured courses cache when status changes
+        if (status === CourseStatus.PUBLISHED || course.status === CourseStatus.PUBLISHED) {
+            await this.invalidateFeaturedCache();
+        }
 
         return this.mapToCourseDto(updated);
     }
@@ -420,9 +453,27 @@ export class CoursesService {
         }
 
         await this.prisma.course.delete({ where: { id } });
+
+        // Invalidate featured courses cache if was published
+        if (course.status === CourseStatus.PUBLISHED) {
+            await this.invalidateFeaturedCache();
+        }
     }
 
     // ============ Helper Methods ============
+
+    /**
+     * Invalidate featured courses cache
+     * Called when courses are published, unpublished, or deleted
+     */
+    private async invalidateFeaturedCache(): Promise<void> {
+        // Delete common featured cache keys (for typical limit values)
+        const commonLimits = [3, 6, 10, 12];
+        await Promise.all(
+            commonLimits.map(limit => this.cacheManager.del(`${CACHE_KEY_FEATURED}:${limit}`))
+        );
+        this.logger.log('Featured courses cache invalidated');
+    }
 
     private mapToListItem(course: any): CourseListItemDto {
         const avgRating = course.reviews.length > 0

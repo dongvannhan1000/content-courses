@@ -1,15 +1,24 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryTreeItemDto, CategoryDetailDto, CategoryDto } from './dto/category-response.dto';
 import { CourseStatus } from '@prisma/client';
 
+// Cache keys
+const CACHE_KEY_CATEGORIES = 'categories:all';
+const CACHE_TTL_CATEGORIES = 600000; // 10 minutes
+
 @Injectable()
 export class CategoriesService {
     private readonly logger = new Logger(CategoriesService.name);
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    ) { }
 
     /**
      * Get all active categories in tree structure with courseCount
@@ -18,7 +27,14 @@ export class CategoriesService {
      * Uses Prisma _count to avoid N+1 queries
      */
     async findAll(): Promise<CategoryTreeItemDto[]> {
-        this.logger.log('Getting all categories (tree structure)');
+        // Check cache first
+        const cached = await this.cacheManager.get<CategoryTreeItemDto[]>(CACHE_KEY_CATEGORIES);
+        if (cached) {
+            this.logger.log('Getting all categories (from cache)');
+            return cached;
+        }
+
+        this.logger.log('Getting all categories (from database)');
         const categories = await this.prisma.category.findMany({
             where: {
                 isActive: true,
@@ -49,7 +65,12 @@ export class CategoriesService {
             orderBy: { order: 'asc' },
         });
 
-        return categories.map((cat: Parameters<typeof this.mapToTreeItem>[0]) => this.mapToTreeItem(cat));
+        const result = categories.map((cat: Parameters<typeof this.mapToTreeItem>[0]) => this.mapToTreeItem(cat));
+
+        // Store in cache
+        await this.cacheManager.set(CACHE_KEY_CATEGORIES, result, CACHE_TTL_CATEGORIES);
+
+        return result;
     }
 
     /**
@@ -137,6 +158,10 @@ export class CategoriesService {
             },
         });
 
+        // Invalidate cache
+        await this.cacheManager.del(CACHE_KEY_CATEGORIES);
+        this.logger.log('Categories cache invalidated');
+
         return this.mapToCategoryDto(category);
     }
 
@@ -193,6 +218,10 @@ export class CategoriesService {
             },
         });
 
+        // Invalidate cache
+        await this.cacheManager.del(CACHE_KEY_CATEGORIES);
+        this.logger.log('Categories cache invalidated');
+
         return this.mapToCategoryDto(category);
     }
 
@@ -232,6 +261,10 @@ export class CategoriesService {
         }
 
         await this.prisma.category.delete({ where: { id } });
+
+        // Invalidate cache
+        await this.cacheManager.del(CACHE_KEY_CATEGORIES);
+        this.logger.log('Categories cache invalidated');
     }
 
     // ============ Helper Methods ============
