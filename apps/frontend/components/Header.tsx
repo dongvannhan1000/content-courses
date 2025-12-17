@@ -86,18 +86,20 @@ export default function Header() {
                             {/* Theme Toggle */}
                             <ThemeToggle />
 
-                            {/* Cart Button */}
-                            <Link
-                                href="/cart"
-                                className="hidden sm:flex p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 relative cursor-pointer"
-                            >
-                                <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                {cartItemCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                        {cartItemCount}
-                                    </span>
-                                )}
-                            </Link>
+                            {/* Cart Button - Only show for authenticated users */}
+                            {isAuthenticated && (
+                                <Link
+                                    href="/cart"
+                                    className="hidden sm:flex p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 relative cursor-pointer"
+                                >
+                                    <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                    {cartItemCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                            {cartItemCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            )}
 
                             {/* User/Auth Section */}
                             {isLoading ? (
@@ -218,19 +220,21 @@ export default function Header() {
                                     </Link>
                                 ))}
 
-                                {/* Mobile Cart */}
-                                <Link
-                                    href="/cart"
-                                    className="flex items-center justify-between py-2 text-gray-700 dark:text-gray-300"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    <span className="font-medium">Giỏ hàng</span>
-                                    {cartItemCount > 0 && (
-                                        <Badge variant="accent" size="sm">
-                                            {cartItemCount}
-                                        </Badge>
-                                    )}
-                                </Link>
+                                {/* Mobile Cart - Only show for authenticated users */}
+                                {isAuthenticated && (
+                                    <Link
+                                        href="/cart"
+                                        className="flex items-center justify-between py-2 text-gray-700 dark:text-gray-300"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        <span className="font-medium">Giỏ hàng</span>
+                                        {cartItemCount > 0 && (
+                                            <Badge variant="accent" size="sm">
+                                                {cartItemCount}
+                                            </Badge>
+                                        )}
+                                    </Link>
+                                )}
 
                                 {/* Mobile Auth/User */}
                                 {isAuthenticated && user ? (

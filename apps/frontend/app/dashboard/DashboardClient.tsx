@@ -24,7 +24,7 @@ import type { EnrollmentListItem } from "@/types";
 
 export default function DashboardClient() {
     const router = useRouter();
-    const { user, loading: authLoading } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const [enrollments, setEnrollments] = useState<EnrollmentListItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

@@ -160,7 +160,12 @@ export const useCartStore = create<CartState>()(
 
             // Set login state - called from AuthProvider
             setLoggedIn: (loggedIn) => {
-                set({ isLoggedIn: loggedIn });
+                if (!loggedIn) {
+                    // Clear cart when logging out - guests don't have cart
+                    set({ isLoggedIn: false, items: [] });
+                } else {
+                    set({ isLoggedIn: true });
+                }
             },
 
             // Sync: Replace local cart with server cart
