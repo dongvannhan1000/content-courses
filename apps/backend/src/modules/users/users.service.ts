@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
@@ -8,11 +10,18 @@ import {
     PaginatedUsersDto,
 } from './dto/user-response.dto';
 
+// Cache keys
+const CACHE_KEY_PUBLIC_PROFILE = 'users:public';
+const CACHE_TTL_PUBLIC_PROFILE = 600000; // 10 minutes
+
 @Injectable()
 export class UsersService {
     private readonly logger = new Logger(UsersService.name);
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    ) { }
 
     // ============ Current User Profile ============
 
@@ -54,6 +63,10 @@ export class UsersService {
             },
         });
 
+        // Invalidate public profile cache
+        await this.cacheManager.del(`${CACHE_KEY_PUBLIC_PROFILE}:${userId}`);
+        this.logger.log(`Public profile cache invalidated for user: ${userId}`);
+
         return this.mapToProfile(updated);
     }
 
@@ -63,7 +76,16 @@ export class UsersService {
      * Get public profile of a user (for viewing instructors, etc.)
      */
     async getPublicProfile(userId: number): Promise<PublicUserDto> {
-        this.logger.log(`Getting public profile for user: ${userId}`);
+        const cacheKey = `${CACHE_KEY_PUBLIC_PROFILE}:${userId}`;
+
+        // Check cache first
+        const cached = await this.cacheManager.get<PublicUserDto>(cacheKey);
+        if (cached) {
+            this.logger.log(`Getting public profile for user: ${userId} (from cache)`);
+            return cached;
+        }
+
+        this.logger.log(`Getting public profile for user: ${userId} (from database)`);
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
             select: {
@@ -79,13 +101,18 @@ export class UsersService {
             throw new NotFoundException('User not found');
         }
 
-        return {
+        const result: PublicUserDto = {
             id: user.id,
             name: user.name ?? undefined,
             photoURL: user.photoURL ?? undefined,
             bio: user.bio ?? undefined,
             role: user.role,
         };
+
+        // Store in cache
+        await this.cacheManager.set(cacheKey, result, CACHE_TTL_PUBLIC_PROFILE);
+
+        return result;
     }
 
     // ============ Admin: List Users ============

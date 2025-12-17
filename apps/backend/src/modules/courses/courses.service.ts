@@ -18,7 +18,9 @@ import {
 
 // Cache keys
 const CACHE_KEY_FEATURED = 'courses:featured';
+const CACHE_KEY_COURSE_DETAIL = 'courses:detail';
 const CACHE_TTL_FEATURED = 300000; // 5 minutes
+const CACHE_TTL_COURSE_DETAIL = 300000; // 5 minutes
 
 @Injectable()
 export class CoursesService {
@@ -184,7 +186,16 @@ export class CoursesService {
      * Used for: Course detail page
      */
     async findBySlug(slug: string): Promise<CourseDetailDto> {
-        this.logger.log(`Getting course by slug: ${slug}`);
+        const cacheKey = `${CACHE_KEY_COURSE_DETAIL}:${slug}`;
+
+        // Check cache first
+        const cached = await this.cacheManager.get<CourseDetailDto>(cacheKey);
+        if (cached) {
+            this.logger.log(`Getting course by slug: ${slug} (from cache)`);
+            return cached;
+        }
+
+        this.logger.log(`Getting course by slug: ${slug} (from database)`);
         const course = await this.prisma.course.findUnique({
             where: { slug },
             include: {
@@ -218,7 +229,12 @@ export class CoursesService {
             throw new NotFoundException(`Course with slug "${slug}" not found`);
         }
 
-        return this.mapToDetail(course);
+        const result = this.mapToDetail(course);
+
+        // Store in cache
+        await this.cacheManager.set(cacheKey, result, CACHE_TTL_COURSE_DETAIL);
+
+        return result;
     }
 
     // ============ Instructor/Admin Endpoints ============
@@ -346,6 +362,13 @@ export class CoursesService {
                 categoryId: dto.categoryId,
             },
         });
+
+        // Invalidate course detail cache
+        await this.cacheManager.del(`${CACHE_KEY_COURSE_DETAIL}:${course.slug}`);
+        if (dto.slug && dto.slug !== course.slug) {
+            await this.cacheManager.del(`${CACHE_KEY_COURSE_DETAIL}:${dto.slug}`);
+        }
+        this.logger.log(`Course detail cache invalidated for: ${course.slug}`);
 
         return this.mapToCourseDto(updated);
     }
