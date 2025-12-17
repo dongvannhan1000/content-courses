@@ -30,13 +30,6 @@ export default function DashboardClient() {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState("courses");
 
-    // Auth check - redirect if not logged in
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.push("/auth/login?redirect=/dashboard");
-        }
-    }, [user, authLoading, router]);
-
     // Fetch enrollments - only once when user is available
     useEffect(() => {
         // Skip if no user or if we already have enrollments

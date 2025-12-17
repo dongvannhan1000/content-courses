@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Search, ShoppingCart, Menu, X, ChevronDown, LogOut, Settings, BookOpen } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/providers";
 import { Button, Avatar, Badge } from "@/components/ui";
 import { AuthModal } from "@/components/features/auth";
@@ -16,6 +16,8 @@ export default function Header() {
     const [authModalTab, setAuthModalTab] = useState<"login" | "register">("login");
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
     // Real auth state
     const { user, isAuthenticated, isLoading, signOut } = useAuth();
@@ -31,6 +33,18 @@ export default function Header() {
         { href: "/#student-experience", label: "Trải nghiệm" },
         { href: "/blog", label: "Blog" },
     ];
+
+    // Auto-open login modal from URL param (e.g., /?login=true)
+    useEffect(() => {
+        const loginParam = searchParams.get("login");
+        if (loginParam === "true" && !isAuthenticated && !isLoading) {
+            setAuthModalTab("login");
+            setIsAuthModalOpen(true);
+            // Clean up URL
+            const newUrl = pathname;
+            router.replace(newUrl);
+        }
+    }, [searchParams, isAuthenticated, isLoading, pathname, router]);
 
     const openAuthModal = (tab: "login" | "register") => {
         setAuthModalTab(tab);
