@@ -1,5 +1,6 @@
+"use client";
+
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { CourseListItem } from "@/types";
 import { cartApi, type CartItemResponse } from "@/lib/api/cart";
 
@@ -10,27 +11,20 @@ export interface CartItem {
 
 interface CartState {
     items: CartItem[];
-    isOpen: boolean;
-    isSyncing: boolean;
-    isLoggedIn: boolean;
+    isLoading: boolean;
+    error: string | null;
 
     // Computed
     totalItems: () => number;
     totalPrice: () => number;
+    isInCart: (courseId: number) => boolean;
 
     // Actions
+    fetchCart: () => Promise<void>;
     addItem: (course: CourseListItem) => Promise<void>;
     removeItem: (courseId: number) => Promise<void>;
     clearCart: () => Promise<void>;
-    isInCart: (courseId: number) => boolean;
-    toggleCart: () => void;
-    openCart: () => void;
-    closeCart: () => void;
-
-    // Sync actions
-    setLoggedIn: (loggedIn: boolean) => void;
-    syncWithServer: () => Promise<void>;
-    mergeWithServer: () => Promise<void>;
+    resetCart: () => void;
 }
 
 /**
@@ -50,7 +44,6 @@ function apiItemToCartItem(item: CartItemResponse): CartItem {
                 name: item.course.instructor.name || "",
                 photoURL: undefined,
             },
-            // These fields may not be in cart response, use defaults
             shortDesc: undefined,
             level: undefined,
             duration: 0,
@@ -66,146 +59,77 @@ function apiItemToCartItem(item: CartItemResponse): CartItem {
     };
 }
 
-export const useCartStore = create<CartState>()(
-    persist(
-        (set, get) => ({
-            items: [],
-            isOpen: false,
-            isSyncing: false,
-            isLoggedIn: false,
+export const useCartStore = create<CartState>()((set, get) => ({
+    items: [],
+    isLoading: false,
+    error: null,
 
-            totalItems: () => get().items.length,
+    totalItems: () => get().items.length,
 
-            totalPrice: () =>
-                get().items.reduce(
-                    (total, item) =>
-                        total + (item.course.discountPrice || item.course.price),
-                    0
-                ),
+    totalPrice: () =>
+        get().items.reduce(
+            (total, item) =>
+                total + (item.course.discountPrice || item.course.price),
+            0
+        ),
 
-            addItem: async (course) => {
-                const { items, isLoggedIn } = get();
-                const exists = items.some((item) => item.course.id === course.id);
+    isInCart: (courseId) =>
+        get().items.some((item) => item.course.id === courseId),
 
-                if (exists) return;
-
-                if (isLoggedIn) {
-                    // Logged in: sync with server
-                    try {
-                        set({ isSyncing: true });
-                        const response = await cartApi.addItem(course.id);
-                        set({ items: response.items.map(apiItemToCartItem), isSyncing: false });
-                    } catch (error) {
-                        console.error("Failed to add item to server cart:", error);
-                        // Fallback to local
-                        set({
-                            items: [...items, { course, addedAt: new Date() }],
-                            isSyncing: false,
-                        });
-                    }
-                } else {
-                    // Guest: local only
-                    set({
-                        items: [...items, { course, addedAt: new Date() }],
-                    });
-                }
-            },
-
-            removeItem: async (courseId) => {
-                const { items, isLoggedIn } = get();
-
-                if (isLoggedIn) {
-                    try {
-                        set({ isSyncing: true });
-                        const response = await cartApi.removeItem(courseId);
-                        set({ items: response.items.map(apiItemToCartItem), isSyncing: false });
-                    } catch (error) {
-                        console.error("Failed to remove item from server cart:", error);
-                        // Fallback to local
-                        set({
-                            items: items.filter((item) => item.course.id !== courseId),
-                            isSyncing: false,
-                        });
-                    }
-                } else {
-                    set({
-                        items: items.filter((item) => item.course.id !== courseId),
-                    });
-                }
-            },
-
-            clearCart: async () => {
-                const { isLoggedIn } = get();
-
-                if (isLoggedIn) {
-                    try {
-                        set({ isSyncing: true });
-                        await cartApi.clearCart();
-                        set({ items: [], isSyncing: false });
-                    } catch (error) {
-                        console.error("Failed to clear server cart:", error);
-                        set({ items: [], isSyncing: false });
-                    }
-                } else {
-                    set({ items: [] });
-                }
-            },
-
-            isInCart: (courseId) =>
-                get().items.some((item) => item.course.id === courseId),
-
-            toggleCart: () => set({ isOpen: !get().isOpen }),
-            openCart: () => set({ isOpen: true }),
-            closeCart: () => set({ isOpen: false }),
-
-            // Set login state - called from AuthProvider
-            setLoggedIn: (loggedIn) => {
-                if (!loggedIn) {
-                    // Clear cart when logging out - guests don't have cart
-                    set({ isLoggedIn: false, items: [] });
-                } else {
-                    set({ isLoggedIn: true });
-                }
-            },
-
-            // Sync: Replace local cart with server cart
-            syncWithServer: async () => {
-                try {
-                    set({ isSyncing: true });
-                    const response = await cartApi.getCart();
-                    set({ items: response.items.map(apiItemToCartItem), isSyncing: false });
-                } catch (error) {
-                    console.error("Failed to sync cart with server:", error);
-                    set({ isSyncing: false });
-                }
-            },
-
-            // Merge: Combine local cart with server cart (after login)
-            mergeWithServer: async () => {
-                const { items } = get();
-                const localCourseIds = items.map((item) => item.course.id);
-
-                if (localCourseIds.length === 0) {
-                    // No local items, just sync from server
-                    return get().syncWithServer();
-                }
-
-                try {
-                    set({ isSyncing: true });
-                    const response = await cartApi.mergeCart(localCourseIds);
-                    set({ items: response.items.map(apiItemToCartItem), isSyncing: false });
-                } catch (error) {
-                    console.error("Failed to merge cart with server:", error);
-                    // Keep local items on failure
-                    set({ isSyncing: false });
-                }
-            },
-        }),
-        {
-            name: "cart-storage",
-            partialize: (state) => ({
-                items: state.items,
-            }),
+    // Fetch cart from server (called on login)
+    fetchCart: async () => {
+        try {
+            set({ isLoading: true, error: null });
+            const response = await cartApi.getCart();
+            set({ items: response.items.map(apiItemToCartItem), isLoading: false });
+        } catch (error) {
+            console.error("Failed to fetch cart:", error);
+            set({ error: "Không thể tải giỏ hàng", isLoading: false });
         }
-    )
-);
+    },
+
+    // Add item to cart (server)
+    addItem: async (course) => {
+        const { items } = get();
+        const exists = items.some((item) => item.course.id === course.id);
+        if (exists) return;
+
+        try {
+            set({ isLoading: true, error: null });
+            const response = await cartApi.addItem(course.id);
+            set({ items: response.items.map(apiItemToCartItem), isLoading: false });
+        } catch (error) {
+            console.error("Failed to add item to cart:", error);
+            set({ error: "Không thể thêm vào giỏ hàng", isLoading: false });
+        }
+    },
+
+    // Remove item from cart (server)
+    removeItem: async (courseId) => {
+        try {
+            set({ isLoading: true, error: null });
+            const response = await cartApi.removeItem(courseId);
+            set({ items: response.items.map(apiItemToCartItem), isLoading: false });
+        } catch (error) {
+            console.error("Failed to remove item from cart:", error);
+            set({ error: "Không thể xóa khỏi giỏ hàng", isLoading: false });
+        }
+    },
+
+    // Clear cart (server)
+    clearCart: async () => {
+        try {
+            set({ isLoading: true, error: null });
+            await cartApi.clearCart();
+            set({ items: [], isLoading: false });
+        } catch (error) {
+            console.error("Failed to clear cart:", error);
+            set({ error: "Không thể xóa giỏ hàng", isLoading: false });
+        }
+    },
+
+    // Reset cart state (called on logout)
+    resetCart: () => {
+        set({ items: [], isLoading: false, error: null });
+    },
+}));

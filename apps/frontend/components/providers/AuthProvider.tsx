@@ -16,28 +16,28 @@ interface AuthProviderProps {
  * 
  * This component sets up a SINGLE Firebase auth listener for the entire app.
  * It syncs Firebase auth state with the Zustand auth store and backend.
- * Also triggers cart sync when user logs in.
+ * Also triggers cart fetch when user logs in.
  * 
  * Place this provider near the root of your app (in layout.tsx).
  * Components should use useAuth() hook to access auth state and actions.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
     const { login, logout, setLoading } = useAuthStore();
-    const { setLoggedIn, mergeWithServer } = useCartStore();
+    const { fetchCart, resetCart } = useCartStore();
 
     // Use refs to avoid recreating the listener when store actions change
     const loginRef = useRef(login);
     const logoutRef = useRef(logout);
     const setLoadingRef = useRef(setLoading);
-    const setLoggedInRef = useRef(setLoggedIn);
-    const mergeWithServerRef = useRef(mergeWithServer);
+    const fetchCartRef = useRef(fetchCart);
+    const resetCartRef = useRef(resetCart);
 
     // Keep refs up to date
     loginRef.current = login;
     logoutRef.current = logout;
     setLoadingRef.current = setLoading;
-    setLoggedInRef.current = setLoggedIn;
-    mergeWithServerRef.current = mergeWithServer;
+    fetchCartRef.current = fetchCart;
+    resetCartRef.current = resetCart;
 
     useEffect(() => {
         const auth = getFirebaseAuth();
@@ -58,9 +58,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
                         if (data?.user) {
                             loginRef.current(data.user as User);
 
-                            // Sync cart with server after successful login
-                            setLoggedInRef.current(true);
-                            mergeWithServerRef.current();
+                            // Fetch cart from server after successful login
+                            fetchCartRef.current();
                         }
                     } catch (backendError) {
                         // Backend might not be running or user not synced
@@ -77,7 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                             updatedAt: new Date(),
                         };
                         loginRef.current(userData);
-                        // Don't sync cart if backend is down
+                        // Don't fetch cart if backend is down
                     }
                 } catch (error) {
                     console.error("Error getting user data:", error);
@@ -85,7 +84,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
             } else {
                 logoutRef.current();
-                setLoggedInRef.current(false);
+                resetCartRef.current();
             }
         });
 
