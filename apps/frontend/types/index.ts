@@ -106,7 +106,7 @@ export type LessonType = 'VIDEO' | 'DOCUMENT' | 'QUIZ';
 
 export interface Media {
     id: number;
-    type: 'VIDEO' | 'DOCUMENT' | 'IMAGE';
+    type: 'VIDEO' | 'DOCUMENT' | 'IMAGE' | 'YOUTUBE_EMBED';
     title?: string;
     url: string;
     filename?: string;

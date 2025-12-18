@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, Play } from "lucide-react";
 
 export default function Hero() {
@@ -34,10 +35,13 @@ export default function Hero() {
                         </p>
 
                         <div className="flex flex-wrap gap-4">
-                            <button className="group px-8 py-4 gradient-primary text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-primary-500/30">
+                            <Link
+                                href="/courses"
+                                className="group px-8 py-4 gradient-primary text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-primary-500/30"
+                            >
                                 Khám phá khóa học
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
-                            </button>
+                            </Link>
 
                             <button className="px-8 py-4 glass text-gray-700 dark:text-gray-200 font-semibold rounded-xl hover:shadow-xl transition-all duration-200 flex items-center gap-2 cursor-pointer">
                                 <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center">

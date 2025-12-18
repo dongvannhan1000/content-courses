@@ -22,7 +22,7 @@ import { Button, Badge, Avatar, Card, Tabs, TabsList, TabsTrigger, TabsContent }
 import { AuthModal } from "@/components/features/auth";
 import { useAuth } from "@/lib/hooks";
 import type { CourseDetail, LessonSummary, EnrollmentCheck } from "@/types";
-import { useEnrollmentStore } from "@/lib/stores";
+import { useEnrollmentStore, useCartStore } from "@/lib/stores";
 import { enrollmentsApi } from "@/lib/api/enrollments";
 import Link from "next/link";
 
@@ -49,6 +49,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
 
     // Enrollment state
     const { isEnrolled: isEnrolledInStore } = useEnrollmentStore();
+    const { addItem, isInCart } = useCartStore();
     const [enrollmentData, setEnrollmentData] = useState<EnrollmentCheck | null>(null);
     const [isLoadingEnrollment, setIsLoadingEnrollment] = useState(false);
 
@@ -87,7 +88,26 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
             setIsAuthModalOpen(true);
             return;
         }
-        // TODO: Add to cart or navigate to checkout
+        // Add to cart
+        addItem({
+            id: course.id,
+            title: course.title,
+            slug: course.slug,
+            thumbnail: course.thumbnail,
+            price: course.price,
+            discountPrice: course.discountPrice,
+            instructor: course.instructor,
+            shortDesc: course.shortDesc,
+            level: course.level,
+            duration: course.duration,
+            status: course.status,
+            publishedAt: course.publishedAt,
+            category: course.category,
+            lessonCount: course.lessonCount,
+            enrollmentCount: course.enrollmentCount,
+            reviewCount: course.reviewCount,
+            rating: course.rating,
+        });
     };
 
     return (

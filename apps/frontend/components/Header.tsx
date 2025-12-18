@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/providers";
 import { Button, Avatar, Badge } from "@/components/ui";
 import { AuthModal } from "@/components/features/auth";
+import { SearchModal } from "@/components/features/search";
 import { useAuth } from "@/lib/hooks";
 import { useCartStore } from "@/lib/stores";
 
@@ -15,6 +16,7 @@ export default function Header() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalTab, setAuthModalTab] = useState<"login" | "register">("login");
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -45,6 +47,19 @@ export default function Header() {
             router.replace(newUrl);
         }
     }, [searchParams, isAuthenticated, isLoading, pathname, router]);
+
+    // Keyboard shortcut for search (Cmd/Ctrl + K)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                e.preventDefault();
+                setIsSearchOpen(true);
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, []);
 
     const openAuthModal = (tab: "login" | "register") => {
         setAuthModalTab(tab);
@@ -92,6 +107,7 @@ export default function Header() {
                             {/* Search Button */}
                             <button
                                 aria-label="Tìm kiếm"
+                                onClick={() => setIsSearchOpen(true)}
                                 className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
                             >
                                 <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -308,6 +324,12 @@ export default function Header() {
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
                 defaultTab={authModalTab}
+            />
+
+            {/* Search Modal */}
+            <SearchModal
+                isOpen={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
             />
         </>
     );
