@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase";
-import { useAuthStore, useCartStore } from "@/lib/stores";
+import { useAuthStore, useCartStore, useEnrollmentStore } from "@/lib/stores";
 import { apiClient } from "@/lib/api/client";
 import type { User } from "@/types";
 
@@ -24,6 +24,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
     const { login, logout, setLoading } = useAuthStore();
     const { fetchCart, resetCart } = useCartStore();
+    const { fetchEnrollments, resetEnrollments } = useEnrollmentStore();
 
     // Use refs to avoid recreating the listener when store actions change
     const loginRef = useRef(login);
@@ -31,6 +32,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const setLoadingRef = useRef(setLoading);
     const fetchCartRef = useRef(fetchCart);
     const resetCartRef = useRef(resetCart);
+    const fetchEnrollmentsRef = useRef(fetchEnrollments);
+    const resetEnrollmentsRef = useRef(resetEnrollments);
 
     // Keep refs up to date
     loginRef.current = login;
@@ -38,6 +41,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setLoadingRef.current = setLoading;
     fetchCartRef.current = fetchCart;
     resetCartRef.current = resetCart;
+    fetchEnrollmentsRef.current = fetchEnrollments;
+    resetEnrollmentsRef.current = resetEnrollments;
 
     useEffect(() => {
         const auth = getFirebaseAuth();
@@ -58,8 +63,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                         if (data?.user) {
                             loginRef.current(data.user as User);
 
-                            // Fetch cart from server after successful login
+                            // Fetch cart and enrollments from server after successful login
                             fetchCartRef.current();
+                            fetchEnrollmentsRef.current();
                         }
                     } catch (backendError) {
                         // Backend might not be running or user not synced
@@ -85,6 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             } else {
                 logoutRef.current();
                 resetCartRef.current();
+                resetEnrollmentsRef.current();
             }
         });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
     Play,
@@ -15,11 +15,16 @@ import {
     FileText,
     ShoppingCart,
     Zap,
+    CheckCircle,
+    GraduationCap,
 } from "lucide-react";
 import { Button, Badge, Avatar, Card, Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui";
 import { AuthModal } from "@/components/features/auth";
 import { useAuth } from "@/lib/hooks";
-import type { CourseDetail, LessonSummary } from "@/types";
+import type { CourseDetail, LessonSummary, EnrollmentCheck } from "@/types";
+import { useEnrollmentStore } from "@/lib/stores";
+import { enrollmentsApi } from "@/lib/api/enrollments";
+import Link from "next/link";
 
 interface CourseDetailClientProps {
     course: CourseDetail;
@@ -41,6 +46,34 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const { isAuthenticated } = useAuth();
+
+    // Enrollment state
+    const { isEnrolled: isEnrolledInStore } = useEnrollmentStore();
+    const [enrollmentData, setEnrollmentData] = useState<EnrollmentCheck | null>(null);
+    const [isLoadingEnrollment, setIsLoadingEnrollment] = useState(false);
+
+    // Check enrollment status from store first, then fetch detailed data if needed
+    const isEnrolled = isAuthenticated && (isEnrolledInStore(course.id) || enrollmentData?.enrolled);
+    const progressPercent = enrollmentData?.progressPercent || 0;
+
+    // Fetch detailed enrollment data when authenticated
+    useEffect(() => {
+        const fetchEnrollmentData = async () => {
+            if (!isAuthenticated || !isEnrolledInStore(course.id)) return;
+
+            try {
+                setIsLoadingEnrollment(true);
+                const data = await enrollmentsApi.checkEnrollment(course.id);
+                setEnrollmentData(data);
+            } catch (error) {
+                console.error("Failed to check enrollment:", error);
+            } finally {
+                setIsLoadingEnrollment(false);
+            }
+        };
+
+        fetchEnrollmentData();
+    }, [isAuthenticated, course.id, isEnrolledInStore]);
 
     // Calculate total duration from lessons
     const totalDuration = course.lessons?.reduce((sum, lesson) => sum + lesson.duration, 0) || course.duration;
@@ -165,26 +198,74 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                         </div>
 
                                         <div className="p-6 space-y-4">
-                                            {/* Price */}
-                                            <div className="flex items-baseline gap-3">
-                                                <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                                                    {formatPrice(course.discountPrice || course.price)}₫
-                                                </span>
-                                                {course.discountPrice && (
-                                                    <>
-                                                        <span className="text-lg text-gray-400 line-through">
-                                                            {formatPrice(course.price)}₫
-                                                        </span>
-                                                        <Badge variant="danger" size="sm">
-                                                            -{discountPercentage}%
-                                                        </Badge>
-                                                    </>
-                                                )}
-                                            </div>
+                                            {/* Enrolled Status Banner */}
+                                            {isEnrolled && (
+                                                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                                    <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                                                        Bạn đã sở hữu khóa học này
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Progress Bar (for enrolled users) */}
+                                            {isEnrolled && progressPercent > 0 && (
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-sm">
+                                                        <span className="text-gray-600 dark:text-gray-400">Tiến độ học tập</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">{progressPercent}%</span>
+                                                    </div>
+                                                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-300"
+                                                            style={{ width: `${progressPercent}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Price - Only show if not enrolled */}
+                                            {!isEnrolled && (
+                                                <div className="flex items-baseline gap-3">
+                                                    <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                                                        {formatPrice(course.discountPrice || course.price)}đ
+                                                    </span>
+                                                    {course.discountPrice && (
+                                                        <>
+                                                            <span className="text-lg text-gray-400 line-through">
+                                                                {formatPrice(course.price)}đ
+                                                            </span>
+                                                            <Badge variant="danger" size="sm">
+                                                                -{discountPercentage}%
+                                                            </Badge>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
 
                                             {/* Actions */}
                                             <div className="space-y-3">
-                                                {isAuthenticated ? (
+                                                {isEnrolled ? (
+                                                    /* Enrolled user actions */
+                                                    <>
+                                                        <Link href={`/learn/${course.slug}`}>
+                                                            <Button
+                                                                variant="primary"
+                                                                size="lg"
+                                                                fullWidth
+                                                                leftIcon={<GraduationCap className="w-5 h-5" />}
+                                                            >
+                                                                {progressPercent > 0 ? "Tiếp tục học" : "Bắt đầu học"}
+                                                            </Button>
+                                                        </Link>
+                                                        {progressPercent === 100 && (
+                                                            <Button variant="secondary" size="lg" fullWidth>
+                                                                Xem chứng chỉ
+                                                            </Button>
+                                                        )}
+                                                    </>
+                                                ) : isAuthenticated ? (
+                                                    /* Authenticated but not enrolled */
                                                     <>
                                                         <Button
                                                             variant="primary"
@@ -200,6 +281,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                                         </Button>
                                                     </>
                                                 ) : (
+                                                    /* Guest user */
                                                     <Button
                                                         variant="primary"
                                                         size="lg"
@@ -212,9 +294,11 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                                 )}
                                             </div>
 
-                                            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                                                Đảm bảo hoàn tiền trong 30 ngày
-                                            </p>
+                                            {!isEnrolled && (
+                                                <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                                                    Đảm bảo hoàn tiền trong 30 ngày
+                                                </p>
+                                            )}
 
                                             {/* Course includes */}
                                             <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
@@ -299,7 +383,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                                             {index + 1}
                                                         </span>
                                                         <div className="flex items-center gap-3">
-                                                            {lesson.isFree ? (
+                                                            {isEnrolled || lesson.isFree ? (
                                                                 <Play className="w-4 h-4 text-primary-500" />
                                                             ) : (
                                                                 <Lock className="w-4 h-4 text-gray-400" />
@@ -307,7 +391,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                                             <span className="text-gray-700 dark:text-gray-300">
                                                                 {lesson.title}
                                                             </span>
-                                                            {lesson.isFree && (
+                                                            {lesson.isFree && !isEnrolled && (
                                                                 <Badge variant="success" size="sm">
                                                                     Xem thử
                                                                 </Badge>
@@ -411,25 +495,46 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                 {/* Mobile Purchase Bar */}
                 <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
                     <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {formatPrice(course.discountPrice || course.price)}₫
-                                </span>
-                                {course.discountPrice && (
-                                    <span className="text-sm text-gray-400 line-through">
-                                        {formatPrice(course.price)}₫
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <Button
-                            variant="primary"
-                            leftIcon={isAuthenticated ? <ShoppingCart className="w-5 h-5" /> : <Zap className="w-5 h-5" />}
-                            onClick={handleBuyAction}
-                        >
-                            {isAuthenticated ? "Thêm vào giỏ" : "Mua ngay"}
-                        </Button>
+                        {isEnrolled ? (
+                            /* Enrolled user mobile bar */
+                            <>
+                                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                    <CheckCircle className="w-5 h-5" />
+                                    <span className="text-sm font-medium">Đã sở hữu</span>
+                                </div>
+                                <Link href={`/learn/${course.slug}`}>
+                                    <Button
+                                        variant="primary"
+                                        leftIcon={<GraduationCap className="w-5 h-5" />}
+                                    >
+                                        {progressPercent > 0 ? "Tiếp tục học" : "Bắt đầu học"}
+                                    </Button>
+                                </Link>
+                            </>
+                        ) : (
+                            /* Not enrolled mobile bar */
+                            <>
+                                <div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-xl font-bold text-gray-900 dark:text-white">
+                                            {formatPrice(course.discountPrice || course.price)}₫
+                                        </span>
+                                        {course.discountPrice && (
+                                            <span className="text-sm text-gray-400 line-through">
+                                                {formatPrice(course.price)}₫
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    leftIcon={isAuthenticated ? <ShoppingCart className="w-5 h-5" /> : <Zap className="w-5 h-5" />}
+                                    onClick={handleBuyAction}
+                                >
+                                    {isAuthenticated ? "Thêm vào giỏ" : "Mua ngay"}
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

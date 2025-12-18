@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Clock, Users, BookOpen, TrendingUp, Sparkles, ShoppingCart, Check, Zap } from "lucide-react";
+import { Star, Clock, Users, BookOpen, TrendingUp, Sparkles, ShoppingCart, Check, Zap, CheckCircle } from "lucide-react";
 import type { CourseListItem } from "@/types";
-import { useCartStore } from "@/lib/stores";
+import { useCartStore, useEnrollmentStore } from "@/lib/stores";
 import { useAuth } from "@/lib/hooks";
 import { AuthModal } from "@/components/features/auth";
 
@@ -36,6 +36,10 @@ export default function CourseCard({ course }: CourseCardProps) {
     // Only show "Đã thêm" when authenticated AND item is in cart
     const inCart = isAuthenticated && isInCart(course.id);
 
+    // Check if user already enrolled in this course
+    const { isEnrolled } = useEnrollmentStore();
+    const enrolled = isAuthenticated && isEnrolled(course.id);
+
     const discountPercentage = course.discountPrice
         ? Math.round(((course.price - course.discountPrice) / course.price) * 100)
         : 0;
@@ -53,8 +57,8 @@ export default function CourseCard({ course }: CourseCardProps) {
             return;
         }
 
-        // Authenticated: add to cart
-        if (!inCart) {
+        // Authenticated: add to cart (only if not enrolled)
+        if (!inCart && !enrolled) {
             addItem(course);
         }
     };
@@ -198,15 +202,22 @@ export default function CourseCard({ course }: CourseCardProps) {
                             </div>
                             <button
                                 onClick={handleAddToCart}
-                                disabled={inCart}
-                                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${inCart
+                                disabled={inCart || enrolled}
+                                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${enrolled
+                                    ? 'bg-green-500 text-white cursor-not-allowed'
+                                    : inCart
                                         ? 'bg-green-500 text-white cursor-not-allowed opacity-80'
                                         : isAuthenticated
                                             ? 'gradient-accent text-white hover:opacity-90 shadow-md shadow-accent-500/20 cursor-pointer'
                                             : 'gradient-primary text-white hover:opacity-90 shadow-md shadow-primary-500/20 cursor-pointer'
                                     }`}
                             >
-                                {inCart ? (
+                                {enrolled ? (
+                                    <>
+                                        <CheckCircle className="w-4 h-4" />
+                                        Đã mua
+                                    </>
+                                ) : inCart ? (
                                     <>
                                         <Check className="w-4 h-4" />
                                         Đã thêm
