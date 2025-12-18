@@ -28,13 +28,39 @@ export class FirebaseAuthGuard implements CanActivate {
             context.getClass(),
         ]);
 
-        if (isPublic) {
-            return true;
-        }
-
         const request = context.switchToHttp().getRequest<Request>();
         const token = this.extractTokenFromHeader(request);
 
+        // For public routes: try to extract user if token present, but don't require it
+        if (isPublic) {
+            if (token) {
+                try {
+                    const decodedToken = await this.firebaseService.verifyIdToken(token);
+                    const dbUser = await this.prisma.user.findUnique({
+                        where: { firebaseUid: decodedToken.uid },
+                        select: { id: true, role: true },
+                    });
+
+                    if (dbUser) {
+                        request.user = {
+                            uid: decodedToken.uid,
+                            email: decodedToken.email || '',
+                            emailVerified: decodedToken.email_verified,
+                            name: decodedToken.name,
+                            dbId: dbUser.id,
+                            role: dbUser.role,
+                        };
+                        this.logger.debug(`Public route with auth: user ${dbUser.id}`);
+                    }
+                } catch (error) {
+                    // Token invalid on public route - just proceed without user
+                    this.logger.debug('Public route: token present but invalid, proceeding as anonymous');
+                }
+            }
+            return true;
+        }
+
+        // For protected routes: require valid token
         if (!token) {
             throw new UnauthorizedException('No token provided');
         }

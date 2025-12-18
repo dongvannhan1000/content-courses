@@ -102,7 +102,8 @@ export default function LessonPage() {
                         const lessonData = await lessonsApi.getBySlug(courseData.id, lessonSlug);
                         setLesson(lessonData);
                     } catch (lessonError) {
-                        console.error("Failed to fetch lesson:", lessonError);
+                        // Expected to fail if backend doesn't have lesson detail - use mock data
+                        console.warn("Lesson API not available, using mock data from course.lessons");
                         // Use mock lesson data for testing
                         const mockLesson = courseData.lessons?.find(l => l.slug === lessonSlug);
                         if (mockLesson) {

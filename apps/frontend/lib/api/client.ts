@@ -16,6 +16,8 @@ apiClient.interceptors.request.use(
         // Get token directly from Firebase (not localStorage)
         const token = await getIdToken();
 
+        console.log(`[API] ${config.method?.toUpperCase()} ${config.url} - Token: ${token ? 'present' : 'MISSING'}`);
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

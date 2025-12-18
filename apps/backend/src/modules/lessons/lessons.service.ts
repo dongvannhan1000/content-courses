@@ -276,7 +276,10 @@ export class LessonsService {
     }
 
     private async checkEnrollment(courseId: number, userId?: number): Promise<boolean> {
-        if (!userId) return false;
+        if (!userId) {
+            this.logger.warn(`checkEnrollment: No userId provided for course ${courseId}`);
+            return false;
+        }
 
         const enrollment = await this.prisma.enrollment.findUnique({
             where: {
@@ -284,7 +287,13 @@ export class LessonsService {
             },
         });
 
-        return enrollment?.status === EnrollmentStatus.ACTIVE;
+        this.logger.log(`checkEnrollment: user=${userId}, course=${courseId}, enrollment=${enrollment ? JSON.stringify({ id: enrollment.id, status: enrollment.status }) : 'null'}`);
+
+        // Allow access for ACTIVE or COMPLETED enrollments
+        const hasAccess = enrollment?.status === EnrollmentStatus.ACTIVE ||
+            enrollment?.status === EnrollmentStatus.COMPLETED;
+
+        return hasAccess;
     }
 
     private async updateCourseDuration(courseId: number): Promise<void> {
