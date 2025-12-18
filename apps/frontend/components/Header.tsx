@@ -108,7 +108,18 @@ export default function Header() {
                             <button
                                 aria-label="Tìm kiếm"
                                 onClick={() => setIsSearchOpen(true)}
-                                className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
+                                className="hidden sm:flex items-center gap-2 px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
+                            >
+                                <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                <kbd className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                                    ⌘K
+                                </kbd>
+                            </button>
+                            {/* Mobile Search Button */}
+                            <button
+                                aria-label="Tìm kiếm"
+                                onClick={() => setIsSearchOpen(true)}
+                                className="sm:hidden p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 cursor-pointer"
                             >
                                 <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             </button>
