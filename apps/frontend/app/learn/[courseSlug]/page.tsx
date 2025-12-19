@@ -23,9 +23,12 @@ import { enrollmentsApi, coursesApi } from "@/lib/api";
 import type { CourseDetail, LessonSummary, EnrollmentCheck } from "@/types";
 
 function formatDuration(seconds: number): string {
+    if (!seconds || seconds <= 0) return '0m';
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (hours > 0) {
+        return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    }
     return `${minutes}m`;
 }
 
@@ -183,9 +186,9 @@ export default function LearnPage() {
                                         </div>
 
                                         {/* Info */}
-                                        <div className="flex-1 space-y-4">
-                                            <div>
-                                                <h1 className="font-display font-bold text-2xl text-gray-900 dark:text-white mb-2">
+                                        <div className="flex-1 flex flex-col">
+                                            <div className="mb-3">
+                                                <h1 className="font-display font-bold text-2xl text-gray-900 dark:text-white mb-1">
                                                     {course.title}
                                                 </h1>
                                                 <p className="text-gray-600 dark:text-gray-400">
@@ -194,7 +197,7 @@ export default function LearnPage() {
                                             </div>
 
                                             {/* Progress Bar */}
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 mb-4">
                                                 <div className="flex items-center justify-between text-sm">
                                                     <span className="text-gray-600 dark:text-gray-400">
                                                         Tiến độ: {completedLessons}/{totalLessons} bài học
@@ -203,7 +206,7 @@ export default function LearnPage() {
                                                         {progressPercent}%
                                                     </span>
                                                 </div>
-                                                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full gradient-primary rounded-full transition-all duration-500"
                                                         style={{ width: `${progressPercent}%` }}
@@ -213,11 +216,11 @@ export default function LearnPage() {
 
                                             {/* Continue Button */}
                                             {nextLesson && (
-                                                <Link href={`/learn/${course.slug}/${nextLesson.slug}`}>
+                                                <Link href={`/learn/${course.slug}/${nextLesson.slug}`} className="inline-block">
                                                     <Button
                                                         variant="primary"
-                                                        size="lg"
-                                                        leftIcon={<Play className="w-5 h-5" />}
+                                                        size="md"
+                                                        leftIcon={<Play className="w-4 h-4" />}
                                                     >
                                                         {progressPercent > 0 ? "Tiếp tục học" : "Bắt đầu học"}
                                                     </Button>
@@ -274,17 +277,17 @@ export default function LearnPage() {
                                                 key={lesson.id}
                                                 href={`/learn/${course.slug}/${lesson.slug}`}
                                                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors cursor-pointer ${isCurrent
-                                                        ? "bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-500"
-                                                        : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                    ? "bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-500"
+                                                    : "hover:bg-gray-50 dark:hover:bg-gray-800"
                                                     }`}
                                             >
                                                 {/* Status Icon */}
                                                 <div
                                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isCompleted
-                                                            ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                                                            : isCurrent
-                                                                ? "bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
-                                                                : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                                                        ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                                                        : isCurrent
+                                                            ? "bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
+                                                            : "bg-gray-100 dark:bg-gray-800 text-gray-400"
                                                         }`}
                                                 >
                                                     {isCompleted ? (
