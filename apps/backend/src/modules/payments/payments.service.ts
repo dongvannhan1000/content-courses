@@ -129,7 +129,7 @@ export class PaymentsService {
             paymentUrl = await this.createPayOSPaymentLink({
                 orderCode,
                 amount,
-                description: `Thanh toán khóa học: ${course.title}`.substring(0, 50),
+                description: `Khoa hoc #${courseId}`.substring(0, 25), // PayOS max 25 chars
                 items: [{ name: course.title.substring(0, 50), quantity: 1, price: amount }],
                 returnUrl: returnUrl || `${process.env.FRONTEND_URL}/payment/success`,
                 cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancel`,

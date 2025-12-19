@@ -5,7 +5,12 @@ import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-console.log(FRONTEND_URL);
+const NGROK_URL = process.env.NGROK_URL || ''; // ngrok URL for PayOS webhook testing
+
+console.log('FRONTEND_URL:', FRONTEND_URL);
+if (NGROK_URL) {
+  console.log('NGROK_URL:', NGROK_URL);
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,17 +21,25 @@ async function bootstrap() {
   // Enable cookie parser for HTTP-only cookies
   app.use(cookieParser());
 
+  // Build CORS origins list
+  const origins = [
+    'http://localhost:3000', // Next.js
+    'http://localhost:3001', // Next.js fallback
+    'http://localhost:5173', // Vite
+    'http://localhost:4173', // Vite preview
+    FRONTEND_URL,
+  ];
+
+  // Add ngrok URL if configured (for PayOS webhook testing)
+  if (NGROK_URL) {
+    origins.push(NGROK_URL);
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000', // Next.js
-      'http://localhost:3001', // Next.js fallback
-      'http://localhost:5173', // Vite
-      'http://localhost:4173', // Vite preview
-      `${FRONTEND_URL}`,
-    ],
+    origin: origins.filter(Boolean), // Filter out empty strings
     credentials: true, // Enable credentials for cookies
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
   });
 
   app.useGlobalPipes(

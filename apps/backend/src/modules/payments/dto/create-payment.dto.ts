@@ -17,7 +17,7 @@ export class CreatePaymentDto {
         description: 'URL to redirect after successful payment',
     })
     @IsOptional()
-    @IsUrl()
+    @IsUrl({ require_tld: false }) // Allow localhost URLs
     returnUrl?: string;
 
     @ApiPropertyOptional({
@@ -25,7 +25,7 @@ export class CreatePaymentDto {
         description: 'URL to redirect if payment cancelled',
     })
     @IsOptional()
-    @IsUrl()
+    @IsUrl({ require_tld: false }) // Allow localhost URLs
     cancelUrl?: string;
 }
 

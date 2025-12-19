@@ -58,20 +58,10 @@ export default function CartPage() {
                 `${baseUrl}/cart`
             );
 
-            if (response.success && response.orderCode) {
-                // Mock payment for testing (since PayOS isn't configured)
-                // In production, redirect to response.paymentUrl
-                const mockResult = await paymentsApi.mockPayment(response.orderCode.toString());
-
-                if (mockResult.success) {
-                    // Remove purchased item from cart
-                    removeItem(firstItem.course.id);
-
-                    // Redirect to result page
-                    router.push(`/payment/result?orderCode=${response.orderCode}&status=success`);
-                } else {
-                    setCheckoutError("Thanh toán không thành công. Vui lòng thử lại.");
-                }
+            if (response.success && response.paymentUrl) {
+                // Redirect to PayOS payment page
+                // After payment, PayOS will redirect back to returnUrl with orderCode
+                window.location.href = response.paymentUrl;
             } else {
                 setCheckoutError("Không thể khởi tạo thanh toán. Vui lòng thử lại.");
             }
