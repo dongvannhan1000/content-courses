@@ -65,8 +65,8 @@ export default function CourseCard({ course }: CourseCardProps) {
 
     return (
         <>
-            <Link href={`/courses/${course.slug}`} className="block">
-                <div className="group glass rounded-2xl overflow-hidden card-hover cursor-pointer">
+            <Link href={`/courses/${course.slug}`} className="block h-full">
+                <div className="group glass rounded-2xl overflow-hidden card-hover cursor-pointer h-full flex flex-col">
                     {/* Thumbnail */}
                     <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-800">
                         {course.thumbnail ? (
@@ -113,7 +113,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                     </div>
 
                     {/* Content */}
-                    <div className="p-5">
+                    <div className="p-5 flex flex-col flex-1">
                         {/* Category */}
                         {course.category && (
                             <div className="flex items-center gap-2 mb-2">
@@ -128,12 +128,10 @@ export default function CourseCard({ course }: CourseCardProps) {
                             {course.title}
                         </h3>
 
-                        {/* Description */}
-                        {course.shortDesc && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                                {course.shortDesc}
-                            </p>
-                        )}
+                        {/* Description - fixed height */}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 min-h-[2.5rem]">
+                            {course.shortDesc || '\u00A0'}
+                        </p>
 
                         {/* Instructor */}
                         <div className="flex items-center gap-2 mb-4">
@@ -188,8 +186,8 @@ export default function CourseCard({ course }: CourseCardProps) {
                             </div>
                         )}
 
-                        {/* Price & Action */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 gap-3">
+                        {/* Price & Action - pushed to bottom */}
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 gap-3 mt-auto">
                             <div className="flex flex-col">
                                 <span className="text-xl font-bold text-primary-700 dark:text-primary-400">
                                     {formatPrice(displayPrice)}₫
