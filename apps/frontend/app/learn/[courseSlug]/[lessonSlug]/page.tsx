@@ -22,7 +22,7 @@ import { RequireAuth } from "@/components/auth";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useEnrollmentStore } from "@/lib/stores";
 import { enrollmentsApi, coursesApi, lessonsApi } from "@/lib/api";
-import type { CourseDetail, LessonDetail, LessonSummary } from "@/types";
+import type { CourseDetail, LessonDetail, LessonSummary, CourseProgressDto } from "@/types";
 
 function formatDuration(seconds: number): string {
     const hours = Math.floor(seconds / 3600);
@@ -69,7 +69,10 @@ export default function LessonPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isCompleted, setIsCompleted] = useState(false);
+    const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+
+    // Progress state - track which lessons are completed
+    const [completedLessonIds, setCompletedLessonIds] = useState<Set<number>>(new Set());
 
     // Fetch data on mount
     useEffect(() => {
@@ -125,6 +128,22 @@ export default function LessonPage() {
                             setError("Không tìm thấy bài học");
                         }
                     }
+
+                    // Fetch course progress (completed lessons) - only if enrolled
+                    if (isAuthenticated) {
+                        try {
+                            const progressData = await lessonsApi.getCourseProgress(courseData.id);
+                            const completedIds = new Set(
+                                progressData.lessons
+                                    .filter(l => l.isCompleted)
+                                    .map(l => l.id)
+                            );
+                            setCompletedLessonIds(completedIds);
+                        } catch (progressError) {
+                            // Not enrolled or progress not available - that's OK
+                            console.warn("Could not fetch progress:", progressError);
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -152,13 +171,32 @@ export default function LessonPage() {
     const extractedYoutubeId = videoMedia?.url ? extractYouTubeId(videoMedia.url) : null;
     const youtubeId = extractedYoutubeId || DEMO_YOUTUBE_IDS[Math.abs(currentIndex >= 0 ? currentIndex : 0) % DEMO_YOUTUBE_IDS.length];
 
-    const handleMarkComplete = () => {
-        setIsCompleted(true);
-        // Navigate to next lesson if available
-        if (nextLesson) {
-            setTimeout(() => {
-                router.push(`/learn/${courseSlug}/${nextLesson.slug}`);
-            }, 1000);
+    // Check if current lesson is completed
+    const isCurrentLessonCompleted = lesson ? completedLessonIds.has(lesson.id) : false;
+
+    const handleMarkComplete = async () => {
+        if (!course || !lesson || isMarkingComplete) return;
+
+        setIsMarkingComplete(true);
+        try {
+            // Call backend API to mark lesson complete
+            await lessonsApi.markComplete(course.id, lesson.id);
+
+            // Update local state
+            setCompletedLessonIds(prev => new Set([...prev, lesson.id]));
+
+            // Navigate to next lesson if available
+            if (nextLesson) {
+                setTimeout(() => {
+                    router.push(`/learn/${courseSlug}/${nextLesson.slug}`);
+                }, 1000);
+            }
+        } catch (err) {
+            console.error("Failed to mark lesson complete:", err);
+            // Still update UI optimistically
+            setCompletedLessonIds(prev => new Set([...prev, lesson.id]));
+        } finally {
+            setIsMarkingComplete(false);
         }
     };
 
@@ -217,13 +255,13 @@ export default function LessonPage() {
 
                         <div className="flex items-center gap-3">
                             <Button
-                                variant={isCompleted ? "secondary" : "primary"}
+                                variant={isCurrentLessonCompleted ? "secondary" : "primary"}
                                 size="sm"
                                 onClick={handleMarkComplete}
-                                disabled={isCompleted}
-                                leftIcon={isCompleted ? <CheckCircle className="w-4 h-4" /> : undefined}
+                                disabled={isCurrentLessonCompleted || isMarkingComplete}
+                                leftIcon={isCurrentLessonCompleted ? <CheckCircle className="w-4 h-4" /> : isMarkingComplete ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
                             >
-                                {isCompleted ? "Đã hoàn thành" : "Hoàn thành bài học"}
+                                {isCurrentLessonCompleted ? "Đã hoàn thành" : isMarkingComplete ? "Đang lưu..." : "Hoàn thành bài học"}
                             </Button>
 
                             <button
@@ -394,7 +432,7 @@ export default function LessonPage() {
                             <div className="p-2">
                                 {allLessons.map((l, index) => {
                                     const isCurrent = l.slug === lessonSlug;
-                                    const isDone = index < currentIndex;
+                                    const isDone = completedLessonIds.has(l.id);
 
                                     return (
                                         <Link

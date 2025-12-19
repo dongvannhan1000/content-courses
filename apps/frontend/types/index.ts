@@ -244,3 +244,30 @@ export interface ApiResponse<T> {
     data?: T;
     error?: ApiError;
 }
+
+// ============ Progress Types ============
+
+export interface ProgressDto {
+    id: number;
+    lessonId: number;
+    isCompleted: boolean;
+    watchedSeconds: number;
+    lastPosition: number;
+    completedAt?: Date;
+}
+
+export interface LessonProgressSummary {
+    id: number;
+    title: string;
+    order: number;
+    isCompleted: boolean;
+}
+
+export interface CourseProgressDto {
+    courseId: number;
+    totalLessons: number;
+    completedLessons: number;
+    progressPercent: number;
+    lessons: LessonProgressSummary[];
+}
+

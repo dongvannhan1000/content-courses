@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { LessonListItem, LessonDetail } from "@/types";
+import type { LessonListItem, LessonDetail, ProgressDto, CourseProgressDto } from "@/types";
 
 export interface LessonsResponse {
     lessons: LessonListItem[];
@@ -20,16 +20,32 @@ export const lessonsApi = {
     },
 
     // Mark lesson as completed
-    markComplete: async (lessonId: number): Promise<void> => {
-        await apiClient.post(`/lessons/${lessonId}/complete`);
+    markComplete: async (courseId: number, lessonId: number): Promise<ProgressDto> => {
+        const { data } = await apiClient.post(`/courses/${courseId}/lessons/${lessonId}/complete`);
+        return data;
     },
 
-    // Update lesson progress (for video tracking)
-    updateProgress: async (lessonId: number, progressPercent: number): Promise<void> => {
-        await apiClient.patch(`/lessons/${lessonId}/progress`, {
-            progressPercent,
+    // Get course progress summary
+    getCourseProgress: async (courseId: number): Promise<CourseProgressDto> => {
+        const { data } = await apiClient.get(`/courses/${courseId}/progress`);
+        return data;
+    },
+
+    // [Placeholder] Get lesson progress (for video resume)
+    getLessonProgress: async (courseId: number, lessonId: number): Promise<ProgressDto> => {
+        const { data } = await apiClient.get(`/courses/${courseId}/lessons/${lessonId}/progress`);
+        return data;
+    },
+
+    // [Placeholder] Update lesson progress (for video tracking)
+    updateProgress: async (courseId: number, lessonId: number, watchedSeconds: number, lastPosition: number): Promise<ProgressDto> => {
+        const { data } = await apiClient.patch(`/courses/${courseId}/lessons/${lessonId}/progress`, {
+            watchedSeconds,
+            lastPosition,
         });
+        return data;
     },
 };
 
 export default lessonsApi;
+
