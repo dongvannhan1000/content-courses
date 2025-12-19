@@ -9,6 +9,7 @@ import { CommonModule } from './common/common.module';
 import { HealthController } from './health.controller';
 import { PrismaModule } from './infra/prisma/prisma.module';
 import { FirebaseModule } from './infra/firebase/firebase.module';
+import { ENV } from './config/environment.config';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { FirebaseAuthGuard } from './modules/auth/guards/firebase-auth.guard';
@@ -49,22 +50,22 @@ import { ProgressModule } from './modules/progress/progress.module';
     CartModule,
     ProgressModule,
     PrismaModule,
-    // Rate limiting configuration
+    // Rate limiting configuration - uses ENV for different limits per environment
     ThrottlerModule.forRoot([
       {
         name: 'short',
         ttl: 1000,    // 1 second
-        limit: 10,    // 10 requests per second (was 3 - too restrictive)
+        limit: ENV.rateLimits.short,
       },
       {
         name: 'medium',
         ttl: 10000,   // 10 seconds
-        limit: 50,    // 50 requests per 10 seconds (was 20)
+        limit: ENV.rateLimits.medium,
       },
       {
         name: 'long',
         ttl: 60000,   // 1 minute
-        limit: 200,   // 200 requests per minute (was 100)
+        limit: ENV.rateLimits.long,
       },
     ]),
   ],

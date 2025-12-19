@@ -5,6 +5,8 @@
  * Supports both real PayOS API and mock mode for local testing.
  */
 
+import { ENV } from '../../config/environment.config';
+
 // ============ Environment Configuration ============
 
 export interface PayOSConfig {
@@ -17,7 +19,11 @@ export interface PayOSConfig {
 }
 
 export function getPayOSConfig(): PayOSConfig {
-    const mockMode = process.env.PAYOS_MOCK_MODE === 'true';
+    // Auto-enable mock mode in development (unless explicitly disabled)
+    // In production, require explicit PAYOS_MOCK_MODE=true to enable mock
+    const mockMode = ENV.features.autoMockPayOS
+        ? (process.env.PAYOS_MOCK_MODE !== 'false')  // Dev: mock by default
+        : (process.env.PAYOS_MOCK_MODE === 'true');  // Prod: explicit only
 
     return {
         clientId: process.env.PAYOS_CLIENT_ID || '',

@@ -3,14 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { ENV } from '../../config/environment.config';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly pool: Pool;
 
-  // Inject ConfigService để lấy biến môi trường theo cách NestJS chuẩn
   constructor(private readonly configService: ConfigService) {
-    // Sử dụng ConfigService thay vì process.env trực tiếp
     const databaseUrl = configService.get<string>('DATABASE_URL');
 
     if (!databaseUrl) {
@@ -23,7 +22,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     super({
       adapter: adapter,
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      log: ENV.prismaLogLevels as any,
     });
 
     this.pool = pool;
