@@ -39,26 +39,7 @@ function getErrorMessage(code: string): string {
     return errorMessages[code] || "Đã có lỗi xảy ra, vui lòng thử lại";
 }
 
-/**
- * Get current Firebase ID token
- * Firebase automatically handles token refresh
- */
-export async function getIdToken(): Promise<string | null> {
-    const auth = getFirebaseAuth();
-    const currentUser = auth.currentUser;
 
-    if (!currentUser) {
-        return null;
-    }
-
-    try {
-        // forceRefresh: false - uses cached token if valid
-        return await currentUser.getIdToken(false);
-    } catch (error) {
-        console.error("Error getting ID token:", error);
-        return null;
-    }
-}
 
 /**
  * useAuth hook - Provides auth state and actions

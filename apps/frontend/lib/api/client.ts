@@ -1,9 +1,22 @@
 import axios from "axios";
-import { getIdToken } from "@/lib/hooks/useAuth";
+import { getIdToken } from "@/lib/firebase";
+
+// Determine API URL based on IS_NGROK flag
+// Set NEXT_PUBLIC_IS_NGROK=true to use ngrok URL for PayOS webhook testing
+const getApiUrl = () => {
+    const isNgrok = process.env.NEXT_PUBLIC_IS_NGROK === "true";
+
+    if (isNgrok && process.env.NEXT_PUBLIC_API_URL_NGROK) {
+        console.log("[API] Using ngrok URL:", process.env.NEXT_PUBLIC_API_URL_NGROK);
+        return process.env.NEXT_PUBLIC_API_URL_NGROK;
+    }
+
+    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+};
 
 // Create axios instance with default config
 export const apiClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api",
+    baseURL: getApiUrl(),
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",
