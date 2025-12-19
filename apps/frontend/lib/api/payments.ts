@@ -58,6 +58,23 @@ export const paymentsApi = {
     },
 
     /**
+     * Create a batch payment for multiple courses
+     * Returns payment URL for redirect
+     */
+    createBatchPayment: async (
+        courseIds: number[],
+        returnUrl?: string,
+        cancelUrl?: string
+    ): Promise<CreatePaymentResponse> => {
+        const { data } = await apiClient.post("/payments/create-batch", {
+            courseIds,
+            returnUrl,
+            cancelUrl,
+        });
+        return data;
+    },
+
+    /**
      * Verify payment status after returning from payment page
      */
     verifyPayment: async (orderCode: string): Promise<PaymentVerifyResponse> => {

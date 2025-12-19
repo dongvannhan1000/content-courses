@@ -146,10 +146,169 @@ export class PaymentsService {
     }
 
     /**
+     * Create a batch payment for multiple courses
+     * 1. Validate all courses exist and are published
+     * 2. Check user not enrolled in any of the courses
+     * 3. Create PENDING enrollments for each course
+     * 4. Create one PENDING payment with total amount
+     * 5. Call PayOS with items array
+     * 6. Return payment URL
+     */
+    async createBatchPayment(
+        userId: number,
+        courseIds: number[],
+        returnUrl?: string,
+        cancelUrl?: string,
+    ): Promise<CreatePaymentResponseDto> {
+        this.logger.log(`[BatchPayment] Creating batch payment for user ${userId} with courses: ${courseIds.join(', ')}`);
+
+        // Remove duplicates
+        const uniqueCourseIds = [...new Set(courseIds)];
+
+        // 1. Fetch all courses
+        const courses = await this.prisma.course.findMany({
+            where: { id: { in: uniqueCourseIds } },
+            select: {
+                id: true,
+                title: true,
+                price: true,
+                discountPrice: true,
+                status: true,
+            },
+        });
+
+        // Validate all courses exist
+        if (courses.length !== uniqueCourseIds.length) {
+            const foundIds = courses.map(c => c.id);
+            const missingIds = uniqueCourseIds.filter(id => !foundIds.includes(id));
+            throw new NotFoundException(`Courses not found: ${missingIds.join(', ')}`);
+        }
+
+        // Validate all courses are published
+        const unpublishedCourses = courses.filter(c => c.status !== CourseStatus.PUBLISHED);
+        if (unpublishedCourses.length > 0) {
+            throw new ForbiddenException(
+                `Cannot purchase unpublished courses: ${unpublishedCourses.map(c => c.title).join(', ')}`
+            );
+        }
+
+        // 2. Check user not already enrolled in any course
+        const existingEnrollments = await this.prisma.enrollment.findMany({
+            where: {
+                userId,
+                courseId: { in: uniqueCourseIds },
+                status: EnrollmentStatus.ACTIVE,
+            },
+            include: { course: { select: { title: true } } },
+        });
+
+        if (existingEnrollments.length > 0) {
+            throw new ConflictException(
+                `Already enrolled in: ${existingEnrollments.map(e => e.course.title).join(', ')}`
+            );
+        }
+
+        // Clean up any pending enrollments/payments for these courses
+        const pendingEnrollments = await this.prisma.enrollment.findMany({
+            where: {
+                userId,
+                courseId: { in: uniqueCourseIds },
+                status: EnrollmentStatus.PENDING,
+            },
+            include: { payment: true },
+        });
+
+        for (const enrollment of pendingEnrollments) {
+            if (enrollment.payment) {
+                await this.prisma.payment.delete({ where: { id: enrollment.payment.id } });
+            }
+            await this.prisma.enrollment.delete({ where: { id: enrollment.id } });
+        }
+
+        // Calculate total amount and build items array
+        let totalAmount = 0;
+        const paymentItems: { name: string; quantity: number; price: number }[] = [];
+
+        for (const course of courses) {
+            const price = Number(course.discountPrice ?? course.price);
+            totalAmount += price;
+            paymentItems.push({
+                name: course.title.substring(0, 50),
+                quantity: 1,
+                price,
+            });
+        }
+
+        const orderCode = generateOrderCode();
+
+        // 3. Create PENDING enrollments for each course
+        const enrollmentIds: number[] = [];
+        for (const courseId of uniqueCourseIds) {
+            const enrollment = await this.prisma.enrollment.create({
+                data: {
+                    userId,
+                    courseId,
+                    status: EnrollmentStatus.PENDING,
+                },
+            });
+            enrollmentIds.push(enrollment.id);
+        }
+
+        // 4. Create one PENDING payment with total amount
+        // Store courseIds and enrollmentIds in paymentData for webhook processing
+        const payment = await this.prisma.payment.create({
+            data: {
+                userId,
+                enrollmentId: enrollmentIds[0], // Link to first enrollment for backward compatibility
+                amount: totalAmount,
+                currency: 'VND',
+                status: PaymentStatus.PENDING,
+                method: 'PAYOS',
+                transactionId: orderCode.toString(),
+                paymentData: {
+                    isBatch: true,
+                    courseIds: uniqueCourseIds,
+                    enrollmentIds,
+                },
+            },
+        });
+
+        // 5. Get payment URL from PayOS (or mock)
+        let paymentUrl: string;
+
+        if (this.config.mockMode) {
+            paymentUrl = `http://localhost:3000/api/payments/mock-pay/${orderCode}`;
+            this.logger.log(`[MOCK] Created batch payment link: ${paymentUrl}`);
+        } else {
+            const courseCount = uniqueCourseIds.length;
+            paymentUrl = await this.createPayOSPaymentLink({
+                orderCode,
+                amount: totalAmount,
+                description: `Thanh toan ${courseCount} khoa hoc`.substring(0, 25),
+                items: paymentItems,
+                returnUrl: returnUrl || `${process.env.FRONTEND_URL}/payment/success`,
+                cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancel`,
+            });
+        }
+
+        this.logger.log(`[BatchPayment] Created payment ${payment.id} for ${uniqueCourseIds.length} courses, total: ${totalAmount} VND`);
+
+        return {
+            success: true,
+            paymentUrl,
+            orderCode,
+            paymentId: payment.id,
+            enrollmentId: enrollmentIds[0], // Return first enrollmentId for backward compatibility
+        };
+    }
+
+
+    /**
      * Handle PayOS webhook callback
      * 1. Verify signature
      * 2. Check idempotency (not already processed)
      * 3. Update payment and enrollment status atomically
+     * 4. For batch payments, update ALL enrollments
      */
     async handleWebhook(payload: PayOSWebhookPayload, signature: string): Promise<{ success: boolean; message: string }> {
         this.logger.log(`Received webhook for orderCode: ${payload.data?.orderCode}`);
@@ -195,25 +354,44 @@ export class PaymentsService {
         const newPaymentStatus = isSuccess ? PaymentStatus.COMPLETED : PaymentStatus.FAILED;
         const newEnrollmentStatus = isSuccess ? EnrollmentStatus.ACTIVE : EnrollmentStatus.PENDING;
 
-        // 5. Update payment and enrollment atomically
-        await this.prisma.$transaction([
+        // 5. Check if this is a batch payment
+        const paymentData = payment.paymentData as { isBatch?: boolean; enrollmentIds?: number[] } | null;
+        const isBatch = paymentData?.isBatch === true;
+        const enrollmentIdsToUpdate = isBatch && paymentData?.enrollmentIds
+            ? paymentData.enrollmentIds
+            : [payment.enrollmentId];
+
+        this.logger.log(`Processing ${isBatch ? 'batch' : 'single'} payment, updating ${enrollmentIdsToUpdate.length} enrollments`);
+
+        // 6. Update payment and enrollment(s) atomically
+        const operations: any[] = [
             this.prisma.payment.update({
                 where: { id: payment.id },
                 data: {
                     status: newPaymentStatus,
                     paidAt: isSuccess ? new Date() : null,
-                    paymentData: payload as any,
+                    // Merge webhook payload into existing paymentData
+                    paymentData: {
+                        ...(paymentData || {}),
+                        webhookPayload: payload,
+                    } as any,
                 },
             }),
-            this.prisma.enrollment.update({
-                where: { id: payment.enrollmentId },
-                data: {
-                    status: newEnrollmentStatus,
-                },
-            }),
-        ]);
+        ];
 
-        this.logger.log(`Payment ${orderCode} updated to ${newPaymentStatus}`);
+        // Add enrollment updates
+        for (const enrollmentId of enrollmentIdsToUpdate) {
+            operations.push(
+                this.prisma.enrollment.update({
+                    where: { id: enrollmentId },
+                    data: { status: newEnrollmentStatus },
+                })
+            );
+        }
+
+        await this.prisma.$transaction(operations);
+
+        this.logger.log(`Payment ${orderCode} updated to ${newPaymentStatus}, ${enrollmentIdsToUpdate.length} enrollments updated`);
         return { success: true, message: `Payment ${isSuccess ? 'completed' : 'failed'}` };
     }
 

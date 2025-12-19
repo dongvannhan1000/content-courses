@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,8 @@ import {
     Loader2,
     CheckCircle,
     AlertCircle,
+    Square,
+    CheckSquare,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -29,9 +31,55 @@ function formatPrice(price: number): string {
 export default function CartPage() {
     const router = useRouter();
     const { user, isLoading: authLoading } = useAuth();
-    const { items, removeItem, clearCart, totalPrice } = useCartStore();
+    const { items, removeItem, clearCart } = useCartStore();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+    // Selection state - track selected course IDs
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+    // Initialize selection with all items when items change
+    useEffect(() => {
+        setSelectedIds(new Set(items.map(item => item.course.id)));
+    }, [items]);
+
+    // Selection handlers
+    const toggleItem = (courseId: number) => {
+        setSelectedIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(courseId)) {
+                newSet.delete(courseId);
+            } else {
+                newSet.add(courseId);
+            }
+            return newSet;
+        });
+    };
+
+    const selectAll = () => {
+        setSelectedIds(new Set(items.map(item => item.course.id)));
+    };
+
+    const deselectAll = () => {
+        setSelectedIds(new Set());
+    };
+
+    const isAllSelected = selectedIds.size === items.length && items.length > 0;
+    const isNoneSelected = selectedIds.size === 0;
+
+    // Calculate selected items and total
+    const selectedItems = useMemo(() =>
+        items.filter(item => selectedIds.has(item.course.id)),
+        [items, selectedIds]
+    );
+
+    const selectedTotal = useMemo(() =>
+        selectedItems.reduce(
+            (total, item) => total + (item.course.discountPrice || item.course.price),
+            0
+        ),
+        [selectedItems]
+    );
 
     const handleCheckout = async () => {
         // Check auth
@@ -40,27 +88,24 @@ export default function CartPage() {
             return;
         }
 
-        if (items.length === 0) return;
+        if (selectedIds.size === 0) return;
 
         setCheckoutLoading(true);
         setCheckoutError(null);
 
         try {
-            // Process each item in cart (for single item checkout at a time)
-            // In a real app, you might want batch checkout
-            const firstItem = items[0];
+            const courseIds = Array.from(selectedIds);
             const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
-            // Create payment
-            const response = await paymentsApi.createPayment(
-                firstItem.course.id,
+            // Create batch payment for selected courses
+            const response = await paymentsApi.createBatchPayment(
+                courseIds,
                 `${baseUrl}/payment/result`,
                 `${baseUrl}/cart`
             );
 
             if (response.success && response.paymentUrl) {
                 // Redirect to PayOS payment page
-                // After payment, PayOS will redirect back to returnUrl with orderCode
                 window.location.href = response.paymentUrl;
             } else {
                 setCheckoutError("Không thể khởi tạo thanh toán. Vui lòng thử lại.");
@@ -73,8 +118,6 @@ export default function CartPage() {
             setCheckoutLoading(false);
         }
     };
-
-    const total = totalPrice();
 
     return (
         <main className="min-h-screen">
@@ -90,6 +133,11 @@ export default function CartPage() {
                                 </h1>
                                 <p className="text-gray-600 dark:text-gray-400 mt-1">
                                     {items.length} khóa học trong giỏ hàng
+                                    {selectedIds.size > 0 && selectedIds.size < items.length && (
+                                        <span className="ml-2 text-primary-600 dark:text-primary-400">
+                                            ({selectedIds.size} đã chọn)
+                                        </span>
+                                    )}
                                 </p>
                             </div>
                             <Link href="/courses">
@@ -122,31 +170,73 @@ export default function CartPage() {
                             <div className="grid lg:grid-cols-3 gap-8">
                                 {/* Cart Items */}
                                 <div className="lg:col-span-2 space-y-4">
+                                    {/* Select All Header */}
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                                        <button
+                                            onClick={isAllSelected ? deselectAll : selectAll}
+                                            className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                                        >
+                                            {isAllSelected ? (
+                                                <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                                            ) : (
+                                                <Square className="w-5 h-5" />
+                                            )}
+                                            <span className="font-medium">
+                                                {isAllSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                                            </span>
+                                        </button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={clearCart}
+                                            className="text-red-500 hover:text-red-600"
+                                        >
+                                            Xóa tất cả
+                                        </Button>
+                                    </div>
+
                                     {items.map((item) => {
                                         const course = item.course;
                                         const displayPrice = course.discountPrice || course.price;
                                         const hasDiscount = !!course.discountPrice;
+                                        const isSelected = selectedIds.has(course.id);
 
                                         return (
                                             <Card
                                                 key={course.id}
                                                 variant="default"
                                                 padding="none"
-                                                className="overflow-hidden"
+                                                className={`overflow-hidden transition-all ${isSelected
+                                                        ? "ring-2 ring-primary-500 dark:ring-primary-400"
+                                                        : "opacity-60"
+                                                    }`}
                                             >
                                                 <div className="flex flex-col sm:flex-row">
-                                                    {/* Thumbnail */}
-                                                    <div className="relative w-full sm:w-48 h-32 shrink-0">
-                                                        {course.thumbnail ? (
-                                                            <Image
-                                                                src={course.thumbnail}
-                                                                alt={course.title}
-                                                                fill
-                                                                className="object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600" />
-                                                        )}
+                                                    {/* Checkbox + Thumbnail */}
+                                                    <div className="flex">
+                                                        <button
+                                                            onClick={() => toggleItem(course.id)}
+                                                            className="flex items-center justify-center w-12 sm:w-14 bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                            aria-label={isSelected ? "Bỏ chọn" : "Chọn"}
+                                                        >
+                                                            {isSelected ? (
+                                                                <CheckSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                                                            ) : (
+                                                                <Square className="w-6 h-6 text-gray-400" />
+                                                            )}
+                                                        </button>
+                                                        <div className="relative w-32 sm:w-40 h-24 sm:h-28 shrink-0">
+                                                            {course.thumbnail ? (
+                                                                <Image
+                                                                    src={course.thumbnail}
+                                                                    alt={course.title}
+                                                                    fill
+                                                                    className="object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600" />
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     {/* Content */}
@@ -197,18 +287,6 @@ export default function CartPage() {
                                             </Card>
                                         );
                                     })}
-
-                                    {/* Clear Cart */}
-                                    <div className="flex justify-end">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={clearCart}
-                                            className="text-red-500 hover:text-red-600"
-                                        >
-                                            Xóa tất cả
-                                        </Button>
-                                    </div>
                                 </div>
 
                                 {/* Order Summary */}
@@ -218,25 +296,32 @@ export default function CartPage() {
                                             Tóm tắt đơn hàng
                                         </h3>
 
-                                        {/* Items Summary */}
-                                        <div className="space-y-3 mb-6">
-                                            {items.map((item) => (
-                                                <div
-                                                    key={item.course.id}
-                                                    className="flex justify-between text-sm"
-                                                >
-                                                    <span className="text-gray-600 dark:text-gray-400 line-clamp-1 flex-1 mr-2">
-                                                        {item.course.title}
-                                                    </span>
-                                                    <span className="text-gray-900 dark:text-white font-medium whitespace-nowrap">
-                                                        {formatPrice(
-                                                            item.course.discountPrice || item.course.price
-                                                        )}
-                                                        ₫
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {/* Selected Items Summary */}
+                                        {selectedItems.length > 0 ? (
+                                            <div className="space-y-3 mb-6">
+                                                {selectedItems.map((item) => (
+                                                    <div
+                                                        key={item.course.id}
+                                                        className="flex justify-between text-sm"
+                                                    >
+                                                        <span className="text-gray-600 dark:text-gray-400 line-clamp-1 flex-1 mr-2">
+                                                            {item.course.title}
+                                                        </span>
+                                                        <span className="text-gray-900 dark:text-white font-medium whitespace-nowrap">
+                                                            {formatPrice(
+                                                                item.course.discountPrice || item.course.price
+                                                            )}
+                                                            ₫
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                                                <p>Chưa chọn khóa học nào</p>
+                                                <p className="text-sm mt-1">Hãy chọn ít nhất 1 khóa học để thanh toán</p>
+                                            </div>
+                                        )}
 
                                         {/* Divider */}
                                         <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
@@ -244,10 +329,10 @@ export default function CartPage() {
                                         {/* Total */}
                                         <div className="flex justify-between items-center mb-6">
                                             <span className="font-semibold text-gray-900 dark:text-white">
-                                                Tổng cộng
+                                                Tổng cộng ({selectedItems.length} khóa học)
                                             </span>
                                             <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                                                {formatPrice(total)}₫
+                                                {formatPrice(selectedTotal)}₫
                                             </span>
                                         </div>
 
@@ -267,7 +352,7 @@ export default function CartPage() {
                                             size="lg"
                                             fullWidth
                                             onClick={handleCheckout}
-                                            disabled={checkoutLoading || authLoading}
+                                            disabled={checkoutLoading || authLoading || isNoneSelected}
                                             leftIcon={
                                                 checkoutLoading ? (
                                                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -278,9 +363,11 @@ export default function CartPage() {
                                         >
                                             {checkoutLoading
                                                 ? "Đang xử lý..."
-                                                : user
-                                                    ? "Thanh toán"
-                                                    : "Đăng nhập để thanh toán"}
+                                                : isNoneSelected
+                                                    ? "Chọn khóa học để thanh toán"
+                                                    : user
+                                                        ? `Thanh toán ${selectedItems.length} khóa học`
+                                                        : "Đăng nhập để thanh toán"}
                                         </Button>
 
                                         {/* Security Note */}

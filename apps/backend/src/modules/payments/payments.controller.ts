@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { Request } from 'express';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto, PaymentQueryDto } from './dto/create-payment.dto';
+import { CreatePaymentDto, CreateBatchPaymentDto, PaymentQueryDto } from './dto/create-payment.dto';
 import {
     PaymentListItemDto,
     PaymentDetailDto,
@@ -58,6 +58,27 @@ export class PaymentsController {
         return this.paymentsService.createPayment(
             req.user!.dbId,
             dto.courseId,
+            dto.returnUrl,
+            dto.cancelUrl,
+        );
+    }
+
+    @Post('create-batch')
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: 'Create payment for multiple courses',
+        description: 'Creates pending enrollments and one payment for multiple courses, returns PayOS payment URL.',
+    })
+    @ApiResponse({ status: 201, type: CreatePaymentResponseDto })
+    @ApiResponse({ status: 404, description: 'One or more courses not found' })
+    @ApiResponse({ status: 409, description: 'Already enrolled in one or more courses' })
+    async createBatchPayment(
+        @Body() dto: CreateBatchPaymentDto,
+        @NestRequest() req: Request,
+    ): Promise<CreatePaymentResponseDto> {
+        return this.paymentsService.createBatchPayment(
+            req.user!.dbId,
+            dto.courseIds,
             dto.returnUrl,
             dto.cancelUrl,
         );

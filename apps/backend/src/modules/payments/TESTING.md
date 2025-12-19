@@ -74,6 +74,72 @@ http://localhost:3000/api
 
 ---
 
+## 1B. POST /api/payments/create-batch (Batch Payment)
+
+**Purpose:** Create payment for multiple courses at once
+
+### Test Case 1B.1: Success - Multiple Courses
+| Field | Value |
+|-------|-------|
+| Method | POST |
+| URL | `{{baseUrl}}/payments/create-batch` |
+| Headers | `Authorization: Bearer {{userToken}}` |
+| Expected Status | 201 Created |
+
+**Request Body:**
+```json
+{
+  "courseIds": [1, 2, 3],
+  "returnUrl": "http://localhost:3001/payment/result",
+  "cancelUrl": "http://localhost:3001/cart"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "paymentUrl": "http://localhost:3000/api/payments/mock-pay/1234567890",
+  "orderCode": 1234567890,
+  "paymentId": 1,
+  "enrollmentId": 1
+}
+```
+
+### Test Case 1B.2: Already Enrolled in One Course
+| Field | Value |
+|-------|-------|
+| Method | POST |
+| URL | `{{baseUrl}}/payments/create-batch` |
+| Headers | `Authorization: Bearer {{userToken}}` |
+| Body | `{ "courseIds": [1, 2] }` where user is enrolled in course 1 |
+| Expected Status | 409 Conflict |
+
+**Response:**
+```json
+{
+  "statusCode": 409,
+  "message": "Already enrolled in: Course Title"
+}
+```
+
+### Test Case 1B.3: Course Not Found
+| Field | Value |
+|-------|-------|
+| Method | POST |
+| URL | `{{baseUrl}}/payments/create-batch` |
+| Headers | `Authorization: Bearer {{userToken}}` |
+| Body | `{ "courseIds": [1, 99999] }` |
+| Expected Status | 404 Not Found |
+
+### Test Case 1B.4: Empty Array
+| Field | Value |
+|-------|-------|
+| Method | POST |
+| URL | `{{baseUrl}}/payments/create-batch` |
+| Body | `{ "courseIds": [] }` |
+| Expected Status | 400 Bad Request |
+
 ## 2. POST /api/payments/webhook (PayOS Webhook)
 
 **Purpose:** Handle PayOS payment callback
