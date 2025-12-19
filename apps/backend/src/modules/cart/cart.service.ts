@@ -54,14 +54,17 @@ export class CartService {
             throw new NotFoundException('Khóa học không tồn tại');
         }
 
-        // Check if already enrolled
+        // Check if already enrolled (only ACTIVE or COMPLETED enrollments count)
         const existingEnrollment = await this.prisma.enrollment.findUnique({
             where: {
                 userId_courseId: { userId, courseId },
             },
         });
 
-        if (existingEnrollment) {
+        // Only block if enrollment is ACTIVE or COMPLETED
+        // PENDING enrollments (from incomplete payments) should not block
+        if (existingEnrollment &&
+            (existingEnrollment.status === 'ACTIVE' || existingEnrollment.status === 'COMPLETED')) {
             throw new ConflictException('Bạn đã đăng ký khóa học này');
         }
 
