@@ -148,9 +148,9 @@ export default function LessonPage() {
     const videoMedia = lesson?.media?.find(
         (m) => m.type === "VIDEO" || m.type === "YOUTUBE_EMBED"
     );
-    const youtubeId = videoMedia?.url
-        ? extractYouTubeId(videoMedia.url)
-        : DEMO_YOUTUBE_IDS[Math.abs(currentIndex) % DEMO_YOUTUBE_IDS.length];
+    // Extract YouTube ID from media URL, fallback to demo videos if not a YouTube URL
+    const extractedYoutubeId = videoMedia?.url ? extractYouTubeId(videoMedia.url) : null;
+    const youtubeId = extractedYoutubeId || DEMO_YOUTUBE_IDS[Math.abs(currentIndex >= 0 ? currentIndex : 0) % DEMO_YOUTUBE_IDS.length];
 
     const handleMarkComplete = () => {
         setIsCompleted(true);
