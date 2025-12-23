@@ -6,6 +6,7 @@ import {
     signOut,
     GoogleAuthProvider,
     signInWithPopup,
+    sendPasswordResetEmail,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { useAuthStore } from "@/lib/stores";
@@ -125,17 +126,20 @@ export function useAuth() {
         }
     }, [setLoading, setError]);
 
-    // Forgot password - request reset link via backend
+    // Forgot password - send reset email via Firebase Client SDK
+    // Note: Backend API /auth/forgot-password also exists but only generates link without sending
     const forgotPassword = useCallback(async (email: string) => {
         setAuthError(null);
         setLoading(true);
 
         try {
-            await apiClient.post("/auth/forgot-password", { email });
+            const auth = getFirebaseAuth();
+            await sendPasswordResetEmail(auth, email);
             setLoading(false);
             return { success: true };
-        } catch (error: any) {
-            const message = error?.message || "Không thể gửi email đặt lại mật khẩu";
+        } catch (error) {
+            const authError = error as AuthError;
+            const message = getErrorMessage(authError.code);
             setAuthError(message);
             setLoading(false);
             return { success: false, error: message };
