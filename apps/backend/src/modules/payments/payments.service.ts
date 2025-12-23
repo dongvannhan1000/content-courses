@@ -10,31 +10,90 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PaymentStatus, EnrollmentStatus, CourseStatus } from '@prisma/client';
 import { PaymentQueryDto } from './dto/create-payment.dto';
 import {
-    PaymentListItemDto,
-    PaymentDetailDto,
     CreatePaymentResponseDto,
     PaymentVerifyResponseDto,
     PaginatedPaymentsDto,
     RefundResponseDto,
-    CoursePaymentRefDto,
-    UserPaymentRefDto,
+    PaymentListItemDto,
+    PaymentDetailDto,
 } from './dto/payment-response.dto';
 import {
-    getPayOSConfig,
     generateOrderCode,
     mapPayOSStatus,
     PayOSWebhookPayload,
-    CreatePaymentLinkRequest,
-    CreatePaymentLinkResponse,
 } from './payos.config';
-import * as crypto from 'crypto';
+import { PayOSService, PaymentMapperService } from './services';
 
 @Injectable()
 export class PaymentsService {
     private readonly logger = new Logger(PaymentsService.name);
-    private readonly config = getPayOSConfig();
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private payosService: PayOSService,
+        private mapper: PaymentMapperService,
+    ) { }
+
+    // ============ Helper Methods ============
+
+    /**
+     * Cleanup pending enrollments/payments for given courses
+     * Properly handles batch payments by deleting ALL enrollments in the batch
+     */
+    private async cleanupPendingPaymentsForCourses(userId: number, courseIds: number[]): Promise<void> {
+        // Find all pending enrollments for these courses
+        const pendingEnrollments = await this.prisma.enrollment.findMany({
+            where: {
+                userId,
+                courseId: { in: courseIds },
+                status: EnrollmentStatus.PENDING,
+            },
+            include: { payment: true },
+        });
+
+        if (pendingEnrollments.length === 0) {
+            return;
+        }
+
+        // Collect all payment IDs that need cleanup
+        const paymentIdsToDelete = new Set<number>();
+        const enrollmentIdsToDelete = new Set<number>();
+
+        for (const enrollment of pendingEnrollments) {
+            enrollmentIdsToDelete.add(enrollment.id);
+
+            if (enrollment.payment) {
+                const payment = enrollment.payment;
+                paymentIdsToDelete.add(payment.id);
+
+                // Check if this is a batch payment
+                const paymentData = payment.paymentData as { isBatch?: boolean; enrollmentIds?: number[] } | null;
+                if (paymentData?.isBatch && paymentData.enrollmentIds) {
+                    // Add all enrollments from this batch to be deleted
+                    for (const enrollmentId of paymentData.enrollmentIds) {
+                        enrollmentIdsToDelete.add(enrollmentId);
+                    }
+                    this.logger.log(`[Cleanup] Batch payment ${payment.id} found, will delete ${paymentData.enrollmentIds.length} enrollments`);
+                }
+            }
+        }
+
+        // Delete in correct order: payments first (due to FK), then enrollments
+        // But actually, payment has enrollmentId FK, so we need to delete payment first
+        if (paymentIdsToDelete.size > 0) {
+            await this.prisma.payment.deleteMany({
+                where: { id: { in: Array.from(paymentIdsToDelete) } },
+            });
+            this.logger.log(`[Cleanup] Deleted ${paymentIdsToDelete.size} pending payments`);
+        }
+
+        if (enrollmentIdsToDelete.size > 0) {
+            await this.prisma.enrollment.deleteMany({
+                where: { id: { in: Array.from(enrollmentIdsToDelete) } },
+            });
+            this.logger.log(`[Cleanup] Deleted ${enrollmentIdsToDelete.size} pending enrollments`);
+        }
+    }
 
     // ============ User Methods ============
 
@@ -76,20 +135,14 @@ export class PaymentsService {
         // 2. Check user not already enrolled (or has completed payment)
         const existingEnrollment = await this.prisma.enrollment.findUnique({
             where: { userId_courseId: { userId, courseId } },
-            include: { payment: true },
         });
 
         if (existingEnrollment?.status === EnrollmentStatus.ACTIVE) {
             throw new ConflictException('Already enrolled in this course');
         }
 
-        // If there's a pending enrollment with pending payment, reuse it
-        if (existingEnrollment?.payment?.status === PaymentStatus.PENDING) {
-            // If payment is still pending, we could return existing or create new
-            // For simplicity, delete old and create new
-            await this.prisma.payment.delete({ where: { id: existingEnrollment.payment.id } });
-            await this.prisma.enrollment.delete({ where: { id: existingEnrollment.id } });
-        }
+        // 3. Cleanup any pending enrollments/payments (handles batch payments properly)
+        await this.cleanupPendingPaymentsForCourses(userId, [courseId]);
 
         // Calculate amount
         const amount = Number(course.discountPrice ?? course.price);
@@ -120,13 +173,13 @@ export class PaymentsService {
         // 5. Get payment URL from PayOS (or mock)
         let paymentUrl: string;
 
-        if (this.config.mockMode) {
+        if (this.payosService.isMockMode()) {
             // Mock mode for local testing
-            paymentUrl = `http://localhost:3000/api/payments/mock-pay/${orderCode}`;
+            paymentUrl = this.payosService.getMockPaymentUrl(orderCode);
             this.logger.log(`[MOCK] Created payment link: ${paymentUrl}`);
         } else {
             // Real PayOS integration
-            paymentUrl = await this.createPayOSPaymentLink({
+            paymentUrl = await this.payosService.createPaymentLink({
                 orderCode,
                 amount,
                 description: `Khoa hoc #${courseId}`.substring(0, 25), // PayOS max 25 chars
@@ -208,22 +261,8 @@ export class PaymentsService {
             );
         }
 
-        // Clean up any pending enrollments/payments for these courses
-        const pendingEnrollments = await this.prisma.enrollment.findMany({
-            where: {
-                userId,
-                courseId: { in: uniqueCourseIds },
-                status: EnrollmentStatus.PENDING,
-            },
-            include: { payment: true },
-        });
-
-        for (const enrollment of pendingEnrollments) {
-            if (enrollment.payment) {
-                await this.prisma.payment.delete({ where: { id: enrollment.payment.id } });
-            }
-            await this.prisma.enrollment.delete({ where: { id: enrollment.id } });
-        }
+        // 3. Cleanup any pending enrollments/payments (handles batch payments properly)
+        await this.cleanupPendingPaymentsForCourses(userId, uniqueCourseIds);
 
         // Calculate total amount and build items array
         let totalAmount = 0;
@@ -276,12 +315,12 @@ export class PaymentsService {
         // 5. Get payment URL from PayOS (or mock)
         let paymentUrl: string;
 
-        if (this.config.mockMode) {
-            paymentUrl = `http://localhost:3000/api/payments/mock-pay/${orderCode}`;
+        if (this.payosService.isMockMode()) {
+            paymentUrl = this.payosService.getMockPaymentUrl(orderCode);
             this.logger.log(`[MOCK] Created batch payment link: ${paymentUrl}`);
         } else {
             const courseCount = uniqueCourseIds.length;
-            paymentUrl = await this.createPayOSPaymentLink({
+            paymentUrl = await this.payosService.createPaymentLink({
                 orderCode,
                 amount: totalAmount,
                 description: `Thanh toan ${courseCount} khoa hoc`.substring(0, 25),
@@ -314,12 +353,10 @@ export class PaymentsService {
         this.logger.log(`Received webhook for orderCode: ${payload.data?.orderCode}`);
 
         // 1. Verify signature (skip in mock mode)
-        if (!this.config.mockMode) {
-            const isValid = this.verifyWebhookSignature(payload, signature);
-            if (!isValid) {
-                this.logger.error('Invalid webhook signature');
-                throw new ForbiddenException('Invalid signature');
-            }
+        const isValid = this.payosService.verifyWebhookSignature(payload, signature);
+        if (!isValid) {
+            this.logger.error('Invalid webhook signature');
+            throw new ForbiddenException('Invalid signature');
         }
 
         const orderCode = payload.data?.orderCode;
@@ -397,9 +434,11 @@ export class PaymentsService {
 
     /**
      * Verify payment status after user returns from PayOS
+     * If payment is still PENDING, call PayOS API to get actual status
+     * and update DB accordingly (e.g., mark as FAILED if cancelled)
      */
     async verifyPayment(orderCode: string, userId: number): Promise<PaymentVerifyResponseDto> {
-        const payment = await this.prisma.payment.findUnique({
+        let payment = await this.prisma.payment.findUnique({
             where: { transactionId: orderCode },
             include: {
                 enrollment: {
@@ -421,13 +460,91 @@ export class PaymentsService {
             throw new ForbiddenException('Payment does not belong to you');
         }
 
+        // If payment is still PENDING, check with PayOS to get actual status
+        if (payment.status === PaymentStatus.PENDING) {
+            this.logger.log(`[verifyPayment] Payment ${orderCode} is PENDING, checking with PayOS...`);
+
+            try {
+                const payosStatus = await this.payosService.getPaymentInfo(orderCode);
+
+                if (payosStatus) {
+                    const newStatus = mapPayOSStatus(payosStatus);
+                    this.logger.log(`[verifyPayment] PayOS status: ${payosStatus} -> Internal: ${newStatus}`);
+
+                    // If status changed from PENDING, update DB
+                    if (newStatus !== 'PENDING') {
+                        const newPaymentStatus = newStatus === 'COMPLETED'
+                            ? PaymentStatus.COMPLETED
+                            : PaymentStatus.FAILED;
+
+                        const newEnrollmentStatus = newStatus === 'COMPLETED'
+                            ? EnrollmentStatus.ACTIVE
+                            : EnrollmentStatus.PENDING;
+
+                        // Check if this is a batch payment
+                        const paymentData = payment.paymentData as { isBatch?: boolean; enrollmentIds?: number[] } | null;
+                        const isBatch = paymentData?.isBatch === true;
+                        const enrollmentIdsToUpdate = isBatch && paymentData?.enrollmentIds
+                            ? paymentData.enrollmentIds
+                            : [payment.enrollmentId];
+
+                        // Update payment and enrollment(s) atomically
+                        const operations: any[] = [
+                            this.prisma.payment.update({
+                                where: { id: payment.id },
+                                data: {
+                                    status: newPaymentStatus,
+                                    paidAt: newStatus === 'COMPLETED' ? new Date() : null,
+                                    paymentData: {
+                                        ...(paymentData || {}),
+                                        verifiedAt: new Date().toISOString(),
+                                        payosStatus,
+                                    } as any,
+                                },
+                            }),
+                        ];
+
+                        for (const enrollmentId of enrollmentIdsToUpdate) {
+                            operations.push(
+                                this.prisma.enrollment.update({
+                                    where: { id: enrollmentId },
+                                    data: { status: newEnrollmentStatus },
+                                })
+                            );
+                        }
+
+                        await this.prisma.$transaction(operations);
+
+                        this.logger.log(`[verifyPayment] Updated payment ${orderCode} to ${newPaymentStatus}`);
+
+                        // Refresh payment data after update
+                        payment = await this.prisma.payment.findUnique({
+                            where: { transactionId: orderCode },
+                            include: {
+                                enrollment: {
+                                    include: {
+                                        course: {
+                                            select: { id: true, title: true, slug: true, thumbnail: true },
+                                        },
+                                    },
+                                },
+                            },
+                        }) as typeof payment;
+                    }
+                }
+            } catch (error) {
+                // Log error but don't fail - return current DB status
+                this.logger.warn(`[verifyPayment] Failed to check PayOS status: ${error}`);
+            }
+        }
+
         return {
             success: payment.status === PaymentStatus.COMPLETED,
             status: payment.status,
-            message: this.getStatusMessage(payment.status),
+            message: this.mapper.getStatusMessage(payment.status),
             paymentId: payment.id,
             enrollmentId: payment.enrollmentId,
-            course: this.mapToCourseRef(payment.enrollment.course),
+            course: this.mapper.mapToCourseRef(payment.enrollment.course),
         };
     }
 
@@ -449,7 +566,7 @@ export class PaymentsService {
             orderBy: { createdAt: 'desc' },
         });
 
-        return payments.map((p) => this.mapToListItem(p));
+        return payments.map((p) => this.mapper.mapToListItem(p));
     }
 
     // ============ Admin Methods ============
@@ -490,7 +607,7 @@ export class PaymentsService {
         ]);
 
         return {
-            payments: payments.map((p) => this.mapToDetail(p)),
+            payments: payments.map((p) => this.mapper.mapToDetail(p)),
             total,
             page,
             limit,
@@ -520,7 +637,7 @@ export class PaymentsService {
             throw new NotFoundException(`Payment with ID ${id} not found`);
         }
 
-        return this.mapToDetail(payment);
+        return this.mapper.mapToDetail(payment);
     }
 
     /**
@@ -545,7 +662,7 @@ export class PaymentsService {
         }
 
         // In real scenario, call PayOS refund API here
-        if (!this.config.mockMode) {
+        if (!this.payosService.isMockMode()) {
             // await this.callPayOSRefundAPI(payment.transactionId);
             this.logger.log(`[PRODUCTION] Would call PayOS refund API for ${payment.transactionId}`);
         }
@@ -577,7 +694,7 @@ export class PaymentsService {
      * For local testing without real PayOS
      */
     async mockPaymentComplete(orderCode: string): Promise<PaymentVerifyResponseDto> {
-        if (!this.config.mockMode) {
+        if (!this.payosService.isMockMode()) {
             throw new ForbiddenException('Mock payments not allowed in production');
         }
 
@@ -631,137 +748,7 @@ export class PaymentsService {
             message: 'Mock payment completed',
             paymentId: payment.id,
             enrollmentId: payment.enrollmentId,
-            course: this.mapToCourseRef(payment.enrollment.course),
-        };
-    }
-
-    // ============ PayOS Integration ============
-
-    /**
-     * Create payment link via PayOS API
-     */
-    private async createPayOSPaymentLink(request: CreatePaymentLinkRequest): Promise<string> {
-        const signature = this.generatePayOSSignature(request);
-
-        try {
-            const response = await fetch(`${this.config.baseUrl}/v2/payment-requests`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-client-id': this.config.clientId,
-                    'x-api-key': this.config.apiKey,
-                },
-                body: JSON.stringify({ ...request, signature }),
-            });
-
-            const data = (await response.json()) as CreatePaymentLinkResponse;
-
-            if (data.code !== '00') {
-                this.logger.error(`PayOS error: ${data.desc}`);
-                throw new BadRequestException(`Payment creation failed: ${data.desc}`);
-            }
-
-            return data.data.checkoutUrl;
-        } catch (error) {
-            this.logger.error(`PayOS API error: ${error}`);
-            throw new BadRequestException('Failed to create payment link');
-        }
-    }
-
-    /**
-     * Generate PayOS signature for request
-     */
-    private generatePayOSSignature(data: any): string {
-        const sortedKeys = ['amount', 'cancelUrl', 'description', 'orderCode', 'returnUrl'];
-        const signatureString = sortedKeys
-            .map((key) => `${key}=${data[key]}`)
-            .join('&');
-
-        return crypto
-            .createHmac('sha256', this.config.checksumKey)
-            .update(signatureString)
-            .digest('hex');
-    }
-
-    /**
-     * Verify webhook signature from PayOS
-     */
-    private verifyWebhookSignature(payload: PayOSWebhookPayload, signature: string): boolean {
-        try {
-            // PayOS webhook signature verification
-            const data = payload.data;
-            const sortedKeys = Object.keys(data).sort();
-            const signatureString = sortedKeys
-                .map((key) => `${key}=${(data as any)[key] ?? ''}`)
-                .join('&');
-
-            const expectedSignature = crypto
-                .createHmac('sha256', this.config.checksumKey)
-                .update(signatureString)
-                .digest('hex');
-
-            return signature === expectedSignature;
-        } catch (error) {
-            this.logger.error(`Signature verification error: ${error}`);
-            return false;
-        }
-    }
-
-    // ============ Mapping Methods ============
-
-    private getStatusMessage(status: PaymentStatus): string {
-        switch (status) {
-            case PaymentStatus.COMPLETED:
-                return 'Thanh toán thành công';
-            case PaymentStatus.PENDING:
-                return 'Đang chờ thanh toán';
-            case PaymentStatus.FAILED:
-                return 'Thanh toán thất bại';
-            case PaymentStatus.REFUNDED:
-                return 'Đã hoàn tiền';
-            default:
-                return 'Trạng thái không xác định';
-        }
-    }
-
-    private mapToListItem(payment: any): PaymentListItemDto {
-        return {
-            id: payment.id,
-            amount: Number(payment.amount),
-            currency: payment.currency,
-            status: payment.status,
-            method: payment.method ?? undefined,
-            transactionId: payment.transactionId ?? undefined,
-            course: this.mapToCourseRef(payment.enrollment.course),
-            createdAt: payment.createdAt,
-            paidAt: payment.paidAt ?? undefined,
-        };
-    }
-
-    private mapToDetail(payment: any): PaymentDetailDto {
-        return {
-            ...this.mapToListItem(payment),
-            user: this.mapToUserRef(payment.user),
-            paymentData: payment.paymentData ?? undefined,
-            enrollmentId: payment.enrollmentId,
-            updatedAt: payment.updatedAt,
-        };
-    }
-
-    private mapToCourseRef(course: any): CoursePaymentRefDto {
-        return {
-            id: course.id,
-            title: course.title,
-            slug: course.slug,
-            thumbnail: course.thumbnail ?? undefined,
-        };
-    }
-
-    private mapToUserRef(user: any): UserPaymentRefDto {
-        return {
-            id: user.id,
-            email: user.email,
-            name: user.name ?? undefined,
+            course: this.mapper.mapToCourseRef(payment.enrollment.course),
         };
     }
 }
