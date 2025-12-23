@@ -125,6 +125,23 @@ export function useAuth() {
         }
     }, [setLoading, setError]);
 
+    // Forgot password - request reset link via backend
+    const forgotPassword = useCallback(async (email: string) => {
+        setAuthError(null);
+        setLoading(true);
+
+        try {
+            await apiClient.post("/auth/forgot-password", { email });
+            setLoading(false);
+            return { success: true };
+        } catch (error: any) {
+            const message = error?.message || "Không thể gửi email đặt lại mật khẩu";
+            setAuthError(message);
+            setLoading(false);
+            return { success: false, error: message };
+        }
+    }, [setLoading]);
+
     // Sign out
     const handleSignOut = useCallback(async () => {
         try {
@@ -147,6 +164,7 @@ export function useAuth() {
         register,
         signInWithGoogle,
         signOut: handleSignOut,
+        forgotPassword,
         clearError,
     };
 }
