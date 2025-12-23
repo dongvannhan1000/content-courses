@@ -39,7 +39,7 @@ export default function Footer() {
                                     Nhận thông tin mới nhất
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    Đăng ký để nhận bài viết, tips và khuyến mãi mới nhất từ Content Course
+                                    Đăng ký để nhận bài viết, tips và khuyến mãi mới nhất từ Nghề Content
                                 </p>
                             </div>
                             <div className="flex gap-3">
@@ -67,7 +67,7 @@ export default function Footer() {
                                 <span className="text-white font-bold text-xl">CC</span>
                             </div>
                             <span className="font-display font-bold text-xl text-primary-700 dark:text-primary-400">
-                                Content Course
+                                Nghề Content
                             </span>
                         </Link>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -172,7 +172,7 @@ export default function Footer() {
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            © 2024 Content Course. All rights reserved.
+                            © 2024 Nghề Content. All rights reserved.
                         </p>
                         <div className="flex items-center gap-6">
                             <Link

@@ -202,6 +202,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                                     alt={course.title}
                                                     fill
                                                     className="object-cover"
+                                                    sizes="64px"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600" />

@@ -173,6 +173,7 @@ export default function LearnPage() {
                                                     alt={course.title}
                                                     fill
                                                     className="object-cover"
+                                                    sizes="(max-width: 768px) 100vw, 256px"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600" />

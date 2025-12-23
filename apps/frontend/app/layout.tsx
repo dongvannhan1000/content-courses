@@ -19,7 +19,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-    title: "Content Course - Khóa học Content Marketing chuyên nghiệp",
+    title: "Nghề Content",
     description:
         "Nền tảng học content marketing hàng đầu với các khóa học chất lượng cao, giúp bạn làm chủ nghệ thuật viết content và xây dựng thương hiệu.",
     keywords: [
@@ -30,9 +30,9 @@ export const metadata: Metadata = {
         "SEO content",
         "social media marketing",
     ],
-    authors: [{ name: "Content Course Team" }],
+    authors: [{ name: "Nghề Content Team" }],
     openGraph: {
-        title: "Content Course - Khóa học Content Marketing chuyên nghiệp",
+        title: "Nghề Content - Khóa học Content Marketing chuyên nghiệp",
         description: "Nền tảng học content marketing hàng đầu Việt Nam",
         type: "website",
         locale: "vi_VN",

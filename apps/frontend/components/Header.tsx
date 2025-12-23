@@ -82,7 +82,7 @@ export default function Header() {
                                 <span className="text-white font-bold text-xl">CC</span>
                             </div>
                             <span className="font-display font-bold text-xl text-primary-700 dark:text-primary-400 hidden sm:block">
-                                Content Course
+                                Nghề Content
                             </span>
                         </Link>
 

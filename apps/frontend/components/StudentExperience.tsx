@@ -31,7 +31,7 @@ const testimonials = [
         role: "Chủ shop thời trang",
         avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=200&auto=format&fit=crop",
         course: "Social Media Branding",
-        feedback: "Mình học để tự xây dựng thương hiệu cho shop. Kết quả vượt ngoài mong đợi! Lượng tương tác trên Fanpage tăng vọt, đơn hàng cũng đều hơn hẳn. Cảm ơn Content Course rất nhiều!",
+        feedback: "Mình học để tự xây dựng thương hiệu cho shop. Kết quả vượt ngoài mong đợi! Lượng tương tác trên Fanpage tăng vọt, đơn hàng cũng đều hơn hẳn. Cảm ơn Nghề Content rất nhiều!",
         image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop",
         rating: 5
     }
@@ -66,7 +66,7 @@ export default function StudentExperience() {
                         Trải nghiệm học viên
                     </h2>
                     <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                        Lắng nghe chia sẻ từ những học viên đã thành công cùng Content Course
+                        Lắng nghe chia sẻ từ những học viên đã thành công cùng Nghề Content
                     </p>
                 </div>
 
@@ -106,6 +106,7 @@ export default function StudentExperience() {
                                                         alt={item.name}
                                                         fill
                                                         className="object-cover"
+                                                        sizes="48px"
                                                     />
                                                 </div>
                                                 <div>
@@ -123,6 +124,7 @@ export default function StudentExperience() {
                                                 alt="Student Project Result"
                                                 fill
                                                 className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                                sizes="(max-width: 768px) 100vw, 50vw"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                                             <div className="absolute bottom-4 left-4 right-4">
@@ -160,8 +162,8 @@ export default function StudentExperience() {
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}
                                 className={`h-3 rounded-full transition-all duration-300 cursor-pointer ${index === currentIndex
-                                        ? "bg-primary-600 dark:bg-primary-500 w-8"
-                                        : "bg-gray-300 dark:bg-gray-600 hover:bg-primary-300 dark:hover:bg-primary-700 w-3"
+                                    ? "bg-primary-600 dark:bg-primary-500 w-8"
+                                    : "bg-gray-300 dark:bg-gray-600 hover:bg-primary-300 dark:hover:bg-primary-700 w-3"
                                     }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />

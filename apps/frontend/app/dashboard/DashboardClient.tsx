@@ -211,6 +211,7 @@ export default function DashboardClient() {
                                                             alt={enrollment.course.title}
                                                             fill
                                                             className="object-cover rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none"
+                                                            sizes="(max-width: 640px) 100vw, 192px"
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" />
@@ -282,6 +283,7 @@ export default function DashboardClient() {
                                                             alt={enrollment.course.title}
                                                             fill
                                                             className="object-cover rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none"
+                                                            sizes="(max-width: 640px) 100vw, 192px"
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" />

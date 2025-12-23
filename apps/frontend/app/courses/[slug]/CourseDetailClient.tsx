@@ -206,6 +206,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                                     alt={course.title}
                                                     fill
                                                     className="object-cover"
+                                                    sizes="(max-width: 1024px) 100vw, 33vw"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600" />

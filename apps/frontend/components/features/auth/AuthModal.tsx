@@ -122,7 +122,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
                     <span className="text-white font-bold text-2xl">CC</span>
                 </div>
                 <h2 className="font-display font-bold text-2xl text-gray-900 dark:text-white">
-                    Chào mừng đến với Content Course
+                    Chào mừng đến với Nghề Content
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 mt-2">
                     Học Content Marketing từ những chuyên gia hàng đầu

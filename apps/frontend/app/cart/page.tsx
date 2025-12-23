@@ -207,8 +207,8 @@ export default function CartPage() {
                                                 variant="default"
                                                 padding="none"
                                                 className={`overflow-hidden transition-all ${isSelected
-                                                        ? "ring-2 ring-primary-500 dark:ring-primary-400"
-                                                        : "opacity-60"
+                                                    ? "ring-2 ring-primary-500 dark:ring-primary-400"
+                                                    : "opacity-60"
                                                     }`}
                                             >
                                                 <div className="flex flex-col sm:flex-row">
@@ -232,6 +232,7 @@ export default function CartPage() {
                                                                     alt={course.title}
                                                                     fill
                                                                     className="object-cover"
+                                                                    sizes="(max-width: 640px) 128px, 160px"
                                                                 />
                                                             ) : (
                                                                 <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600" />
