@@ -1,4 +1,5 @@
 const { pathsToModuleNameMapper } = require('ts-jest');
+const { compilerOptions: baseOptions } = require('../../tsconfig.base.json');
 const { compilerOptions } = require('./tsconfig.json');
 
 module.exports = {
@@ -22,7 +23,7 @@ module.exports = {
   },
 
   // Module name mapping for absolute imports
-  moduleNameMapping: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
+  moduleNameMapper: baseOptions.paths ? pathsToModuleNameMapper(baseOptions.paths, { prefix: '<rootDir>/../../' }) : {},
 
   // Setup files
   setupFilesAfterEnv: ['<rootDir>/test-setup/jest.setup.ts'],

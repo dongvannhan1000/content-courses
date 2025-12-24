@@ -1,7 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { execSync } from 'child_process';
 
 let prisma: PrismaClient | null = null;
+let pool: Pool | null = null;
 
 /**
  * Database helper for testing environment
@@ -13,7 +16,16 @@ export class DatabaseHelper {
    */
   static getClient(): PrismaClient {
     if (!prisma) {
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        throw new Error('DATABASE_URL environment variable is required');
+      }
+
+      pool = new Pool({ connectionString: databaseUrl });
+      const adapter = new PrismaPg(pool);
+
       prisma = new PrismaClient({
+        adapter: adapter,
         log: process.env.NODE_ENV === 'test' ? [] : ['query', 'info', 'warn', 'error'],
       });
     }
@@ -50,6 +62,10 @@ export class DatabaseHelper {
     if (prisma) {
       await prisma.$disconnect();
       prisma = null;
+    }
+    if (pool) {
+      await pool.end();
+      pool = null;
     }
   }
 
