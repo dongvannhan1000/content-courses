@@ -20,7 +20,7 @@ apps/**/.env
 queries
 
 docs/*
-plans/*
+# plans/*
 assets/*
 dist/*
 coverage/*
