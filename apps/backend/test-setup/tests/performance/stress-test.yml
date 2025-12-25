@@ -1,0 +1,92 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Ramp up to find breaking point
+    - duration: 30
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 50
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 100
+      name: "High load"
+    - duration: 60
+      arrivalRate: 200
+      name: "Stress level"
+    - duration: 30
+      arrivalRate: 300
+      name: "Breaking point test"
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool down"
+  
+  # Ensure test completes gracefully
+  defaults:
+    timeout: 30
+  
+  processor: "./load-test-processor.js"
+  
+  # Variables for test scenarios
+  variables:
+    testCategories:
+      - "programming"
+      - "web-development"
+      - "mobile"
+
+scenarios:
+  # Scenario 1: Health check - lightweight
+  - name: "Health Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+          capture:
+            - json: "$.status"
+              as: "healthStatus"
+
+  # Scenario 2: Public browsing - most common
+  - name: "Course Browsing"
+    weight: 50
+    flow:
+      - function: "generateRandomCategory"
+      - get:
+          url: "/api/courses"
+          qs:
+            limit: 10
+            page: 1
+      - think: 2
+      - get:
+          url: "/api/categories"
+      - think: 1
+      - get:
+          url: "/api/courses/featured"
+          qs:
+            limit: 6
+
+  # Scenario 3: Heavy authenticated flow
+  - name: "Authenticated User Heavy Load"
+    weight: 40
+    flow:
+      - function: "generateVirtualUser"
+      - post:
+          url: "/api/auth/login"
+          beforeRequest: "generateMockToken"
+          afterResponse: "extractAuthToken"
+          json:
+            idToken: "{{ uniqueId }}"
+      - loop:
+          - get:
+              url: "/api/enrollments"
+              headers:
+                Authorization: "Bearer {{ authToken }}"
+          - get:
+              url: "/api/cart"
+              headers:
+                Authorization: "Bearer {{ authToken }}"
+          - get:
+              url: "/api/auth/profile"
+              headers:
+                Authorization: "Bearer {{ authToken }}"
+          - think: 1
+        count: 5

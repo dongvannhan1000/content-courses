@@ -106,19 +106,75 @@ npx jest --config jest.config.js --testPathPatterns="e2e" --runInBand --no-cover
 
 ---
 
-## Phase 5: CI/CD Integration
+## Phase 5: CI/CD Integration ✅ COMPLETE
 
-- [ ] GitHub Actions workflow
-- [ ] Coverage reporting
+- [x] GitHub Actions workflow (`.github/workflows/backend-tests.yml`)
+- [x] Coverage reporting (Codecov integration)
+- [x] Security scanning (Snyk)
+- [x] Automated notifications
+
+### GitHub Actions Features
+- PostgreSQL service container for testing
+- Unit, Integration, E2E tests in sequence
+- Coverage upload to Codecov
+- Performance tests (only on main branch)
+- Security vulnerability scanning
+- Build verification
+
+### Trigger Conditions
+- Push to `main` or `develop` branches
+- Pull requests targeting `main` or `develop`
+- Only when `apps/backend/**` files change
+
+---
+
+## Phase 6: Performance Testing ✅ COMPLETE
+
+- [x] Load test configuration (`load-test.yml`)
+- [x] Stress test configuration (`stress-test.yml`)
+- [x] Artillery processor for authentication
+- [x] Performance testing documentation
+
+### Test Files
+- `test-setup/tests/performance/load-test.yml`
+- `test-setup/tests/performance/stress-test.yml`
+- `test-setup/tests/performance/load-test-processor.js`
+- `test-setup/tests/performance/PERFORMANCE_TESTING.md`
+
+### Commands
+```bash
+# Load testing (normal traffic simulation)
+npm run test:perf
+
+# Stress testing (find breaking points)
+npm run test:stress
+```
+
+> **Note:** Performance tests require a running server at `http://localhost:3000`.
 
 ---
 
 ## Timeline
 
-| Tuần | Phase | Mục tiêu |
-|------|-------|----------|
-| 1-2 | Phase 1 | Setup + Unit tests cơ bản |
-| 3-4 | Phase 2 | Unit tests modules phức tạp |
-| 5-6 | Phase 3 | Integration tests |
-| 7-8 | Phase 4 | E2E tests |
-| 9 | Phase 5 | CI/CD automation |
+| Tuần | Phase | Mục tiêu | Status |
+|------|-------|----------|--------|
+| 1-2 | Phase 1 | Setup + Unit tests cơ bản | ✅ |
+| 3-4 | Phase 2 | Unit tests modules phức tạp | ✅ |
+| 5-6 | Phase 3 | Integration tests | ✅ |
+| 7-8 | Phase 4 | E2E tests | ✅ |
+| 9 | Phase 5 | CI/CD automation | ✅ |
+| 10 | Phase 6 | Performance testing | ✅ |
+
+---
+
+## Total Test Summary
+
+| Phase | Type | Tests |
+|-------|------|-------|
+| Phase 1 | Unit (Basic) | 59 |
+| Phase 2 | Unit (Complex) | 104 |
+| Phase 3 | Integration | 106 |
+| Phase 4 | E2E | 44 |
+| **Total** | **Functional Tests** | **313** |
+
+Plus automated CI/CD and Performance testing infrastructure.

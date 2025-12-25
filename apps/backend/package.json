@@ -35,6 +35,7 @@
     "test:cov": "jest --config jest.config.js --coverage --runInBand",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.config.js --runInBand",
     "test:perf": "artillery run test-setup/tests/performance/load-test.yml",
+    "test:stress": "artillery run test-setup/tests/performance/stress-test.yml",
     "test:db:setup": "docker-compose -f test-setup/docker-compose.test.yml up -d postgres-test",
     "test:db:teardown": "docker-compose -f test-setup/docker-compose.test.yml down",
     "test:db:migrate": "npx prisma db push --config prisma/prisma.config.test.ts",
