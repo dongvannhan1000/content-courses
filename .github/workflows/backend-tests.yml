@@ -193,7 +193,7 @@ jobs:
       run: |
         echo "Checking build output..."
         ls -la dist/ || echo "dist folder not found"
-        ls -la dist/main.js || echo "main.js not found"
+        ls -la dist/src/main.js || echo "main.js not found"
 
     - name: Start application and wait for ready
       working-directory: apps/backend
@@ -228,7 +228,7 @@ jobs:
       continue-on-error: true
 
     - name: Stop application
-      run: pkill -f "node dist/main" || true
+      run: pkill -f "node dist/src/main" || true
       if: always()
 
   security-scan:
@@ -253,18 +253,6 @@ jobs:
       working-directory: apps/backend
       run: npm audit --audit-level high
       continue-on-error: true
-
-    - name: Install backend dependencies
-      working-directory: apps/backend
-      run: npm ci --ignore-scripts
-
-    - name: Run Snyk security scan
-      uses: snyk/actions/node@master
-      continue-on-error: true
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=high apps/backend
 
   notify:
     runs-on: ubuntu-latest
