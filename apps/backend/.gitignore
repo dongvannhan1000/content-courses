@@ -64,5 +64,6 @@ data
 firebase-service-account.json
 firebase-adminsdk-*.json
 output.txt
+perf-results.json
 
 
