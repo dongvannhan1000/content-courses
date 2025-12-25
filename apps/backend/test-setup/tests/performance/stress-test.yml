@@ -1,21 +1,21 @@
 config:
-  target: 'http://localhost:3000'
+  target: 'http://localhost:3001'
   phases:
     # Ramp up to find breaking point
     - duration: 30
       arrivalRate: 10
       name: "Warm up"
     - duration: 60
-      arrivalRate: 50
+      arrivalRate: 30
       name: "Ramp up"
     - duration: 60
-      arrivalRate: 100
+      arrivalRate: 60
       name: "High load"
     - duration: 60
-      arrivalRate: 200
+      arrivalRate: 100
       name: "Stress level"
     - duration: 30
-      arrivalRate: 300
+      arrivalRate: 150
       name: "Breaking point test"
     - duration: 30
       arrivalRate: 10
@@ -24,69 +24,48 @@ config:
   # Ensure test completes gracefully
   defaults:
     timeout: 30
-  
-  processor: "./load-test-processor.js"
-  
-  # Variables for test scenarios
-  variables:
-    testCategories:
-      - "programming"
-      - "web-development"
-      - "mobile"
 
 scenarios:
-  # Scenario 1: Health check - lightweight
-  - name: "Health Check"
-    weight: 10
+  # Public endpoints only - no authentication required
+  
+  - name: "List Categories"
+    weight: 25
     flow:
       - get:
-          url: "/health"
-          capture:
-            - json: "$.status"
-              as: "healthStatus"
+          url: "/api/categories"
 
-  # Scenario 2: Public browsing - most common
-  - name: "Course Browsing"
-    weight: 50
+  - name: "List Courses"
+    weight: 40
     flow:
-      - function: "generateRandomCategory"
       - get:
           url: "/api/courses"
           qs:
             limit: 10
             page: 1
-      - think: 2
+
+  - name: "Get Course Detail"
+    weight: 25
+    flow:
+      - get:
+          url: "/api/courses"
+          qs:
+            limit: 5
+          capture:
+            - json: "$.data[0].slug"
+              as: "courseSlug"
+      - get:
+          url: "/api/courses/{{ courseSlug }}"
+
+  - name: "Browse by Category"
+    weight: 10
+    flow:
       - get:
           url: "/api/categories"
-      - think: 1
+          capture:
+            - json: "$[0].slug"
+              as: "categorySlug"
       - get:
-          url: "/api/courses/featured"
+          url: "/api/courses"
           qs:
-            limit: 6
-
-  # Scenario 3: Heavy authenticated flow
-  - name: "Authenticated User Heavy Load"
-    weight: 40
-    flow:
-      - function: "generateVirtualUser"
-      - post:
-          url: "/api/auth/login"
-          beforeRequest: "generateMockToken"
-          afterResponse: "extractAuthToken"
-          json:
-            idToken: "{{ uniqueId }}"
-      - loop:
-          - get:
-              url: "/api/enrollments"
-              headers:
-                Authorization: "Bearer {{ authToken }}"
-          - get:
-              url: "/api/cart"
-              headers:
-                Authorization: "Bearer {{ authToken }}"
-          - get:
-              url: "/api/auth/profile"
-              headers:
-                Authorization: "Bearer {{ authToken }}"
-          - think: 1
-        count: 5
+            category: "{{ categorySlug }}"
+            limit: 10

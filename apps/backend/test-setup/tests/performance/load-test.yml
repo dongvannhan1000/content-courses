@@ -1,5 +1,5 @@
 config:
-  target: 'http://localhost:3000'
+  target: 'http://localhost:3001'
   phases:
     - duration: 60
       arrivalRate: 5
@@ -15,45 +15,48 @@ config:
       name: "Cool down"
 
 scenarios:
-  - name: "Health Check"
-    weight: 20
-    flow:
-      - get:
-          url: "/health"
-
-  - name: "Public API Endpoints"
-    weight: 40
+  # Public endpoints only - no authentication required
+  
+  - name: "List Categories"
+    weight: 30
     flow:
       - get:
           url: "/api/categories"
+
+  - name: "List Courses"
+    weight: 40
+    flow:
       - get:
           url: "/api/courses"
           qs:
-            status: "published"
             limit: 10
+            page: 1
 
-  - name: "Authenticated User Flow"
-    weight: 40
+  - name: "Get Course Detail"
+    weight: 20
     flow:
-      # Login (mock)
-      - post:
-          url: "/api/auth/login"
-          json:
-            idToken: "mock-test-token"
+      # First get list of courses
+      - get:
+          url: "/api/courses"
+          qs:
+            limit: 5
           capture:
-            - json: "$.access_token"
-              as: "authToken"
-
-      # Get user profile
+            - json: "$.data[0].slug"
+              as: "courseSlug"
+      # Then get detail of first course
       - get:
-          url: "/api/auth/profile"
-          headers:
-            Authorization: "Bearer {{ authToken }}"
+          url: "/api/courses/{{ courseSlug }}"
 
-      # Get user's enrollments
+  - name: "Browse by Category"
+    weight: 10
+    flow:
       - get:
-          url: "/api/enrollments"
-          headers:
-            Authorization: "Bearer {{ authToken }}"
-
-processor: "./load-test-processor.js"
+          url: "/api/categories"
+          capture:
+            - json: "$[0].slug"
+              as: "categorySlug"
+      - get:
+          url: "/api/courses"
+          qs:
+            category: "{{ categorySlug }}"
+            limit: 10

@@ -16,8 +16,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       throw new Error('DATABASE_URL must be defined in the environment.');
     }
 
-    // Khởi tạo Pool và Adapter cho Prisma 7.x
-    const pool = new Pool({ connectionString: databaseUrl });
+    // Khởi tạo Pool với cấu hình có thể điều chỉnh qua environment variables
+    const pool = new Pool({
+      connectionString: databaseUrl,
+      max: parseInt(process.env.DB_POOL_MAX || '20', 10),           // Default 20 connections
+      min: parseInt(process.env.DB_POOL_MIN || '2', 10),            // Keep 2 connections alive
+      idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),  // 30s idle timeout
+      connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '5000', 10),  // 5s connect timeout
+    });
     const adapter = new PrismaPg(pool);
 
     super({

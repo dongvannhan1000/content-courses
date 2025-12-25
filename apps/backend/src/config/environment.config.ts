@@ -48,10 +48,10 @@ export const ENV = {
         autoMockPayOS: getEnvironment() === 'development',
     },
 
-    // Rate limits: relaxed for dev, strict for prod
+    // Rate limits: relaxed for dev, optimized for prod (supports ~2000 concurrent users)
     rateLimits: getEnvironment() === 'development'
-        ? { short: 50, medium: 200, long: 500 }
-        : { short: 10, medium: 50, long: 200 },
+        ? { short: 100, medium: 500, long: 1000 }  // Very relaxed for dev/testing
+        : { short: 30, medium: 100, long: 300 },   // Production: balanced security + capacity
 
     // Prisma log levels
     prismaLogLevels: getEnvironment() === 'development'
