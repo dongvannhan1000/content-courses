@@ -134,13 +134,14 @@ export class DatabaseHelper {
   static async cleanupTestData(): Promise<void> {
     const client = this.getClient();
 
-    // Delete in reverse order of dependencies
+    // Delete in reverse order of dependencies (child tables first)
     await client.progress.deleteMany({});
     await client.review.deleteMany({});
     await client.media.deleteMany({});
+    await client.payment.deleteMany({}); // Must delete before enrollment (FK)
     await client.enrollment.deleteMany({});
     await client.lesson.deleteMany({});
-    await client.payment.deleteMany({});
+    await client.cartItem.deleteMany({}); // Must delete before course (FK)
     await client.course.deleteMany({});
     await client.user.deleteMany({});
     await client.category.deleteMany({});
