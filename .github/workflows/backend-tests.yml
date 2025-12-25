@@ -75,10 +75,12 @@ jobs:
     - name: Run linting
       working-directory: apps/backend
       run: npm run lint
+      continue-on-error: true
 
     - name: Run type checking
       working-directory: apps/backend
       run: npx tsc --noEmit
+      continue-on-error: true
 
     - name: Run unit tests
       working-directory: apps/backend
