@@ -1,0 +1,158 @@
+ts-jest[ts-jest-transformer] (WARN) Define `ts-jest` config under `globals` is deprecated. Please do
+transform: {
+    <transform_regex>: ['ts-jest', { /* ts-jest config goes here in Jest */ }],
+},
+See more at https://kulshekhar.github.io/ts-jest/docs/getting-started/presets#advanced
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in C:/Users/duyen/OneDrive/Desktop/projects_2025/nghe-content/apps/backend/tsconfig.jest.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+FAIL test-setup/tests/e2e/course-purchase.e2e.spec.ts
+  E2E: Course Purchase Flow
+    Step 1: Browse Courses
+      × should list available published courses (247 ms)
+      × should get course details (98 ms)
+      × should filter courses by category (73 ms)
+    Step 2: Add to Cart
+      × should add course to cart (76 ms)
+      √ should get cart with added courses (84 ms)
+      × should not add course if already enrolled (74 ms)
+    Step 3: Create Payment
+      √ should create payment for cart items (97 ms)
+      √ should create batch payment for multiple courses (102 ms)
+      √ should return 404 for non-existent course (80 ms)
+    Free Course: Direct Enrollment
+      √ should enroll directly in free course without payment (82 ms)
+      √ should check enrollment status after enrolling (76 ms)
+      √ should list user enrollments after enrolling (76 ms)
+    Complete Purchase Flow
+      × should complete full purchase: browse → add to cart → pay → enrolled (84 ms)
+    Error Scenarios
+      √ should not allow duplicate enrollment (78 ms)
+      √ should require authentication for purchase (67 ms)
+      √ should require authentication for enrollment (63 ms)
+
+  ● E2E: Course Purchase Flow › Step 1: Browse Courses › should list available published courses
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "courses"
+    Received path: []
+
+    Received value: {"data": [{"category": {"id": 1163, "name": "E2E Test Category", "slug": "e2e-test-category-1766648688023"}, "duration": 92, "enrollmentCount": 0, "id": 1063, "instructor": {"id": 2453, "name": "Narciso Feil", "photoURL": "https://cdn.jsdelivr.net/gh/faker-js/assets-person-portrait/male/512/39.jpg"}, "lessonCount": 3, "level": "BEGINNER", "price": 100000, "publishedAt": "2025-12-25T07:44:48.056Z", "reviewCount": 0, "shortDesc": "Adamo cunabula thymbra valeo virgo velut corrupti tamisium. Concido acies pel earum minus ara supra currus.", "slug": "paid-e2e-course-1766648688056", "status": "PUBLISHED", "title": "Paid E2E Course"}, {"category": {"id": 1163, "name": "E2E Test Category", "slug": "e2e-test-category-1766648688023"}, "duration": 84, "enrollmentCount": 0, "id": 1062, "instructor": {"id": 2453, "name": "Narciso Feil", "photoURL": "https://cdn.jsdelivr.net/gh/faker-js/assets-person-portrait/male/512/39.jpg"}, "lessonCount": 3, "level": "INTERMEDIATE", "price": 0, "publishedAt": "2025-12-25T07:44:48.047Z", "reviewCount": 0, "shortDesc": "Curia argumentum ago cenaculum pariatur quasi curso bardus corporis verto. Aduro utroque templum tenetur quis valetudo agnitio sophismata excepturi.", "slug": "free-e2e-course-1766648688047", "status": "PUBLISHED", "title": "Free E2E Course"}], "limit": 10, "page": 1, "total": 2, "totalPages": 1}
+
+    [0m [90m 74 |[39m                 [33m.[39mexpect([33mHttpStatus[39m[33m.[39m[33mOK[39m)[33m;[39m
+     [90m 75 |[39m
+    [31m[1m>[22m[39m[90m 76 |[39m             expect(response[33m.[39mbody)[33m.[39mtoHaveProperty([32m'courses'[39m)[33m;[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 77 |[39m             expect([33mArray[39m[33m.[39misArray(response[33m.[39mbody[33m.[39mcourses))[33m.[39mtoBe([36mtrue[39m)[33m;[39m
+     [90m 78 |[39m
+     [90m 79 |[39m             [90m// Should include our test courses[39m[0m
+
+      at Object.<anonymous> (test-setup/tests/e2e/course-purchase.e2e.spec.ts:76:35)
+
+  ● E2E: Course Purchase Flow › Step 1: Browse Courses › should get course details
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "100000"
+    Received: 100000
+
+    [0m [90m 91 |[39m             expect(response[33m.[39mbody[33m.[39mid)[33m.[39mtoBe(paidCourse[33m.[39mid)[33m;[39m
+     [90m 92 |[39m             expect(response[33m.[39mbody[33m.[39mtitle)[33m.[39mtoBe(paidCourse[33m.[39mtitle)[33m;[39m
+    [31m[1m>[22m[39m[90m 93 |[39m             expect(response[33m.[39mbody[33m.[39mprice)[33m.[39mtoBe(paidCourse[33m.[39mprice)[33m;[39m
+     [90m    |[39m                                         [31m[1m^[22m[39m
+     [90m 94 |[39m         })[33m;[39m
+     [90m 95 |[39m
+     [90m 96 |[39m         it([32m'should filter courses by category'[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+
+      at Object.<anonymous> (test-setup/tests/e2e/course-purchase.e2e.spec.ts:93:41)
+
+  ● E2E: Course Purchase Flow › Step 1: Browse Courses › should filter courses by category
+
+    expected 200 "OK", got 400 "Bad Request"
+
+    [0m [90m  97 |[39m             [36mconst[39m response [33m=[39m [36mawait[39m createRequest(app)
+     [90m  98 |[39m                 [33m.[39m[36mget[39m([32m`/courses?categoryId=${category.id}`[39m)
+    [31m[1m>[22m[39m[90m  99 |[39m                 [33m.[39mexpect([33mHttpStatus[39m[33m.[39m[33mOK[39m)[33m;[39m
+     [90m     |[39m                  [31m[1m^[22m[39m
+     [90m 100 |[39m
+     [90m 101 |[39m             expect(response[33m.[39mbody)[33m.[39mtoHaveProperty([32m'courses'[39m)[33m;[39m
+     [90m 102 |[39m             [36mconst[39m courses [33m=[39m response[33m.[39mbody[33m.[39mcourses[33m;[39m[0m
+
+      at Object.<anonymous> (test-setup/tests/e2e/course-purchase.e2e.spec.ts:99:18)
+      ----
+      at Test._assertStatus (../../node_modules/supertest/lib/test.js:309:14)
+      at ../../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../../node_modules/supertest/lib/test.js:152:11)
+
+  ● E2E: Course Purchase Flow › Step 2: Add to Cart › should add course to cart
+
+    expected 201 "Created", got 404 "Not Found"
+
+    [0m [90m 116 |[39m                 [33m.[39m[36mset[39m([33mIntegrationTestHelper[39m[33m.[39mgetAuthHeaders(token))
+     [90m 117 |[39m                 [33m.[39msend({ courseId[33m:[39m paidCourse[33m.[39mid })
+    [31m[1m>[22m[39m[90m 118 |[39m                 [33m.[39mexpect([33mHttpStatus[39m[33m.[39m[33mCREATED[39m)[33m;[39m
+     [90m     |[39m                  [31m[1m^[22m[39m
+     [90m 119 |[39m
+     [90m 120 |[39m             expect(response[33m.[39mbody)[33m.[39mtoHaveProperty([32m'items'[39m)[33m;[39m
+     [90m 121 |[39m             [36mconst[39m cartItems [33m=[39m response[33m.[39mbody[33m.[39mitems[33m;[39m[0m
+
+      at Object.<anonymous> (test-setup/tests/e2e/course-purchase.e2e.spec.ts:118:18)
+      ----
+      at Test._assertStatus (../../node_modules/supertest/lib/test.js:309:14)
+      at ../../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../../node_modules/supertest/lib/test.js:152:11)
+
+  ● E2E: Course Purchase Flow › Step 2: Add to Cart › should not add course if already enrolled
+
+    expected 409 "Conflict", got 404 "Not Found"
+
+    [0m [90m 153 |[39m                 [33m.[39m[36mset[39m([33mIntegrationTestHelper[39m[33m.[39mgetAuthHeaders(token))
+     [90m 154 |[39m                 [33m.[39msend({ courseId[33m:[39m paidCourse[33m.[39mid })
+    [31m[1m>[22m[39m[90m 155 |[39m                 [33m.[39mexpect([33mHttpStatus[39m[33m.[39m[33mCONFLICT[39m)[33m;[39m
+     [90m     |[39m                  [31m[1m^[22m[39m
+     [90m 156 |[39m
+     [90m 157 |[39m             expect(response[33m.[39mbody[33m.[39mmessage)[33m.[39mtoBeDefined()[33m;[39m
+     [90m 158 |[39m         })[33m;[39m[0m
+
+      at Object.<anonymous> (test-setup/tests/e2e/course-purchase.e2e.spec.ts:155:18)
+      ----
+      at Test._assertStatus (../../node_modules/supertest/lib/test.js:309:14)
+      at ../../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../../node_modules/supertest/lib/test.js:152:11)
+
+  ● E2E: Course Purchase Flow › Complete Purchase Flow › should complete full purchase: browse → add to cart → pay → enrolled
+
+    expected 201 "Created", got 404 "Not Found"
+
+    [0m [90m 287 |[39m                 [33m.[39m[36mset[39m([33mIntegrationTestHelper[39m[33m.[39mgetAuthHeaders(token))
+     [90m 288 |[39m                 [33m.[39msend({ courseId[33m:[39m paidCourse[33m.[39mid })
+    [31m[1m>[22m[39m[90m 289 |[39m                 [33m.[39mexpect([33mHttpStatus[39m[33m.[39m[33mCREATED[39m)[33m;[39m
+     [90m     |[39m                  [31m[1m^[22m[39m
+     [90m 290 |[39m
+     [90m 291 |[39m             [90m// Step 4: Create payment[39m
+     [90m 292 |[39m             [36mconst[39m paymentResponse [33m=[39m [36mawait[39m createRequest(app)[0m
+
+      at Object.<anonymous> (test-setup/tests/e2e/course-purchase.e2e.spec.ts:289:18)
+      ----
+      at Test._assertStatus (../../node_modules/supertest/lib/test.js:309:14)
+      at ../../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../../node_modules/supertest/lib/test.js:152:11)
+
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 10 passed, 16 total
+Snapshots:   0 total
+Time:        3.738 s, estimated 4 s
+Ran all test suites matching test-setup/tests/e2e/course-purchase.e2e.spec.ts.
