@@ -228,9 +228,7 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
-        args: --severity-threshold=high
-        command: test
-        args: apps/backend
+        args: --severity-threshold=high apps/backend
 
   notify:
     runs-on: ubuntu-latest
