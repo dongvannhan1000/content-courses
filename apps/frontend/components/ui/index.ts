@@ -28,3 +28,12 @@ export { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
 
 // Dropdown
 export { Dropdown } from "./Dropdown";
+
+// Select
+export { Select } from "./Select";
+
+// TextArea
+export { TextArea } from "./TextArea";
+
+// ConfirmModal
+export { ConfirmModal } from "./ConfirmModal";
