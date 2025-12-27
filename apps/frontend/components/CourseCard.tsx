@@ -8,24 +8,10 @@ import type { CourseListItem } from "@/types";
 import { useCartStore, useEnrollmentStore } from "@/lib/stores";
 import { useAuth } from "@/lib/hooks";
 import { AuthModal } from "@/components/features/auth";
+import { formatLevel, formatDuration, formatPrice } from "@/lib/utils/format";
 
 interface CourseCardProps {
     course: CourseListItem;
-}
-
-// Helper to format duration from seconds to readable string
-function formatDuration(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) {
-        return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-}
-
-// Helper to format price in VND
-function formatPrice(price: number): string {
-    return new Intl.NumberFormat('vi-VN').format(price);
 }
 
 export default function CourseCard({ course }: CourseCardProps) {
@@ -107,7 +93,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                         {/* Level Badge */}
                         {course.level && (
                             <div className="absolute bottom-3 left-3 px-3 py-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg">
-                                {course.level}
+                                {formatLevel(course.level)}
                             </div>
                         )}
                     </div>

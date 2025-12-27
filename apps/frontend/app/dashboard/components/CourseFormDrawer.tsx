@@ -86,7 +86,9 @@ export default function CourseFormDrawer({
             setShortDesc(course.shortDesc || "");
             setPrice(course.price);
             setDiscountPrice(course.discountPrice);
-            setLevel((course.level as CourseLevel) || "");
+            // Normalize level to lowercase to match Select options
+            const normalizedLevel = course.level?.toLowerCase() as CourseLevel | undefined;
+            setLevel(normalizedLevel || "");
             setCategoryId(course.category?.id || "");
             setThumbnail(course.thumbnail || "");
             setSlugManuallyEdited(true);
@@ -161,7 +163,7 @@ export default function CourseFormDrawer({
                 thumbnail: thumbnail.trim() || undefined,
                 price,
                 discountPrice: discountPrice || undefined,
-                level: level as CourseLevel || undefined,
+                level: level ? (level as CourseLevel) : undefined,
                 categoryId: categoryId ? Number(categoryId) : undefined,
             };
 

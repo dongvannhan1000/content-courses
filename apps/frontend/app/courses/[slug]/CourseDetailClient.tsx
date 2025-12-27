@@ -25,21 +25,10 @@ import type { CourseDetail, LessonSummary, EnrollmentCheck } from "@/types";
 import { useEnrollmentStore, useCartStore } from "@/lib/stores";
 import { enrollmentsApi } from "@/lib/api/enrollments";
 import Link from "next/link";
+import { formatLevel, formatDuration, formatPrice } from "@/lib/utils/format";
 
 interface CourseDetailClientProps {
     course: CourseDetail;
-}
-
-// Helper functions
-function formatDuration(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-}
-
-function formatPrice(price: number): string {
-    return new Intl.NumberFormat("vi-VN").format(price);
 }
 
 export default function CourseDetailClient({ course }: CourseDetailClientProps) {
@@ -143,7 +132,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                         {course.enrollmentCount > 100 && (
                                             <Badge variant="accent">Bestseller</Badge>
                                         )}
-                                        {course.level && <Badge variant="primary">{course.level}</Badge>}
+                                        {course.level && <Badge variant="primary">{formatLevel(course.level)}</Badge>}
                                     </div>
                                     <h1 className="font-display font-bold text-3xl md:text-4xl leading-tight">
                                         {course.title}
