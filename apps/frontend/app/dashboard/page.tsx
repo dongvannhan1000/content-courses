@@ -1,4 +1,3 @@
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { RequireAuth } from "@/components/auth";
 import DashboardClient from "./DashboardClient";
@@ -11,7 +10,6 @@ export const metadata = {
 export default function DashboardPage() {
     return (
         <main className="min-h-screen">
-            <Header />
             <RequireAuth>
                 <DashboardClient />
             </RequireAuth>
@@ -19,3 +17,4 @@ export default function DashboardPage() {
         </main>
     );
 }
+

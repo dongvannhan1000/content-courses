@@ -297,6 +297,47 @@ export class CoursesService {
     }
 
     /**
+     * Get course by ID for management (any status)
+     * Used for: Instructor/Admin edit course drawer
+     */
+    async findByIdForManagement(id: number, userId: number, userRole: Role): Promise<CourseDetailDto> {
+        this.logger.log(`Getting course ${id} for management by user: ${userId} (role: ${userRole})`);
+        const course = await this.prisma.course.findUnique({
+            where: { id },
+            include: {
+                instructor: {
+                    select: { id: true, name: true, photoURL: true, bio: true },
+                },
+                category: {
+                    select: { id: true, name: true, slug: true },
+                },
+                lessons: {
+                    select: { id: true, title: true, slug: true, order: true, duration: true, isFree: true },
+                    orderBy: { order: 'asc' },
+                },
+                _count: {
+                    select: { lessons: true, enrollments: true, reviews: true },
+                },
+                reviews: {
+                    select: { rating: true },
+                    where: { isApproved: true },
+                },
+            },
+        });
+
+        if (!course) {
+            throw new NotFoundException(`Course with ID ${id} not found`);
+        }
+
+        // Check ownership (instructor can only edit own courses, admin can edit any)
+        if (userRole !== Role.ADMIN && course.instructorId !== userId) {
+            throw new ForbiddenException('You can only edit your own courses');
+        }
+
+        return this.mapToDetail(course);
+    }
+
+    /**
      * Create a new course
      * Used for: Instructor/Admin create course
      */

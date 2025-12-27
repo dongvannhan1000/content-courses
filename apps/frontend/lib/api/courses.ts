@@ -45,6 +45,12 @@ export const coursesApi = {
         return data;
     },
 
+    // Get course for management (any status, for instructor/admin editing)
+    getForManagement: async (id: number): Promise<CourseDetail> => {
+        const { data } = await apiClient.get(`/courses/manage/${id}`);
+        return data;
+    },
+
     // Get featured courses
     getFeatured: async (limit: number = 6): Promise<CourseListItem[]> => {
         const { data } = await apiClient.get("/courses/featured", {

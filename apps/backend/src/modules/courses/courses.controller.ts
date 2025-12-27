@@ -126,6 +126,32 @@ export class CoursesController {
         return this.coursesService.findBySlug(slug);
     }
 
+    /**
+     * GET /api/courses/manage/:id
+     * Get course by ID for editing (any status)
+     * 
+     * Frontend Usage: Instructor/Admin edit course drawer
+     */
+    @Get('manage/:id')
+    @Roles(Role.INSTRUCTOR, Role.ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Get course for editing by ID (Instructor/Admin)' })
+    @ApiParam({ name: 'id', description: 'Course ID', example: 1 })
+    @ApiResponse({
+        status: 200,
+        description: 'Course detail for editing',
+        type: CourseDetailDto,
+    })
+    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiResponse({ status: 403, description: 'Forbidden - Not course owner' })
+    async findForManagement(
+        @Param('id') id: string,
+        @NestRequest() req: Request,
+    ): Promise<CourseDetailDto> {
+        const user = req.user!;
+        return this.coursesService.findByIdForManagement(parseInt(id, 10), user.dbId, user.role);
+    }
+
     // ============ Protected Endpoints ============
 
     /**

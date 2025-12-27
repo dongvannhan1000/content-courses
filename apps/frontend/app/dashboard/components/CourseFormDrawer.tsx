@@ -80,24 +80,27 @@ export default function CourseFormDrawer({
     // Load course data in edit mode
     useEffect(() => {
         if (isOpen && course) {
+            // Use data from CourseListItem prop first
+            setTitle(course.title);
+            setSlug(course.slug);
+            setShortDesc(course.shortDesc || "");
+            setPrice(course.price);
+            setDiscountPrice(course.discountPrice);
+            setLevel((course.level as CourseLevel) || "");
+            setCategoryId(course.category?.id || "");
+            setThumbnail(course.thumbnail || "");
+            setSlugManuallyEdited(true);
+
+            // Fetch full details by ID for description (uses /manage/:id endpoint)
             setLoading(true);
-            coursesApi.getById(course.id)
+            coursesApi.getForManagement(course.id)
                 .then((data) => {
-                    setTitle(data.title);
-                    setSlug(data.slug);
-                    setShortDesc(data.shortDesc || "");
                     setDescription(data.description);
-                    setPrice(data.price);
-                    setDiscountPrice(data.discountPrice);
-                    setLevel((data.level as CourseLevel) || "");
-                    setCategoryId(data.category?.id || "");
-                    setThumbnail(data.thumbnail || "");
-                    setSlugManuallyEdited(true);
                 })
                 .catch((err) => {
-                    console.error("Error loading course:", err);
-                    showError("Lỗi", "Không thể tải thông tin khóa học");
-                    onClose();
+                    console.error("Error loading course details:", err);
+                    // Fallback: allow editing with empty description
+                    setDescription("");
                 })
                 .finally(() => setLoading(false));
         } else if (isOpen && !course) {
@@ -113,7 +116,7 @@ export default function CourseFormDrawer({
             setThumbnail("");
             setSlugManuallyEdited(false);
         }
-    }, [isOpen, course, onClose, showError]);
+    }, [isOpen, course]);
 
     // Auto-generate slug
     useEffect(() => {
