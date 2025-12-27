@@ -37,3 +37,6 @@ export { TextArea } from "./TextArea";
 
 // ConfirmModal
 export { ConfirmModal } from "./ConfirmModal";
+
+// Drawer
+export { Drawer } from "./Drawer";

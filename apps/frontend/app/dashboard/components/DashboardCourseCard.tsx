@@ -141,6 +141,7 @@ interface InstructorCourseCardProps {
     course: CourseListItem;
     onDelete: (course: CourseListItem) => void;
     onSubmit: (course: CourseListItem) => void;
+    onEdit?: (course: CourseListItem) => void;
     isSubmitting?: boolean;
     isAdmin?: boolean;
 }
@@ -153,7 +154,7 @@ const statusConfig: Record<CourseStatus, { variant: "default" | "warning" | "suc
     ARCHIVED: { variant: "danger", label: "Lưu trữ" },
 };
 
-export function InstructorCourseCard({ course, onDelete, onSubmit, isSubmitting, isAdmin }: InstructorCourseCardProps) {
+export function InstructorCourseCard({ course, onDelete, onSubmit, onEdit, isSubmitting, isAdmin }: InstructorCourseCardProps) {
     const status = statusConfig[course.status] || statusConfig.DRAFT;
 
     return (
@@ -200,11 +201,14 @@ export function InstructorCourseCard({ course, onDelete, onSubmit, isSubmitting,
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100 dark:border-slate-700">
-                        <Link href={`/dashboard/courses/${course.id}/edit`}>
-                            <Button variant="ghost" size="sm" leftIcon={<Edit3 className="w-4 h-4" />}>
-                                Sửa
-                            </Button>
-                        </Link>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            leftIcon={<Edit3 className="w-4 h-4" />}
+                            onClick={() => onEdit?.(course)}
+                        >
+                            Sửa
+                        </Button>
                         <Link href={`/dashboard/courses/${course.id}/lessons`}>
                             <Button variant="ghost" size="sm" leftIcon={<BookOpen className="w-4 h-4" />}>
                                 Bài học

@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
-import { enrollmentsApi } from "@/lib/api";
+import { enrollmentsApi, coursesApi } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
     DashboardHeader,
     StudentStats,
-    InstructorStats,
     StudentView,
-    InstructorView,
+    CourseFormDrawer,
 } from "./components";
-import type { EnrollmentListItem } from "@/types";
+import InstructorViewWithDrawer from "./components/InstructorViewWithDrawer";
+import type { EnrollmentListItem, CourseListItem } from "@/types";
 
 export default function DashboardClient() {
     const { user, isLoading: authLoading } = useAuth();
@@ -19,6 +19,12 @@ export default function DashboardClient() {
     // Student data
     const [enrollments, setEnrollments] = useState<EnrollmentListItem[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Instructor drawer state (lifted here for header button)
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [editingCourse, setEditingCourse] = useState<CourseListItem | undefined>(undefined);
+    const [courses, setCourses] = useState<CourseListItem[]>([]);
+    const [coursesLoading, setCoursesLoading] = useState(true);
 
     // Determine if user is instructor/admin
     const isInstructor = user?.role === "INSTRUCTOR" || user?.role === "ADMIN";
@@ -56,6 +62,53 @@ export default function DashboardClient() {
         };
     }, [user?.id, isInstructor]);
 
+    // Fetch courses for instructors
+    useEffect(() => {
+        if (!user?.id || !isInstructor) {
+            setCoursesLoading(false);
+            return;
+        }
+
+        const fetchCourses = async () => {
+            try {
+                setCoursesLoading(true);
+                const data = await coursesApi.getMyCourses();
+                setCourses(data);
+            } catch (err) {
+                console.error("Error fetching courses:", err);
+            } finally {
+                setCoursesLoading(false);
+            }
+        };
+
+        fetchCourses();
+    }, [user?.id, isInstructor]);
+
+    // Refresh courses after create/edit
+    const refreshCourses = useCallback(async () => {
+        try {
+            const data = await coursesApi.getMyCourses();
+            setCourses(data);
+        } catch (err) {
+            console.error("Error refreshing courses:", err);
+        }
+    }, []);
+
+    // Drawer handlers
+    const handleCreateCourse = useCallback(() => {
+        setEditingCourse(undefined);
+        setDrawerOpen(true);
+    }, []);
+
+    const handleEditCourse = useCallback((course: CourseListItem) => {
+        setEditingCourse(course);
+        setDrawerOpen(true);
+    }, []);
+
+    const handleDrawerSuccess = useCallback(() => {
+        refreshCourses();
+    }, [refreshCourses]);
+
     // Calculate student stats
     const inProgressEnrollments = enrollments.filter(
         (e) => e.status === "ACTIVE" && e.progressPercent < 100
@@ -76,7 +129,7 @@ export default function DashboardClient() {
         : undefined;
 
     // Loading state
-    if (authLoading || (user && loading && !isInstructor)) {
+    if (authLoading || (user && loading && !isInstructor) || (user && isInstructor && coursesLoading)) {
         return (
             <div className="min-h-screen py-8 pt-24 flex items-center justify-center">
                 <div className="text-center">
@@ -100,13 +153,19 @@ export default function DashboardClient() {
                     user={user}
                     hasInProgressCourses={inProgressEnrollments.length > 0}
                     continueLink={continueLink}
+                    onCreateCourse={isInstructor ? handleCreateCourse : undefined}
                 />
 
                 {/* Role-based content */}
                 {isInstructor ? (
                     <>
-                        {/* Instructor Stats - will be calculated inside InstructorView */}
-                        <InstructorView isAdmin={isAdmin} />
+                        <InstructorViewWithDrawer
+                            isAdmin={isAdmin}
+                            courses={courses}
+                            setCourses={setCourses}
+                            onEditCourse={handleEditCourse}
+                            onCreateCourse={handleCreateCourse}
+                        />
                     </>
                 ) : (
                     <>
@@ -122,6 +181,16 @@ export default function DashboardClient() {
                     </>
                 )}
             </div>
+
+            {/* Course Form Drawer - rendered at top level */}
+            {isInstructor && (
+                <CourseFormDrawer
+                    isOpen={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    course={editingCourse}
+                    onSuccess={handleDrawerSuccess}
+                />
+            )}
         </div>
     );
 }

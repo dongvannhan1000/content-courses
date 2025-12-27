@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Play, BookOpen, Plus, BarChart3 } from "lucide-react";
+import { Play, BookOpen, Plus } from "lucide-react";
 import { Button, Avatar } from "@/components/ui";
 import type { User } from "@/types";
 
@@ -9,9 +9,10 @@ interface DashboardHeaderProps {
     user: User;
     hasInProgressCourses: boolean;
     continueLink?: string;
+    onCreateCourse?: () => void;
 }
 
-export default function DashboardHeader({ user, hasInProgressCourses, continueLink }: DashboardHeaderProps) {
+export default function DashboardHeader({ user, hasInProgressCourses, continueLink, onCreateCourse }: DashboardHeaderProps) {
     const isInstructor = user.role === "INSTRUCTOR" || user.role === "ADMIN";
 
     // Role-specific greeting
@@ -50,15 +51,14 @@ export default function DashboardHeader({ user, hasInProgressCourses, continueLi
                 <div className="flex flex-wrap gap-3">
                     {isInstructor ? (
                         <>
-                            <Link href="/dashboard/courses/new">
-                                <Button
-                                    variant="secondary"
-                                    leftIcon={<Plus className="w-4 h-4" />}
-                                    className="bg-white/20 hover:bg-white/30 text-white border-white/20"
-                                >
-                                    Tạo khóa học
-                                </Button>
-                            </Link>
+                            <Button
+                                variant="secondary"
+                                leftIcon={<Plus className="w-4 h-4" />}
+                                className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                                onClick={onCreateCourse}
+                            >
+                                Tạo khóa học
+                            </Button>
                         </>
                     ) : (
                         <>

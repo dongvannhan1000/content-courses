@@ -1,25 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { Plus, BookOpen } from "lucide-react";
 import { Card, Button, Tabs, TabsList, TabsTrigger, ConfirmModal } from "@/components/ui";
 import { useToast } from "@/components/ui/Toast";
 import { coursesApi } from "@/lib/api";
 import { InstructorCourseCard } from "./DashboardCourseCard";
-import CourseFormDrawer from "./CourseFormDrawer";
 import type { CourseListItem } from "@/types";
 
-interface InstructorViewProps {
+interface InstructorViewWithDrawerProps {
     isAdmin: boolean;
+    courses: CourseListItem[];
+    setCourses: React.Dispatch<React.SetStateAction<CourseListItem[]>>;
+    onEditCourse: (course: CourseListItem) => void;
+    onCreateCourse: () => void;
 }
 
-export default function InstructorView({ isAdmin }: InstructorViewProps) {
+export default function InstructorViewWithDrawer({
+    isAdmin,
+    courses,
+    setCourses,
+    onEditCourse,
+    onCreateCourse,
+}: InstructorViewWithDrawerProps) {
     const { success: showSuccess, error: showError } = useToast();
 
-    // State
-    const [courses, setCourses] = useState<CourseListItem[]>([]);
-    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("all");
 
     // Delete modal state
@@ -29,51 +34,6 @@ export default function InstructorView({ isAdmin }: InstructorViewProps) {
 
     // Submit state
     const [submittingId, setSubmittingId] = useState<number | null>(null);
-
-    // Drawer state
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [editingCourse, setEditingCourse] = useState<CourseListItem | undefined>(undefined);
-
-    // Fetch courses
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                setLoading(true);
-                const data = await coursesApi.getMyCourses();
-                setCourses(data);
-            } catch (err: unknown) {
-                console.error("Error fetching courses:", err);
-                const errorObj = err as { message?: string };
-                showError("Lỗi", errorObj.message || "Không thể tải danh sách khóa học");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchCourses();
-    }, [showError]);
-
-    // Refetch courses after create/edit
-    const handleDrawerSuccess = async () => {
-        try {
-            const data = await coursesApi.getMyCourses();
-            setCourses(data);
-        } catch (err) {
-            console.error("Error refreshing courses:", err);
-        }
-    };
-
-    // Open drawer for create
-    const handleCreateCourse = () => {
-        setEditingCourse(undefined);
-        setDrawerOpen(true);
-    };
-
-    // Open drawer for edit
-    const handleEditCourse = (course: CourseListItem) => {
-        setEditingCourse(course);
-        setDrawerOpen(true);
-    };
 
     // Filter courses by status
     const filterCourses = (status: string): CourseListItem[] => {
@@ -135,26 +95,6 @@ export default function InstructorView({ isAdmin }: InstructorViewProps) {
         }
     };
 
-    // Loading skeleton
-    if (loading) {
-        return (
-            <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                    <Card key={i} variant="default" padding="lg">
-                        <div className="animate-pulse flex gap-4">
-                            <div className="w-44 h-28 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-                            <div className="flex-1 space-y-3">
-                                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
-                            </div>
-                        </div>
-                    </Card>
-                ))}
-            </div>
-        );
-    }
-
     // Empty state
     const EmptyState = () => (
         <Card variant="glass" padding="lg" className="text-center">
@@ -173,7 +113,7 @@ export default function InstructorView({ isAdmin }: InstructorViewProps) {
                 <Button
                     variant="primary"
                     leftIcon={<Plus className="w-5 h-5" />}
-                    onClick={handleCreateCourse}
+                    onClick={onCreateCourse}
                 >
                     Tạo khóa học
                 </Button>
@@ -199,7 +139,7 @@ export default function InstructorView({ isAdmin }: InstructorViewProps) {
                                 course={course}
                                 onDelete={handleDeleteClick}
                                 onSubmit={handleSubmit}
-                                onEdit={handleEditCourse}
+                                onEdit={onEditCourse}
                                 isSubmitting={submittingId === course.id}
                                 isAdmin={isAdmin}
                             />
@@ -221,14 +161,6 @@ export default function InstructorView({ isAdmin }: InstructorViewProps) {
                 cancelText="Hủy"
                 variant="danger"
                 isLoading={deleting}
-            />
-
-            {/* Course Form Drawer */}
-            <CourseFormDrawer
-                isOpen={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                course={editingCourse}
-                onSuccess={handleDrawerSuccess}
             />
         </div>
     );

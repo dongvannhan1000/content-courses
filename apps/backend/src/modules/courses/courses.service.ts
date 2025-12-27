@@ -269,6 +269,34 @@ export class CoursesService {
     }
 
     /**
+     * Get ALL courses (for ADMIN dashboard)
+     * Used for: Admin can see and manage all courses
+     */
+    async findAllForManagement(): Promise<CourseListItemDto[]> {
+        this.logger.log(`Getting all courses for admin management`);
+        const courses = await this.prisma.course.findMany({
+            include: {
+                instructor: {
+                    select: { id: true, name: true, photoURL: true },
+                },
+                category: {
+                    select: { id: true, name: true, slug: true },
+                },
+                _count: {
+                    select: { lessons: true, enrollments: true, reviews: true },
+                },
+                reviews: {
+                    select: { rating: true },
+                    where: { isApproved: true },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        return courses.map((course) => this.mapToListItem(course));
+    }
+
+    /**
      * Create a new course
      * Used for: Instructor/Admin create course
      */

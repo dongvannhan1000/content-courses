@@ -82,9 +82,11 @@ export class CoursesController {
 
     /**
      * GET /api/courses/my-courses
-     * Get courses created by the current instructor
+     * Get courses for instructor dashboard
+     * - INSTRUCTOR: returns their own courses
+     * - ADMIN: returns ALL courses
      * 
-     * Frontend Usage: Instructor dashboard
+     * Frontend Usage: Instructor/Admin dashboard
      */
     @Get('my-courses')
     @Roles(Role.INSTRUCTOR, Role.ADMIN)
@@ -92,11 +94,15 @@ export class CoursesController {
     @ApiOperation({ summary: 'Get my courses (Instructor/Admin)' })
     @ApiResponse({
         status: 200,
-        description: 'List of instructor courses',
+        description: 'List of courses',
         type: [CourseListItemDto],
     })
     async getMyCourses(@NestRequest() req: Request): Promise<CourseListItemDto[]> {
         const user = req.user!;
+        // ADMIN sees all courses, INSTRUCTOR sees only their own
+        if (user.role === Role.ADMIN) {
+            return this.coursesService.findAllForManagement();
+        }
         return this.coursesService.findByInstructor(user.dbId);
     }
 
