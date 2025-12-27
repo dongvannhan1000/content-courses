@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { LessonListItem, LessonDetail, ProgressDto, CourseProgressDto } from "@/types";
+import type { LessonListItem, LessonDetail, ProgressDto, CourseProgressDto, CreateLessonDto, UpdateLessonDto } from "@/types";
 
 export interface LessonsResponse {
     lessons: LessonListItem[];
@@ -45,7 +45,31 @@ export const lessonsApi = {
         });
         return data;
     },
+
+    // ============ Instructor/Admin Functions ============
+
+    // Create new lesson
+    create: async (courseId: number, dto: CreateLessonDto): Promise<LessonDetail> => {
+        const { data } = await apiClient.post(`/courses/${courseId}/lessons`, dto);
+        return data;
+    },
+
+    // Update lesson
+    update: async (courseId: number, lessonId: number, dto: UpdateLessonDto): Promise<LessonDetail> => {
+        const { data } = await apiClient.put(`/courses/${courseId}/lessons/${lessonId}`, dto);
+        return data;
+    },
+
+    // Delete lesson
+    delete: async (courseId: number, lessonId: number): Promise<void> => {
+        await apiClient.delete(`/courses/${courseId}/lessons/${lessonId}`);
+    },
+
+    // Reorder lessons
+    reorder: async (courseId: number, lessonOrders: { id: number; order: number }[]): Promise<LessonListItem[]> => {
+        const { data } = await apiClient.patch(`/courses/${courseId}/lessons/reorder`, { lessonOrders });
+        return data;
+    },
 };
 
 export default lessonsApi;
-

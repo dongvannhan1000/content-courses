@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { CourseListItem, CourseDetail, PaginatedResponse } from "@/types";
+import type { CourseListItem, CourseDetail, PaginatedResponse, CreateCourseDto, UpdateCourseDto, CourseDto } from "@/types";
 
 export interface CourseFilters {
     page?: number;
@@ -52,7 +52,37 @@ export const coursesApi = {
         });
         return data;
     },
+
+    // ============ Instructor/Admin Functions ============
+
+    // Get my courses (for instructor dashboard)
+    getMyCourses: async (): Promise<CourseListItem[]> => {
+        const { data } = await apiClient.get("/courses/my-courses");
+        return data;
+    },
+
+    // Create new course
+    create: async (dto: CreateCourseDto): Promise<CourseDto> => {
+        const { data } = await apiClient.post("/courses", dto);
+        return data;
+    },
+
+    // Update course
+    update: async (id: number, dto: UpdateCourseDto): Promise<CourseDto> => {
+        const { data } = await apiClient.put(`/courses/${id}`, dto);
+        return data;
+    },
+
+    // Delete course
+    delete: async (id: number): Promise<void> => {
+        await apiClient.delete(`/courses/${id}`);
+    },
+
+    // Submit for review (DRAFT → PENDING for instructor, DRAFT → PUBLISHED for admin)
+    submitForReview: async (id: number): Promise<CourseDto> => {
+        const { data } = await apiClient.patch(`/courses/${id}/submit`);
+        return data;
+    },
 };
 
 export default coursesApi;
-

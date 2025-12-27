@@ -9,7 +9,7 @@ export const mockCourses: CourseListItem[] = [
         thumbnail: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&h=450&fit=crop",
         price: 2990000,
         discountPrice: 1990000,
-        level: "Beginner",
+        level: "beginner",
         duration: 43200, // 12 hours in seconds
         status: "PUBLISHED",
         publishedAt: new Date("2024-10-01"),
@@ -37,7 +37,7 @@ export const mockCourses: CourseListItem[] = [
         thumbnail: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=800&h=450&fit=crop",
         price: 2190000,
         discountPrice: 1490000,
-        level: "Intermediate",
+        level: "intermediate",
         duration: 28800, // 8 hours
         status: "PUBLISHED",
         publishedAt: new Date("2024-11-15"),
@@ -65,7 +65,7 @@ export const mockCourses: CourseListItem[] = [
         thumbnail: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=450&fit=crop",
         price: 2590000,
         discountPrice: 1790000,
-        level: "Beginner",
+        level: "beginner",
         duration: 54000, // 15 hours
         status: "PUBLISHED",
         publishedAt: new Date("2024-09-01"),
@@ -93,7 +93,7 @@ export const mockCourses: CourseListItem[] = [
         thumbnail: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=450&fit=crop",
         price: 3290000,
         discountPrice: 2290000,
-        level: "Advanced",
+        level: "advanced",
         duration: 64800, // 18 hours
         status: "PUBLISHED",
         publishedAt: new Date("2024-08-01"),
@@ -121,7 +121,7 @@ export const mockCourses: CourseListItem[] = [
         thumbnail: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=450&fit=crop",
         price: 1890000,
         discountPrice: 1290000,
-        level: "Intermediate",
+        level: "intermediate",
         duration: 36000, // 10 hours
         status: "PUBLISHED",
         publishedAt: new Date("2024-11-01"),
@@ -149,7 +149,7 @@ export const mockCourses: CourseListItem[] = [
         thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=450&fit=crop",
         price: 2390000,
         discountPrice: 1690000,
-        level: "Intermediate",
+        level: "intermediate",
         duration: 50400, // 14 hours
         status: "PUBLISHED",
         publishedAt: new Date("2024-10-15"),

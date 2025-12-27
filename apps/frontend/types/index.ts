@@ -61,8 +61,40 @@ export interface InstructorRef {
 
 // ============ Course Types ============
 
-export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-export type CourseLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+export type CourseStatus = 'DRAFT' | 'PENDING' | 'PUBLISHED' | 'ARCHIVED';
+export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
+
+// DTOs for Course CRUD
+export interface CreateCourseDto {
+    title: string;
+    slug: string;
+    description: string;
+    shortDesc?: string;
+    thumbnail?: string;
+    price: number;
+    discountPrice?: number;
+    level?: CourseLevel;
+    categoryId?: number;
+}
+
+export interface UpdateCourseDto extends Partial<CreateCourseDto> { }
+
+export interface CourseDto {
+    id: number;
+    title: string;
+    slug: string;
+    description: string;
+    shortDesc?: string;
+    thumbnail?: string;
+    price: number;
+    discountPrice?: number;
+    level?: string;
+    status: CourseStatus;
+    categoryId?: number;
+    instructorId: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
 
 export interface CourseListItem {
     id: number;
@@ -103,6 +135,21 @@ export interface CourseDetail extends CourseListItem {
 // ============ Lesson Types ============
 
 export type LessonType = 'VIDEO' | 'DOCUMENT' | 'QUIZ';
+
+// DTOs for Lesson CRUD
+export interface CreateLessonDto {
+    title: string;
+    slug: string;
+    description?: string;
+    type?: LessonType;
+    content?: string;        // Markdown content or YouTube URL
+    order?: number;
+    duration?: number;
+    isFree?: boolean;
+    isPublished?: boolean;
+}
+
+export interface UpdateLessonDto extends Partial<CreateLessonDto> { }
 
 export interface Media {
     id: number;

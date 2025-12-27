@@ -178,14 +178,26 @@ export default function Header() {
                                                     </p>
                                                 </div>
                                                 <div className="py-1">
-                                                    <Link
-                                                        href="/dashboard"
-                                                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
-                                                        onClick={() => setIsUserMenuOpen(false)}
-                                                    >
-                                                        <BookOpen className="w-5 h-5" />
-                                                        Khóa học của tôi
-                                                    </Link>
+                                                    {/* Role-based navigation */}
+                                                    {user.role === 'INSTRUCTOR' || user.role === 'ADMIN' ? (
+                                                        <Link
+                                                            href="/dashboard/courses"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                                                            onClick={() => setIsUserMenuOpen(false)}
+                                                        >
+                                                            <BookOpen className="w-5 h-5" />
+                                                            Quản lý khóa học
+                                                        </Link>
+                                                    ) : (
+                                                        <Link
+                                                            href="/dashboard"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                                                            onClick={() => setIsUserMenuOpen(false)}
+                                                        >
+                                                            <BookOpen className="w-5 h-5" />
+                                                            Khóa học của tôi
+                                                        </Link>
+                                                    )}
                                                     <Link
                                                         href="/dashboard/settings"
                                                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
@@ -281,12 +293,14 @@ export default function Header() {
                                 {isAuthenticated && user ? (
                                     <>
                                         <Link
-                                            href="/dashboard"
+                                            href={user.role === 'INSTRUCTOR' || user.role === 'ADMIN' ? '/dashboard/courses' : '/dashboard'}
                                             className="flex items-center gap-3 py-2 text-gray-700 dark:text-gray-300"
                                             onClick={() => setIsMenuOpen(false)}
                                         >
                                             <Avatar src={user.photoURL || undefined} name={user.name} size="sm" />
-                                            <span className="font-medium">{user.name}</span>
+                                            <span className="font-medium">
+                                                {user.role === 'INSTRUCTOR' || user.role === 'ADMIN' ? 'Quản lý khóa học' : user.name}
+                                            </span>
                                         </Link>
                                         <Button
                                             variant="outline"
