@@ -192,6 +192,8 @@ export interface CourseRef {
     slug: string;
     thumbnail?: string;
     instructor: { id: number; name: string };
+    lessonCount?: number;
+    duration?: number;
 }
 
 export interface EnrollmentListItem {
