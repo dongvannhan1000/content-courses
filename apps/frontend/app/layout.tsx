@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter } from "next/font/google";
 import { ThemeProvider, QueryProvider, AuthProvider } from "@/components/providers";
 import { ToastProvider } from "@/components/ui";
 import { SkipLink } from "@/components/SkipLink";
@@ -8,13 +8,6 @@ import "./globals.css";
 const inter = Inter({
     subsets: ["latin", "vietnamese"],
     variable: "--font-inter",
-    display: "swap",
-});
-
-const poppins = Poppins({
-    weight: ["400", "500", "600", "700"],
-    subsets: ["latin", "latin-ext"],
-    variable: "--font-poppins",
     display: "swap",
 });
 
@@ -64,7 +57,7 @@ export default function RootLayout({
                 />
             </head>
             <body
-                className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
+                className={`${inter.variable} font-sans antialiased`}
             >
                 <ThemeProvider defaultTheme="system">
                     <AuthProvider>

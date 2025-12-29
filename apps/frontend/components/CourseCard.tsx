@@ -100,17 +100,17 @@ export default function CourseCard({ course }: CourseCardProps) {
 
                     {/* Content */}
                     <div className="p-5 flex flex-col flex-1">
-                        {/* Category */}
-                        {course.category && (
-                            <div className="flex items-center gap-2 mb-2">
+                        {/* Category - fixed height */}
+                        <div className="flex items-center gap-2 mb-2 h-5">
+                            {course.category && (
                                 <span className="text-xs font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wide">
                                     {course.category.name}
                                 </span>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {/* Title */}
-                        <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
+                        {/* Title - fixed height for 2 lines */}
+                        <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-2 min-h-[3.5rem] group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
                             {course.title}
                         </h3>
 
@@ -157,20 +157,26 @@ export default function CourseCard({ course }: CourseCardProps) {
                             </div>
                         </div>
 
-                        {/* Rating */}
-                        {course.rating && (
-                            <div className="flex items-center gap-2 mb-4">
-                                <div className="flex items-center gap-1">
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                    <span className="font-semibold text-sm text-gray-900 dark:text-white">
-                                        {course.rating.toFixed(1)}
+                        {/* Rating - fixed height for consistent layout */}
+                        <div className="flex items-center gap-2 mb-4 h-5">
+                            {course.rating ? (
+                                <>
+                                    <div className="flex items-center gap-1">
+                                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                        <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                                            {course.rating.toFixed(1)}
+                                        </span>
+                                    </div>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        ({course.reviewCount.toLocaleString()} đánh giá)
                                     </span>
-                                </div>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                    ({course.reviewCount.toLocaleString()} đánh giá)
+                                </>
+                            ) : (
+                                <span className="text-xs text-gray-400 dark:text-gray-500">
+                                    Chưa có đánh giá
                                 </span>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
                         {/* Price & Action - pushed to bottom */}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 gap-3 mt-auto">
