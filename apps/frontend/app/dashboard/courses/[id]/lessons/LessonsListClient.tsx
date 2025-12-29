@@ -151,7 +151,7 @@ export default function LessonsListClient({ courseId }: LessonsListClientProps) 
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-4">
-                        <Link href="/dashboard/courses">
+                        <Link href="/dashboard">
                             <Button variant="ghost" size="sm" leftIcon={<ArrowLeft className="w-4 h-4" />}>
                                 Quay lại
                             </Button>

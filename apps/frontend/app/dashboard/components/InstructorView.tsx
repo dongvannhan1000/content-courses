@@ -7,7 +7,7 @@ import { Card, Button, Tabs, TabsList, TabsTrigger, ConfirmModal } from "@/compo
 import { useToast } from "@/components/ui/Toast";
 import { coursesApi } from "@/lib/api";
 import { InstructorCourseCard } from "./DashboardCourseCard";
-import CourseFormDrawer from "./CourseFormDrawer";
+import CourseFormModal from "./CourseFormModal";
 import type { CourseListItem } from "@/types";
 
 interface InstructorViewProps {
@@ -223,8 +223,8 @@ export default function InstructorView({ isAdmin }: InstructorViewProps) {
                 isLoading={deleting}
             />
 
-            {/* Course Form Drawer */}
-            <CourseFormDrawer
+            {/* Course Form Modal */}
+            <CourseFormModal
                 isOpen={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 course={editingCourse}

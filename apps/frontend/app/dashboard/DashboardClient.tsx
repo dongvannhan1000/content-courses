@@ -8,7 +8,7 @@ import {
     DashboardHeader,
     StudentStats,
     StudentView,
-    CourseFormDrawer,
+    CourseFormModal,
 } from "./components";
 import InstructorViewWithDrawer from "./components/InstructorViewWithDrawer";
 import type { EnrollmentListItem, CourseListItem } from "@/types";
@@ -182,9 +182,9 @@ export default function DashboardClient() {
                 )}
             </div>
 
-            {/* Course Form Drawer - rendered at top level */}
+            {/* Course Form Modal - rendered at top level */}
             {isInstructor && (
-                <CourseFormDrawer
+                <CourseFormModal
                     isOpen={drawerOpen}
                     onClose={() => setDrawerOpen(false)}
                     course={editingCourse}

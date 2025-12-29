@@ -3,4 +3,4 @@ export { StudentStats, InstructorStats } from "./StatsGrid";
 export { StudentCourseCard, InstructorCourseCard } from "./DashboardCourseCard";
 export { default as StudentView } from "./StudentView";
 export { default as InstructorView } from "./InstructorView";
-export { default as CourseFormDrawer } from "./CourseFormDrawer";
+export { default as CourseFormModal } from "./CourseFormModal";

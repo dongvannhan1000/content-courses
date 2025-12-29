@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { Save, Send, Loader2 } from "lucide-react";
-import { Drawer, Button, Input, Select, TextArea } from "@/components/ui";
+import { Save, Loader2 } from "lucide-react";
+import { Modal, ModalFooter, Button, Input, Select, TextArea } from "@/components/ui";
 import { useToast } from "@/components/ui/Toast";
 import { coursesApi, categoriesApi } from "@/lib/api";
-import { useAuth } from "@/lib/hooks/useAuth";
 import type { CourseListItem, CreateCourseDto, UpdateCourseDto, Category, CourseLevel } from "@/types";
 
-interface CourseFormDrawerProps {
+interface CourseFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     course?: CourseListItem; // If provided, edit mode
@@ -30,13 +28,12 @@ function generateSlug(title: string): string {
         .replace(/^-|-$/g, "");
 }
 
-export default function CourseFormDrawer({
+export default function CourseFormModal({
     isOpen,
     onClose,
     course,
     onSuccess,
-}: CourseFormDrawerProps) {
-    const { user } = useAuth();
+}: CourseFormModalProps) {
     const { success: showSuccess, error: showError } = useToast();
     const isEditMode = !!course;
 
@@ -186,7 +183,7 @@ export default function CourseFormDrawer({
     };
 
     return (
-        <Drawer
+        <Modal
             isOpen={isOpen}
             onClose={onClose}
             title={isEditMode ? "Chỉnh sửa khóa học" : "Tạo khóa học mới"}
@@ -197,7 +194,7 @@ export default function CourseFormDrawer({
                     <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
                 </div>
             ) : (
-                <div className="p-6 space-y-5">
+                <div className="space-y-5">
                     {/* Title */}
                     <Input
                         label="Tiêu đề *"
@@ -296,7 +293,7 @@ export default function CourseFormDrawer({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-slate-700">
+                    <ModalFooter>
                         <Button variant="ghost" onClick={onClose} disabled={saving}>
                             Hủy
                         </Button>
@@ -309,9 +306,9 @@ export default function CourseFormDrawer({
                         >
                             {isEditMode ? "Lưu thay đổi" : "Tạo khóa học"}
                         </Button>
-                    </div>
+                    </ModalFooter>
                 </div>
             )}
-        </Drawer>
+        </Modal>
     );
 }
