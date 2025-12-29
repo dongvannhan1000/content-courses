@@ -107,30 +107,11 @@ export class CoursesController {
     }
 
     /**
-     * GET /api/courses/:slug
-     * Get course detail by slug
-     * 
-     * Frontend Usage: Course detail page
-     */
-    @Get(':slug')
-    @Public()
-    @ApiOperation({ summary: 'Get course by slug' })
-    @ApiParam({ name: 'slug', description: 'Course URL slug', example: 'khoa-hoc-javascript' })
-    @ApiResponse({
-        status: 200,
-        description: 'Course detail',
-        type: CourseDetailDto,
-    })
-    @ApiResponse({ status: 404, description: 'Course not found' })
-    async findBySlug(@Param('slug') slug: string): Promise<CourseDetailDto> {
-        return this.coursesService.findBySlug(slug);
-    }
-
-    /**
      * GET /api/courses/manage/:id
      * Get course by ID for editing (any status)
      * 
      * Frontend Usage: Instructor/Admin edit course drawer
+     * NOTE: This route MUST come before :slug to avoid wildcard matching
      */
     @Get('manage/:id')
     @Roles(Role.INSTRUCTOR, Role.ADMIN)
@@ -150,6 +131,27 @@ export class CoursesController {
     ): Promise<CourseDetailDto> {
         const user = req.user!;
         return this.coursesService.findByIdForManagement(parseInt(id, 10), user.dbId, user.role);
+    }
+
+    /**
+     * GET /api/courses/:slug
+     * Get course detail by slug
+     * 
+     * Frontend Usage: Course detail page
+     * NOTE: This wildcard route must come LAST to avoid matching specific routes
+     */
+    @Get(':slug')
+    @Public()
+    @ApiOperation({ summary: 'Get course by slug' })
+    @ApiParam({ name: 'slug', description: 'Course URL slug', example: 'khoa-hoc-javascript' })
+    @ApiResponse({
+        status: 200,
+        description: 'Course detail',
+        type: CourseDetailDto,
+    })
+    @ApiResponse({ status: 404, description: 'Course not found' })
+    async findBySlug(@Param('slug') slug: string): Promise<CourseDetailDto> {
+        return this.coursesService.findBySlug(slug);
     }
 
     // ============ Protected Endpoints ============

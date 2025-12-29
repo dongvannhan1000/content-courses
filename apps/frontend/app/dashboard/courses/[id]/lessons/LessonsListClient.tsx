@@ -61,7 +61,7 @@ export default function LessonsListClient({ courseId }: LessonsListClientProps) 
             try {
                 setLoading(true);
                 const [courseData, lessonsData] = await Promise.all([
-                    coursesApi.getById(courseId),
+                    coursesApi.getForManagement(courseId),
                     lessonsApi.getByCourse(courseId),
                 ]);
                 setCourse(courseData);

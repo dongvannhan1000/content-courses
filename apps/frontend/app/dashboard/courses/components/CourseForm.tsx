@@ -96,7 +96,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
             const fetchCourse = async () => {
                 try {
                     setLoading(true);
-                    const data = await coursesApi.getById(courseId);
+                    const data = await coursesApi.getForManagement(courseId);
                     setOriginalCourse(data);
 
                     // Populate form
