@@ -89,6 +89,12 @@ export const coursesApi = {
         const { data } = await apiClient.patch(`/courses/${id}/submit`);
         return data;
     },
+
+    // Approve course (PENDING → PUBLISHED, Admin only)
+    approve: async (id: number): Promise<CourseDto> => {
+        const { data } = await apiClient.patch(`/courses/${id}/status`, { status: 'PUBLISHED' });
+        return data;
+    },
 };
 
 export default coursesApi;

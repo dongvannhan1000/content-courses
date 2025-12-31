@@ -10,7 +10,7 @@ import {
     StudentView,
     CourseFormModal,
 } from "./components";
-import InstructorViewWithDrawer from "./components/InstructorViewWithDrawer";
+import InstructorView from "./components/InstructorView";
 import type { EnrollmentListItem, CourseListItem } from "@/types";
 
 export default function DashboardClient() {
@@ -159,7 +159,7 @@ export default function DashboardClient() {
                 {/* Role-based content */}
                 {isInstructor ? (
                     <>
-                        <InstructorViewWithDrawer
+                        <InstructorView
                             isAdmin={isAdmin}
                             courses={courses}
                             setCourses={setCourses}

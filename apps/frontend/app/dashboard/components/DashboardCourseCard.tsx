@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Clock, BookOpen, MoreVertical, Edit3, Trash2, Eye, Send } from "lucide-react";
+import { Play, Clock, BookOpen, MoreVertical, Edit3, Trash2, Eye, Send, CheckCircle } from "lucide-react";
 import { Card, Badge, Button } from "@/components/ui";
 import type { EnrollmentListItem, CourseListItem, CourseStatus } from "@/types";
 
@@ -142,7 +142,9 @@ interface InstructorCourseCardProps {
     onDelete: (course: CourseListItem) => void;
     onSubmit: (course: CourseListItem) => void;
     onEdit?: (course: CourseListItem) => void;
+    onApprove?: (course: CourseListItem) => void;
     isSubmitting?: boolean;
+    isApproving?: boolean;
     isAdmin?: boolean;
 }
 
@@ -154,7 +156,7 @@ const statusConfig: Record<CourseStatus, { variant: "default" | "warning" | "suc
     ARCHIVED: { variant: "danger", label: "Lưu trữ" },
 };
 
-export function InstructorCourseCard({ course, onDelete, onSubmit, onEdit, isSubmitting, isAdmin }: InstructorCourseCardProps) {
+export function InstructorCourseCard({ course, onDelete, onSubmit, onEdit, onApprove, isSubmitting, isApproving, isAdmin }: InstructorCourseCardProps) {
     const status = statusConfig[course.status] || statusConfig.DRAFT;
 
     return (
@@ -233,6 +235,20 @@ export function InstructorCourseCard({ course, onDelete, onSubmit, onEdit, isSub
                                 loading={isSubmitting}
                             >
                                 {isAdmin ? "Xuất bản" : "Gửi duyệt"}
+                            </Button>
+                        )}
+                        {course.status === "PENDING" && isAdmin && onApprove && (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                leftIcon={<CheckCircle className="w-4 h-4" />}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    onApprove(course);
+                                }}
+                                loading={isApproving}
+                            >
+                                Duyệt
                             </Button>
                         )}
                         <Button
