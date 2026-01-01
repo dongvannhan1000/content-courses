@@ -1,6 +1,7 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -17,6 +18,7 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let analytics: Analytics | null = null;
+let storage: FirebaseStorage;
 
 function getFirebaseApp(): FirebaseApp {
     if (!app) {
@@ -38,6 +40,13 @@ export function getFirebaseAuth(): Auth {
     return auth;
 }
 
+export function getFirebaseStorage(): FirebaseStorage {
+    if (!storage) {
+        storage = getStorage(getFirebaseApp());
+    }
+    return storage;
+}
+
 export async function getFirebaseAnalytics(): Promise<Analytics | null> {
     if (typeof window !== "undefined" && !analytics) {
         const supported = await isSupported();
@@ -49,7 +58,7 @@ export async function getFirebaseAnalytics(): Promise<Analytics | null> {
 }
 
 // Export initialized instances for direct usage
-export { app, auth, analytics };
+export { app, auth, analytics, storage };
 export default getFirebaseApp;
 
 /**

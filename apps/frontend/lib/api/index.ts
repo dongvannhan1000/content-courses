@@ -5,3 +5,4 @@ export { enrollmentsApi } from "./enrollments";
 export { paymentsApi } from "./payments";
 export { cartApi } from "./cart";
 export { lessonsApi } from "./lessons";
+export { uploadApi } from "./upload";

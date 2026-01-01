@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Save, Loader2 } from "lucide-react";
-import { Modal, ModalFooter, Button, Input, Select, TextArea } from "@/components/ui";
+import { Modal, ModalFooter, Button, Input, Select, TextArea, ImageUpload } from "@/components/ui";
 import { useToast } from "@/components/ui/Toast";
 import { coursesApi, categoriesApi } from "@/lib/api";
 import type { CourseListItem, CreateCourseDto, UpdateCourseDto, Category, CourseLevel } from "@/types";
@@ -239,26 +239,13 @@ export default function CourseFormModal({
                     </div>
 
                     {/* Thumbnail */}
-                    <div>
-                        <Input
-                            label="Thumbnail URL"
-                            placeholder="https://example.com/image.jpg"
-                            value={thumbnail}
-                            onChange={(e) => setThumbnail(e.target.value)}
-                        />
-                        {thumbnail && (
-                            <div className="mt-2 relative w-40 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800">
-                                <img
-                                    src={thumbnail}
-                                    alt="Preview"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = "none";
-                                    }}
-                                />
-                            </div>
-                        )}
-                    </div>
+                    <ImageUpload
+                        label="Ảnh đại diện"
+                        value={thumbnail || undefined}
+                        onChange={(url) => setThumbnail(url || "")}
+                        folder="thumbnails"
+                        helper="Ảnh đại diện hiển thị trong danh sách khóa học"
+                    />
 
                     {/* Actions */}
                     <ModalFooter>

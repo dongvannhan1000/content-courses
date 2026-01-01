@@ -40,3 +40,6 @@ export { ConfirmModal } from "./ConfirmModal";
 
 // Drawer
 export { Drawer } from "./Drawer";
+
+// ImageUpload
+export { default as ImageUpload } from "./ImageUpload";
