@@ -67,7 +67,7 @@ export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
 // DTOs for Course CRUD
 export interface CreateCourseDto {
     title: string;
-    slug: string;
+    slug?: string; // Optional - auto-generated from title if not provided
     description: string;
     shortDesc?: string;
     thumbnail?: string;

@@ -9,12 +9,12 @@ export class CreateCourseDto {
     @MaxLength(255)
     title!: string;
 
-    @ApiProperty({ example: 'khoa-hoc-javascript-tu-co-ban' })
+    @ApiPropertyOptional({ example: 'khoa-hoc-javascript-tu-co-ban', description: 'Auto-generated from title if not provided' })
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @MaxLength(255)
     @Transform(({ value }) => value?.toLowerCase().trim())
-    slug!: string;
+    slug?: string;
 
     @ApiProperty({ example: 'Mô tả chi tiết về khóa học...' })
     @IsString()

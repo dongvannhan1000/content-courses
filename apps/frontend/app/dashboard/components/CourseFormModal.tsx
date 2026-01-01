@@ -14,19 +14,7 @@ interface CourseFormModalProps {
     onSuccess: () => void;
 }
 
-// Generate slug from title
-function generateSlug(title: string): string {
-    return title
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/Đ/g, "D")
-        .replace(/[^a-z0-9\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "");
-}
+
 
 export default function CourseFormModal({
     isOpen,
@@ -39,7 +27,6 @@ export default function CourseFormModal({
 
     // Form state
     const [title, setTitle] = useState("");
-    const [slug, setSlug] = useState("");
     const [shortDesc, setShortDesc] = useState("");
     const [description, setDescription] = useState("");
     const [price, setPrice] = useState<number>(0);
@@ -52,7 +39,7 @@ export default function CourseFormModal({
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
 
     // Fetch categories
     useEffect(() => {
@@ -79,7 +66,6 @@ export default function CourseFormModal({
         if (isOpen && course) {
             // Use data from CourseListItem prop first
             setTitle(course.title);
-            setSlug(course.slug);
             setShortDesc(course.shortDesc || "");
             setPrice(course.price);
             setDiscountPrice(course.discountPrice);
@@ -88,7 +74,6 @@ export default function CourseFormModal({
             setLevel(normalizedLevel || "");
             setCategoryId(course.category?.id || "");
             setThumbnail(course.thumbnail || "");
-            setSlugManuallyEdited(true);
 
             // Fetch full details by ID for description (uses /manage/:id endpoint)
             setLoading(true);
@@ -105,7 +90,6 @@ export default function CourseFormModal({
         } else if (isOpen && !course) {
             // Reset form for create
             setTitle("");
-            setSlug("");
             setShortDesc("");
             setDescription("");
             setPrice(0);
@@ -113,16 +97,11 @@ export default function CourseFormModal({
             setLevel("");
             setCategoryId("");
             setThumbnail("");
-            setSlugManuallyEdited(false);
+
         }
     }, [isOpen, course]);
 
-    // Auto-generate slug
-    useEffect(() => {
-        if (!slugManuallyEdited && title) {
-            setSlug(generateSlug(title));
-        }
-    }, [title, slugManuallyEdited]);
+
 
     // Category options
     const categoryOptions = useMemo(() => {
@@ -140,7 +119,7 @@ export default function CourseFormModal({
     ];
 
     // Validation
-    const isValid = title.trim() && slug.trim() && description.trim() && price >= 0;
+    const isValid = title.trim() && description.trim() && price >= 0;
 
     // Handle save
     const handleSave = async () => {
@@ -154,7 +133,6 @@ export default function CourseFormModal({
 
             const dto: CreateCourseDto | UpdateCourseDto = {
                 title: title.trim(),
-                slug: slug.trim(),
                 description: description.trim(),
                 shortDesc: shortDesc.trim() || undefined,
                 thumbnail: thumbnail.trim() || undefined,
@@ -203,17 +181,7 @@ export default function CourseFormModal({
                         onChange={(e) => setTitle(e.target.value)}
                     />
 
-                    {/* Slug */}
-                    <Input
-                        label="Slug (URL) *"
-                        placeholder="khoa-hoc-example"
-                        value={slug}
-                        onChange={(e) => {
-                            setSlug(e.target.value);
-                            setSlugManuallyEdited(true);
-                        }}
-                        helper="Tự động tạo từ tiêu đề"
-                    />
+
 
                     {/* Short Description */}
                     <Input

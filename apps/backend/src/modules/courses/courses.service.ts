@@ -343,13 +343,12 @@ export class CoursesService {
      */
     async create(dto: CreateCourseDto, userId: number, userRole: Role): Promise<CourseDto> {
         this.logger.log(`Creating course: ${dto.title} by user: ${userId} (role: ${userRole})`);
-        // Check slug uniqueness
-        const existing = await this.prisma.course.findUnique({
-            where: { slug: dto.slug },
-        });
-        if (existing) {
-            throw new ConflictException(`Course with slug "${dto.slug}" already exists`);
-        }
+
+        // Generate slug from title if not provided
+        let slug = dto.slug || this.generateSlug(dto.title);
+
+        // Ensure slug uniqueness - append random suffix if exists
+        slug = await this.ensureUniqueSlug(slug);
 
         // Validate categoryId if provided
         if (dto.categoryId) {
@@ -364,7 +363,7 @@ export class CoursesService {
         const course = await this.prisma.course.create({
             data: {
                 title: dto.title,
-                slug: dto.slug,
+                slug,
                 description: dto.description,
                 shortDesc: dto.shortDesc,
                 thumbnail: dto.thumbnail,
@@ -553,6 +552,50 @@ export class CoursesService {
     }
 
     // ============ Helper Methods ============
+
+    /**
+     * Generate slug from title
+     * Handles Vietnamese diacritics and special characters
+     */
+    private generateSlug(title: string): string {
+        return title
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+            .replace(/đ/g, 'd')
+            .replace(/Đ/g, 'd')
+            .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
+            .replace(/\s+/g, '-') // Replace spaces with -
+            .replace(/-+/g, '-') // Replace multiple - with single -
+            .replace(/^-|-$/g, ''); // Remove leading/trailing -
+    }
+
+    /**
+     * Ensure slug uniqueness by appending random suffix if exists
+     */
+    private async ensureUniqueSlug(baseSlug: string): Promise<string> {
+        let slug = baseSlug;
+        let attempt = 0;
+        const maxAttempts = 10;
+
+        while (attempt < maxAttempts) {
+            const existing = await this.prisma.course.findUnique({
+                where: { slug },
+            });
+
+            if (!existing) {
+                return slug;
+            }
+
+            // Append random suffix
+            const suffix = Math.random().toString(36).substring(2, 8);
+            slug = `${baseSlug}-${suffix}`;
+            attempt++;
+        }
+
+        // Fallback: use timestamp
+        return `${baseSlug}-${Date.now()}`;
+    }
 
     /**
      * Invalidate featured courses cache
