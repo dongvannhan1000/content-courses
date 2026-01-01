@@ -57,6 +57,7 @@ components/
 │   ├── Badge.tsx             # Status badges
 │   ├── Avatar.tsx            # User avatar
 │   ├── Dropdown.tsx          # Dropdown menu
+│   ├── ImageUpload.tsx       # Firebase Storage upload
 │   └── ...                   # 9 more UI components
 │
 ├── CourseCard.tsx            # Course card display
@@ -108,7 +109,8 @@ lib/api/
 ├── paymentsApi.ts     # Payments endpoints
 ├── cartApi.ts         # Cart endpoints
 ├── progressApi.ts     # Progress endpoints
-└── lessonsApi.ts      # Lessons endpoints
+├── lessonsApi.ts      # Lessons endpoints
+└── upload.ts          # Firebase Storage upload
 ```
 
 ### Axios Configuration
@@ -137,6 +139,15 @@ lib/api/
 - Token injection for API calls
 - Cart sync on login/logout
 - Protected route handling
+
+### Firebase Storage
+
+| Feature | Status |
+|---------|--------|
+| Direct upload from frontend | ✅ |
+| Progress tracking | ✅ |
+| File deletion (cleanup orphans) | ✅ |
+| Readable filenames | ✅ |
 
 ---
 

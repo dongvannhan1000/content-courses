@@ -1,6 +1,5 @@
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { getFirebaseStorage } from "@/lib/firebase";
-import { randomUUID } from "crypto";
 
 export type UploadFolder = "thumbnails" | "videos" | "documents" | "avatars";
 
@@ -25,13 +24,36 @@ const FOLDER_CONFIG: Record<UploadFolder, { allowedTypes: string[]; maxSize: num
 };
 
 /**
- * Generate a unique filename preserving extension
+ * Sanitize filename for storage (remove special chars, Vietnamese diacritics)
+ */
+function sanitizeFilename(filename: string): string {
+    // Remove extension
+    const namePart = filename.replace(/\.[^/.]+$/, "");
+
+    return namePart
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]/g, "-") // Replace special chars with -
+        .replace(/-+/g, "-") // Multiple - to single -
+        .replace(/^-|-$/g, "") // Trim - from ends
+        .slice(0, 50); // Max 50 chars
+}
+
+/**
+ * Generate a readable unique filename
+ * Format: {timestamp}-{sanitized-original-name}.{ext}
+ * Example: 1767265225-my-course-thumbnail.png
  */
 function generateUniqueFilename(originalFilename: string): string {
     const ext = originalFilename.split(".").pop()?.toLowerCase() || "";
-    const uuid = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
-    const timestamp = Date.now();
-    return ext ? `${uuid}-${timestamp}.${ext}` : `${uuid}-${timestamp}`;
+    const sanitizedName = sanitizeFilename(originalFilename);
+    const timestamp = Math.floor(Date.now() / 1000); // Unix seconds
+
+    return ext
+        ? `${timestamp}-${sanitizedName || "file"}.${ext}`
+        : `${timestamp}-${sanitizedName || "file"}`;
 }
 
 /**
@@ -118,8 +140,43 @@ export function getFolderConfig(folder: UploadFolder) {
     return FOLDER_CONFIG[folder];
 }
 
+/**
+ * Delete a file from Firebase Storage
+ * Used to cleanup orphaned files when user changes/removes upload
+ */
+export async function deleteFile(fileUrl: string): Promise<void> {
+    if (!fileUrl) return;
+
+    // Only delete Firebase Storage URLs
+    if (!fileUrl.includes("firebasestorage.googleapis.com")) {
+        console.log("Skipping delete - not a Firebase Storage URL");
+        return;
+    }
+
+    try {
+        const storage = getFirebaseStorage();
+        // Extract path from URL
+        // URL format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?...
+        const urlObj = new URL(fileUrl);
+        const pathMatch = urlObj.pathname.match(/\/o\/(.+)$/);
+        if (!pathMatch) {
+            console.warn("Could not extract path from URL:", fileUrl);
+            return;
+        }
+
+        const filePath = decodeURIComponent(pathMatch[1]);
+        const fileRef = ref(storage, filePath);
+        await deleteObject(fileRef);
+        console.log("Deleted file:", filePath);
+    } catch (error) {
+        // Don't throw - deletion failure shouldn't break the flow
+        console.warn("Failed to delete file:", error);
+    }
+}
+
 export const uploadApi = {
     uploadFile,
+    deleteFile,
     validateFile,
     getFolderConfig,
 };

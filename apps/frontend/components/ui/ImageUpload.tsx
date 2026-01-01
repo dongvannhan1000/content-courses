@@ -56,6 +56,11 @@ export default function ImageUpload({
                 setUploading(true);
                 setProgress(0);
 
+                // Delete old file if exists (cleanup orphaned files)
+                if (value) {
+                    await uploadApi.deleteFile(value);
+                }
+
                 const publicUrl = await uploadApi.uploadFile(file, folder, (p) => {
                     setProgress(p);
                 });
@@ -70,7 +75,7 @@ export default function ImageUpload({
                 setProgress(0);
             }
         },
-        [accept, folder, maxSize, maxSizeBytes, onChange]
+        [accept, folder, maxSize, maxSizeBytes, onChange, value]
     );
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,7 +113,11 @@ export default function ImageUpload({
         setDragOver(false);
     };
 
-    const handleRemove = () => {
+    const handleRemove = async () => {
+        // Delete file from storage
+        if (value) {
+            await uploadApi.deleteFile(value);
+        }
         onChange(undefined);
         setError(null);
     };

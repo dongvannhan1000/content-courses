@@ -28,6 +28,8 @@
 - [x] Student dashboard
 - [x] Instructor dashboard
 - [x] Admin course approval
+- [x] **Firebase Storage upload** - Thumbnail upload for courses
+- [x] **Slug auto-generation** - Backend generates SEO-friendly slugs
 
 ---
 
@@ -92,7 +94,7 @@
 | **Backend** | Railway / Render / AWS |
 | **Database** | Neon / Supabase / AWS RDS |
 | **CDN** | Cloudflare |
-| **Storage** | AWS S3 / Cloudinary |
+| **Storage** | Firebase Storage ✅ |
 | **Email** | SendGrid / Resend |
 | **Monitoring** | Sentry + Uptime Robot |
 
