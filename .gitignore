@@ -7,7 +7,7 @@ dist
 apps/**/.env
 .prisma
 .turbo
-project-status/*
+project-status
 
 # .agent
 # .shared
