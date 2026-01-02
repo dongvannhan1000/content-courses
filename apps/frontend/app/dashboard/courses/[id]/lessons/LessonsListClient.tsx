@@ -1,42 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     ArrowLeft,
     Plus,
-    Edit3,
-    Trash2,
-    GripVertical,
     Video,
-    FileText,
     Loader2,
-    Eye,
-    EyeOff,
 } from "lucide-react";
-import { Card, Badge, Button, ConfirmModal } from "@/components/ui";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
+import { Card, Button, ConfirmModal } from "@/components/ui";
 import { useToast } from "@/components/ui/Toast";
 import { coursesApi, lessonsApi } from "@/lib/api";
-import type { CourseDetail, LessonListItem, LessonType } from "@/types";
+import type { CourseDetail, LessonListItem } from "@/types";
 import LessonFormModal from "@/app/dashboard/courses/components/LessonFormModal";
+import SortableLesson from "@/app/dashboard/courses/components/SortableLesson";
 
 interface LessonsListClientProps {
     courseId: number;
-}
-
-// Lesson type icons
-const lessonTypeIcons: Record<LessonType, React.ReactNode> = {
-    VIDEO: <Video className="w-5 h-5 text-primary-500" />,
-    DOCUMENT: <FileText className="w-5 h-5 text-blue-500" />,
-    QUIZ: <FileText className="w-5 h-5 text-orange-500" />,
-};
-
-// Format duration from seconds to minutes
-function formatDuration(seconds: number): string {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
 
 export default function LessonsListClient({ courseId }: LessonsListClientProps) {
@@ -47,6 +43,7 @@ export default function LessonsListClient({ courseId }: LessonsListClientProps) 
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [lessons, setLessons] = useState<LessonListItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Modal states
     const [formModalOpen, setFormModalOpen] = useState(false);
@@ -54,6 +51,14 @@ export default function LessonsListClient({ courseId }: LessonsListClientProps) 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [lessonToDelete, setLessonToDelete] = useState<LessonListItem | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    // DnD sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     // Fetch course and lessons
     useEffect(() => {
@@ -77,6 +82,37 @@ export default function LessonsListClient({ courseId }: LessonsListClientProps) 
 
         fetchData();
     }, [courseId, router, showError]);
+
+    // Handle drag end - reorder lessons
+    const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = lessons.findIndex((l) => l.id === active.id);
+        const newIndex = lessons.findIndex((l) => l.id === over.id);
+
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        // Optimistic update
+        const newLessons = arrayMove(lessons, oldIndex, newIndex);
+        setLessons(newLessons);
+
+        // Save to backend
+        setIsSaving(true);
+        try {
+            const lessonIds = newLessons.map((l) => l.id);
+            await lessonsApi.reorder(courseId, lessonIds);
+            showSuccess("Đã lưu", "Thứ tự bài học đã được cập nhật");
+        } catch (err: unknown) {
+            // Revert on error
+            setLessons(lessons);
+            const errorObj = err as { message?: string };
+            showError("Lỗi", errorObj.message || "Không thể cập nhật thứ tự");
+        } finally {
+            setIsSaving(false);
+        }
+    }, [lessons, courseId, showSuccess, showError]);
 
     // Handle add lesson
     const handleAddLesson = () => {
@@ -179,79 +215,34 @@ export default function LessonsListClient({ courseId }: LessonsListClientProps) 
 
                 {/* Lessons List */}
                 {lessons.length > 0 ? (
-                    <div className="space-y-3">
-                        {lessons.map((lesson, index) => (
-                            <Card key={lesson.id} variant="default" padding="none" className="overflow-hidden">
-                                <div className="flex items-center p-4 gap-4">
-                                    {/* Drag handle (placeholder - dnd-kit integration later) */}
-                                    <div className="cursor-grab text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                        <GripVertical className="w-5 h-5" />
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={lessons.map((l) => l.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-3">
+                                {isSaving && (
+                                    <div className="flex items-center justify-center gap-2 py-2 text-sm text-primary-600 dark:text-primary-400">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Đang lưu...</span>
                                     </div>
-
-                                    {/* Order number */}
-                                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                                        {index + 1}
-                                    </div>
-
-                                    {/* Type icon */}
-                                    <div className="shrink-0">
-                                        {lessonTypeIcons[lesson.type]}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                                            {lesson.title}
-                                        </h3>
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                            <span>{lesson.type}</span>
-                                            {lesson.duration > 0 && (
-                                                <>
-                                                    <span>•</span>
-                                                    <span>{formatDuration(lesson.duration)}</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Badges */}
-                                    <div className="flex items-center gap-2">
-                                        {lesson.isFree && (
-                                            <Badge variant="success" size="sm">FREE</Badge>
-                                        )}
-                                        {lesson.isPublished ? (
-                                            <Badge variant="primary" size="sm">
-                                                <Eye className="w-3 h-3 mr-1" />
-                                                Public
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant="default" size="sm">
-                                                <EyeOff className="w-3 h-3 mr-1" />
-                                                Draft
-                                            </Badge>
-                                        )}
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            leftIcon={<Edit3 className="w-4 h-4" />}
-                                            onClick={() => handleEditLesson(lesson)}
-                                        />
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                            leftIcon={<Trash2 className="w-4 h-4" />}
-                                            onClick={() => handleDeleteClick(lesson)}
-                                        />
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
+                                )}
+                                {lessons.map((lesson, index) => (
+                                    <SortableLesson
+                                        key={lesson.id}
+                                        lesson={lesson}
+                                        index={index}
+                                        onEdit={handleEditLesson}
+                                        onDelete={handleDeleteClick}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
                 ) : (
                     <Card variant="glass" padding="lg" className="text-center">
                         <Video className="w-12 h-12 mx-auto mb-4 text-gray-400" />

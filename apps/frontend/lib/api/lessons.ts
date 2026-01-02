@@ -66,8 +66,8 @@ export const lessonsApi = {
     },
 
     // Reorder lessons
-    reorder: async (courseId: number, lessonOrders: { id: number; order: number }[]): Promise<LessonListItem[]> => {
-        const { data } = await apiClient.patch(`/courses/${courseId}/lessons/reorder`, { lessonOrders });
+    reorder: async (courseId: number, lessonIds: number[]): Promise<LessonListItem[]> => {
+        const { data } = await apiClient.patch(`/courses/${courseId}/lessons/reorder`, { lessonIds });
         return data;
     },
 };
