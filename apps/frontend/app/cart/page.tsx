@@ -147,7 +147,33 @@ export default function CartPage() {
                             </Link>
                         </div>
 
-                        {items.length === 0 ? (
+                        {/* Admin/Instructor Message */}
+                        {(user?.role === "ADMIN" || user?.role === "INSTRUCTOR") ? (
+                            <Card variant="glass" padding="lg" className="text-center py-16">
+                                <div className="w-24 h-24 mx-auto mb-6 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                                    <AlertCircle className="w-12 h-12 text-amber-500" />
+                                </div>
+                                <h2 className="font-display font-semibold text-2xl text-gray-900 dark:text-white mb-2">
+                                    Giỏ hàng không khả dụng
+                                </h2>
+                                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                                    Với vai trò {user?.role === "ADMIN" ? "Quản trị viên" : "Giảng viên"},
+                                    bạn không cần sử dụng tính năng mua khóa học.
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                    <Link href="/courses">
+                                        <Button variant="secondary" size="lg">
+                                            Xem khóa học
+                                        </Button>
+                                    </Link>
+                                    <Link href="/dashboard">
+                                        <Button variant="primary" size="lg">
+                                            Về Dashboard
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </Card>
+                        ) : items.length === 0 ? (
                             /* Empty Cart State */
                             <Card variant="glass" padding="lg" className="text-center py-16">
                                 <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">

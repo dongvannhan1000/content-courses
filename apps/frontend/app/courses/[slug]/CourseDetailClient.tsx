@@ -34,7 +34,10 @@ interface CourseDetailClientProps {
 export default function CourseDetailClient({ course }: CourseDetailClientProps) {
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
+
+    // ADMIN and INSTRUCTOR don't need shopping cart
+    const isAdminOrInstructor = user?.role === "ADMIN" || user?.role === "INSTRUCTOR";
 
     // Enrollment state
     const { isEnrolled: isEnrolledInStore } = useEnrollmentStore();
@@ -283,6 +286,8 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                                                             fullWidth
                                                             leftIcon={<ShoppingCart className="w-5 h-5" />}
                                                             onClick={handleBuyAction}
+                                                            disabled={isAdminOrInstructor}
+                                                            title={isAdminOrInstructor ? "Admin/Instructor không cần mua khóa học" : undefined}
                                                         >
                                                             Thêm vào giỏ hàng
                                                         </Button>

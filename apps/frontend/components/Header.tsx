@@ -24,9 +24,11 @@ export default function Header() {
     // Real auth state
     const { user, isAuthenticated, isLoading, signOut } = useAuth();
 
-    // Cart state
     const cartItems = useCartStore((state) => state.items);
     const cartItemCount = cartItems.length;
+
+    // Check if user is Admin or Instructor (they don't need cart)
+    const isAdminOrInstructor = user?.role === "ADMIN" || user?.role === "INSTRUCTOR";
 
     const isActive = (path: string) => pathname === path;
 
@@ -127,8 +129,8 @@ export default function Header() {
                             {/* Theme Toggle */}
                             <ThemeToggle />
 
-                            {/* Cart Button - Only show for authenticated users */}
-                            {isAuthenticated && (
+                            {/* Cart Button - Hide for Admin/Instructor */}
+                            {isAuthenticated && !isAdminOrInstructor && (
                                 <Link
                                     href="/cart"
                                     className="hidden sm:flex p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors duration-200 relative cursor-pointer"
@@ -262,8 +264,8 @@ export default function Header() {
                                     </Link>
                                 ))}
 
-                                {/* Mobile Cart - Only show for authenticated users */}
-                                {isAuthenticated && (
+                                {/* Mobile Cart - Hide for Admin/Instructor */}
+                                {isAuthenticated && !isAdminOrInstructor && (
                                     <Link
                                         href="/cart"
                                         className="flex items-center justify-between py-2 text-gray-700 dark:text-gray-300"

@@ -16,8 +16,11 @@ interface CourseCardProps {
 
 export default function CourseCard({ course }: CourseCardProps) {
     const { isInCart, addItem } = useCartStore();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+    // ADMIN and INSTRUCTOR don't need shopping cart
+    const isAdminOrInstructor = user?.role === "ADMIN" || user?.role === "INSTRUCTOR";
 
     // Only show "Đã thêm" when authenticated AND item is in cart
     const inCart = isAuthenticated && isInCart(course.id);
@@ -192,7 +195,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                             </div>
                             <button
                                 onClick={handleAddToCart}
-                                disabled={inCart || enrolled}
+                                disabled={inCart || enrolled || isAdminOrInstructor}
                                 className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${enrolled
                                     ? 'bg-green-500 text-white cursor-not-allowed'
                                     : inCart
@@ -201,6 +204,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                                             ? 'gradient-accent text-white hover:opacity-90 shadow-md shadow-accent-500/20 cursor-pointer'
                                             : 'gradient-primary text-white hover:opacity-90 shadow-md shadow-primary-500/20 cursor-pointer'
                                     }`}
+                                title={isAdminOrInstructor ? "Admin/Instructor không cần mua khóa học" : undefined}
                             >
                                 {enrolled ? (
                                     <>
