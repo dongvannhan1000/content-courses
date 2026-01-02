@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Filter, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
@@ -19,7 +19,9 @@ export default function CoursesPage() {
         totalPages: 0,
     });
     const [loading, setLoading] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
 
     // Filter state
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -60,29 +62,33 @@ export default function CoursesPage() {
         }
     }, [selectedPriceRange]);
 
-    // Fetch courses when filters change
+    // Build filters object
+    const buildFilters = useCallback((page: number): CourseFilters => {
+        const filters: CourseFilters = {
+            page,
+            limit: pagination.limit,
+            sortBy,
+            sortOrder,
+            ...getPriceParams(),
+        };
+        if (selectedCategories.length > 0) {
+            filters.category = selectedCategories[0];
+        }
+        return filters;
+    }, [pagination.limit, sortBy, sortOrder, getPriceParams, selectedCategories]);
+
+    // Fetch initial courses when filters change
     useEffect(() => {
         const fetchCourses = async () => {
             setLoading(true);
             setError(null);
+            setCourses([]); // Reset courses when filters change
 
             try {
-                const filters: CourseFilters = {
-                    page: pagination.page,
-                    limit: pagination.limit,
-                    sortBy,
-                    sortOrder,
-                    ...getPriceParams(),
-                };
-
-                // Add category filter (use first selected category for now)
-                if (selectedCategories.length > 0) {
-                    filters.category = selectedCategories[0];
-                }
-
+                const filters = buildFilters(1);
                 const response: PaginatedResponse<CourseListItem> = await coursesApi.getAll(filters);
 
-                // Client-side rating filter (API doesn't support rating filter yet)
+                // Client-side rating filter
                 let filteredData = response.data;
                 if (selectedRating) {
                     filteredData = filteredData.filter(
@@ -106,7 +112,57 @@ export default function CoursesPage() {
         };
 
         fetchCourses();
-    }, [selectedCategories, selectedPriceRange, selectedRating, sortBy, sortOrder, pagination.page, pagination.limit, getPriceParams]);
+    }, [selectedCategories, selectedPriceRange, selectedRating, sortBy, sortOrder, buildFilters]);
+
+    // Load more courses (infinite scroll)
+    const loadMore = useCallback(async () => {
+        if (isFetchingMore || loading || pagination.page >= pagination.totalPages) return;
+
+        setIsFetchingMore(true);
+        try {
+            const nextPage = pagination.page + 1;
+            const filters = buildFilters(nextPage);
+            const response: PaginatedResponse<CourseListItem> = await coursesApi.getAll(filters);
+
+            // Client-side rating filter
+            let filteredData = response.data;
+            if (selectedRating) {
+                filteredData = filteredData.filter(
+                    (course) => course.rating && course.rating >= selectedRating
+                );
+            }
+
+            setCourses(prev => [...prev, ...filteredData]); // Append!
+            setPagination({
+                total: response.total,
+                page: response.page,
+                limit: response.limit,
+                totalPages: response.totalPages,
+            });
+        } catch (err) {
+            console.error("Error loading more courses:", err);
+        } finally {
+            setIsFetchingMore(false);
+        }
+    }, [isFetchingMore, loading, pagination, buildFilters, selectedRating]);
+
+    // Intersection Observer for infinite scroll
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMore();
+                }
+            },
+            { rootMargin: "200px" } // Pre-load trước 200px
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [loadMore]);
 
     const handleCategoryChange = (categorySlug: string) => {
         setSelectedCategories((prev) =>
@@ -114,31 +170,24 @@ export default function CoursesPage() {
                 ? prev.filter((c) => c !== categorySlug)
                 : [...prev, categorySlug]
         );
-        // Reset to page 1 when filter changes
-        setPagination((prev) => ({ ...prev, page: 1 }));
+        // Page will reset via useEffect when filters change
     };
 
     const handlePriceChange = (range: string) => {
         setSelectedPriceRange((prev) => (prev === range ? null : range));
-        setPagination((prev) => ({ ...prev, page: 1 }));
     };
 
     const handleRatingChange = (rating: number) => {
         setSelectedRating((prev) => (prev === rating ? null : rating));
-        setPagination((prev) => ({ ...prev, page: 1 }));
     };
 
     const clearFilters = () => {
         setSelectedCategories([]);
         setSelectedPriceRange(null);
         setSelectedRating(null);
-        setPagination((prev) => ({ ...prev, page: 1 }));
     };
 
-    const handlePageChange = (newPage: number) => {
-        setPagination((prev) => ({ ...prev, page: newPage }));
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
+    // handlePageChange removed - using infinite scroll instead
 
     return (
         <main className="min-h-screen">
@@ -257,53 +306,17 @@ export default function CoursesPage() {
                                     ))}
                                 </div>
 
-                                {/* Pagination */}
-                                {pagination.totalPages > 1 && (
-                                    <div className="flex justify-center items-center gap-2 mt-12">
-                                        <button
-                                            onClick={() => handlePageChange(pagination.page - 1)}
-                                            disabled={pagination.page === 1}
-                                            className="px-4 py-2 glass rounded-lg font-medium text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
-                                        >
-                                            Trước
-                                        </button>
-
-                                        <div className="flex gap-1">
-                                            {Array.from({ length: Math.min(5, pagination.totalPages) }).map((_, i) => {
-                                                let pageNum: number;
-                                                if (pagination.totalPages <= 5) {
-                                                    pageNum = i + 1;
-                                                } else if (pagination.page <= 3) {
-                                                    pageNum = i + 1;
-                                                } else if (pagination.page >= pagination.totalPages - 2) {
-                                                    pageNum = pagination.totalPages - 4 + i;
-                                                } else {
-                                                    pageNum = pagination.page - 2 + i;
-                                                }
-
-                                                return (
-                                                    <button
-                                                        key={pageNum}
-                                                        onClick={() => handlePageChange(pageNum)}
-                                                        className={`w-10 h-10 rounded-lg font-medium transition-colors cursor-pointer ${pagination.page === pageNum
-                                                                ? "gradient-primary text-white"
-                                                                : "glass text-gray-700 dark:text-gray-200 hover:bg-white/60 dark:hover:bg-slate-700/60"
-                                                            }`}
-                                                    >
-                                                        {pageNum}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-
-                                        <button
-                                            onClick={() => handlePageChange(pagination.page + 1)}
-                                            disabled={pagination.page === pagination.totalPages}
-                                            className="px-4 py-2 glass rounded-lg font-medium text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
-                                        >
-                                            Sau
-                                        </button>
+                                {/* Infinite Scroll Sentinel & Loading Indicator */}
+                                <div ref={sentinelRef} className="h-10" />
+                                {isFetchingMore && (
+                                    <div className="flex justify-center py-8">
+                                        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
                                     </div>
+                                )}
+                                {pagination.page >= pagination.totalPages && courses.length > 0 && (
+                                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                                        Đã hiển thị tất cả {pagination.total} khóa học
+                                    </p>
                                 )}
                             </>
                         )}

@@ -1,11 +1,30 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CourseCard from "@/components/CourseCard";
-import StudentExperience from "@/components/StudentExperience";
-import Footer from "@/components/Footer";
+import dynamic from "next/dynamic";
 import { Filter, SlidersHorizontal, BookOpen, Users, Award, Star } from "lucide-react";
 import Link from "next/link";
 import type { CourseListItem, Category } from "@/types";
+
+// Dynamic imports - tách chunk riêng, load khi scroll đến
+const StudentExperience = dynamic(() => import("@/components/StudentExperience"), {
+    loading: () => (
+        <section className="py-20 px-4">
+            <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-16 space-y-4">
+                    <div className="h-10 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg mx-auto animate-pulse" />
+                    <div className="h-6 w-96 bg-gray-100 dark:bg-gray-800 rounded mx-auto animate-pulse" />
+                </div>
+                <div className="max-w-5xl mx-auto aspect-[2/1] bg-gray-100 dark:bg-gray-800 rounded-3xl animate-pulse" />
+            </div>
+        </section>
+    ),
+    ssr: true, // Vẫn render HTML trên server cho SEO
+});
+
+const Footer = dynamic(() => import("@/components/Footer"), {
+    ssr: true,
+});
 
 // Server-side data fetching
 async function getFeaturedCourses(): Promise<CourseListItem[]> {
