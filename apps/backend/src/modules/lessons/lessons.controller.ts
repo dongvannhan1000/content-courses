@@ -32,8 +32,13 @@ import {
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 
+import { IsArray, IsInt, ArrayNotEmpty } from 'class-validator';
+
 // DTO for reorder endpoint
 class ReorderLessonsDto {
+    @IsArray()
+    @ArrayNotEmpty()
+    @IsInt({ each: true })
     lessonIds!: number[];
 }
 
