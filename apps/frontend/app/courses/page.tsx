@@ -132,7 +132,12 @@ export default function CoursesPage() {
                 );
             }
 
-            setCourses(prev => [...prev, ...filteredData]); // Append!
+            // Prevent duplicates by filtering out courses that already exist
+            setCourses(prev => {
+                const existingIds = new Set(prev.map(c => c.id));
+                const newCourses = filteredData.filter(c => !existingIds.has(c.id));
+                return [...prev, ...newCourses];
+            });
             setPagination({
                 total: response.total,
                 page: response.page,
